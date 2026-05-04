@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מרכז הקישורים שלי</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a86e8;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* מסך כניסה */
+        .login-container {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        input[type="tel"] {
+            width: 80%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin: 20px 0;
+            letter-spacing: 5px;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        /* דשבורד קישורים */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .link-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-color);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .link-card:active { transform: scale(0.95); }
+
+        .icon { font-size: 40px; margin-bottom: 10px; }
+        .label { font-weight: bold; font-size: 16px; }
+
+        .hidden { display: none; }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .logout-btn {
+            background: none;
+            color: #888;
+            border: none;
+            font-size: 14px;
+            text-decoration: underline;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- מסך כניסה -->
+    <div id="loginScreen" class="login-container">
+        <h2>ברוכים הבאים</h2>
+        <p>הקש קוד גישה לכניסה:</p>
+        <input type="tel" id="pinInput" placeholder="----" maxlength="6">
+        <button onclick="login()">כניסה</button>
+        <div id="loginError" style="color: red; margin-top: 10px;"></div>
+    </div>
+
+    <!-- מסך טעינה -->
+    <div id="loader" class="hidden">
+        <div class="loader"></div>
+        <p style="text-align: center;">בודק נתונים...</p>
+    </div>
+
+    <!-- מסך קישורים -->
+    <div id="mainScreen" class="hidden">
+        <div class="header">
+            <h1 id="welcomeMsg">שלום</h1>
+            <p>הקישורים הזמינים עבורך כעת:</p>
+        </div>
+        <div id="linksContainer" class="links-grid"></div>
+        <button class="logout-btn" onclick="logout()">החלף משתמש / התנתק</button>
+    </div>
+</div>
+
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbypo3Sbc2v8moe9t43u7t_-o0h_ON7um4gcFHESJc-NfHyo7YZRzFHLemV9q1KiCk1b/exec";
+
+    // בדיקה אם המשתמש כבר מחובר (שמור בדפדפן)
+    window.onload = () => {
+        const savedPin = localStorage.getItem('userPin');
+        if (savedPin) {
+            fetchLinks(savedPin);
+        }
+    };
+
+    function login() {
+        const pin = document.getElementById('pinInput').value;
+        if (!pin) return;
+        fetchLinks(pin);
+    }
+
+    async function fetchLinks(pin) {
+        showScreen('loader');
+        document.getElementById('loginError').innerText = "";
+
+        try {
+            const response = await fetch(`${API_URL}?pin=${pin}`);
+            const data = await response.json();
+
+            if (data.success) {
+                localStorage.setItem('userPin', pin); // שמירת ה-PIN
+                renderLinks(data);
+            } else {
+                showScreen('loginScreen');
+                document.getElementById('loginError').innerText = data.message || "קוד שגוי, נסה שוב.";
+            }
+        } catch (error) {
+            showScreen('loginScreen');
+            document.getElementById('loginError').innerText = "שגיאת תקשורת. בדוק חיבור לאינטרנט.";
+        }
+    }
+
+    function renderLinks(data) {
+        document.getElementById('welcomeMsg').innerText = "שלום, " + data.user;
+        const container = document.getElementById('linksContainer');
+        container.innerHTML = "";
+
+        if (data.links.length === 0) {
+            container.innerHTML = "<p style='grid-column: 1/3; text-align: center;'>אין אתרים זמינים עבורך בשעות אלו.</p>";
+        } else {
+            data.links.forEach(link => {
+                const card = document.createElement('a');
+                card.href = link.url;
+                card.className = 'link-card';
+                card.innerHTML = `
+                    <div class="icon">${link.icon || '🔗'}</div>
+                    <div class="label">${link.name}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        showScreen('mainScreen');
+    }
+
+    function showScreen(screenId) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainScreen').classList.add('hidden');
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function logout() {
+        localStorage.removeItem('userPin');
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
