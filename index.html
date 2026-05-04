@@ -6,42 +6,131 @@
     <title>הדשבורד שלי</title>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #4a86e8; --success: #34a853; --bg: #f4f7f9; }
-        body { font-family: 'Assistant', sans-serif; background: var(--bg); margin: 0; padding: 20px; text-align: center; }
-        .hidden { display: none; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
-        .link-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; position: relative; }
-        .link-card.closed { opacity: 0.6; filter: grayscale(1); cursor: not-allowed; }
+        :root { 
+            --primary: #4a86e8; 
+            --success: #34a853; 
+            --bg: #f4f7f9; 
+            --text: #333;
+        }
+
+        body { 
+            font-family: 'Assistant', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+            text-align: center; 
+            direction: rtl;
+        }
+
+        /* הגדרת חובה להסתרה */
+        .hidden { display: none !important; }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        /* כרטיסיות */
+        .card-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 15px; 
+            margin-top: 20px; 
+        }
+
+        .link-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            transition: 0.2s; 
+            text-decoration: none;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .link-card.closed { 
+            opacity: 0.6; 
+            filter: grayscale(1); 
+            cursor: not-allowed; 
+        }
+
         .icon { font-size: 40px; margin-bottom: 10px; }
         .label { font-weight: bold; }
         .lock-msg { color: #d93025; font-size: 11px; margin-top: 8px; font-weight: bold; }
         
-        /* Modal Styles */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: right; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        /* מודאל (חלון קופץ) */
+        .modal { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.7); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+        }
+
+        .modal-content { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 20px; 
+            width: 90%; 
+            max-width: 400px; 
+            text-align: right; 
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-family: inherit;
+        }
+
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            font-family: inherit;
+        }
+
         .btn-main { background: var(--primary); color: white; }
         .btn-request { background: var(--success); color: white; margin-top: 30px; }
+        .btn-logout { background: none; color: #666; text-decoration: underline; margin-top: 20px; }
+        
+        #loginError { color: red; margin-top: 10px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div id="app">
+    <div class="container">
         <!-- מסך כניסה -->
         <div id="loginScreen">
             <h1>כניסה למערכת</h1>
-            <input type="tel" id="pinInput" placeholder="הכנס קוד PIN" style="text-align:center; font-size:20px;">
+            <p>הכנס את קוד הגישה שקיבלת:</p>
+            <input type="tel" id="pinInput" placeholder="----" style="text-align:center; font-size:24px; letter-spacing: 4px;">
             <button class="btn-main" onclick="login()">כניסה</button>
+            <div id="loginError"></div>
         </div>
 
-        <!-- מסך ראשי -->
+        <!-- מסך ראשי - יוסתר עד להתחברות -->
         <div id="mainScreen" class="hidden">
-            <h2 id="welcomeHeader">שלום</h2>
+            <h2 id="welcomeHeader">טוען...</h2>
             <div id="linksContainer" class="card-grid"></div>
             
+            <!-- כפתור הבקשה נמצא בתוך המסך הראשי בלבד -->
             <button class="btn-request" onclick="openModal()">➕ בקשה לאתר חדש</button>
-            <button onclick="logout()" style="background:none; color:#666; text-decoration:underline;">התנתק</button>
+            <button class="btn-logout" onclick="logout()">התנתק מהחשבון</button>
         </div>
     </div>
 
@@ -49,21 +138,23 @@
     <div id="requestModal" class="modal hidden">
         <div class="modal-content">
             <h3>בקשת אתר חדש</h3>
-            <input type="text" id="reqName" placeholder="שם האתר">
-            <input type="text" id="reqUrl" placeholder="כתובת (URL)">
+            <p style="font-size: 13px; color: #666;">האתר יופיע בדשבורד לאחר אישור מנהל.</p>
+            
+            <input type="text" id="reqName" placeholder="שם האתר (למשל: ויקיפדיה)">
+            <input type="text" id="reqUrl" placeholder="כתובת האתר (URL)">
             <input type="text" id="reqIcon" placeholder="אייקון (אימוג'י)">
             
-            <label>ימי פעילות:</label>
+            <label style="font-weight: bold;">באילו ימים האתר נחוץ?</label>
             <div id="daysSelect" style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin:10px 0;">
                 <label><input type="checkbox" value="ראשון" checked> ראשון</label>
                 <label><input type="checkbox" value="שני" checked> שני</label>
                 <label><input type="checkbox" value="שלישי" checked> שלישי</label>
-                <label><input type="checkbox" value="רביעי" checked> רביעי</label>
+                <label><input type="checkbox" value="رביעי" checked> רביעי</label>
                 <label><input type="checkbox" value="חמישי" checked> חמישי</label>
                 <label><input type="checkbox" value="שישי"> שישי</label>
             </div>
 
-            <label>שעות פעילות:</label>
+            <label style="font-weight: bold;">שעות פעילות מבוקשות:</label>
             <select id="reqHours">
                 <option value="כל שעות היום">כל שעות היום</option>
                 <option value="08:00-11:00">08:00-11:00</option>
@@ -73,12 +164,13 @@
                 <option value="20:00-23:00">20:00-23:00</option>
             </select>
 
-            <button class="btn-main" onclick="submitRequest()">שלח לאישור</button>
-            <button onclick="closeModal()" style="background:#eee;">ביטול</button>
+            <button class="btn-main" id="submitBtn" onclick="submitRequest()">שלח בקשה לאישור</button>
+            <button onclick="closeModal()" style="background:#eee; color: #333;">ביטול</button>
         </div>
     </div>
 
 <script>
+    // הלינק שלך מה-Deploy
     const API_URL = "https://script.google.com/macros/s/AKfycbypo3Sbc2v8moe9t43u7t_-o0h_ON7um4gcFHESJc-NfHyo7YZRzFHLemV9q1KiCk1b/exec";
 
     window.onload = () => {
@@ -92,14 +184,20 @@
     }
 
     async function loadData(pin) {
+        document.getElementById('loginError').innerText = "טוען נתונים...";
         try {
             const res = await fetch(`${API_URL}?pin=${pin}`);
             const data = await res.json();
+            
             if (data.success) {
                 localStorage.setItem('userPin', pin);
                 renderLinks(data);
-            } else { alert(data.message); }
-        } catch (e) { alert("שגיאת תקשורת"); }
+            } else { 
+                document.getElementById('loginError').innerText = data.message; 
+            }
+        } catch (e) { 
+            document.getElementById('loginError').innerText = "שגיאת תקשורת עם השרת"; 
+        }
     }
 
     function renderLinks(data) {
@@ -110,7 +208,11 @@
         data.links.forEach(link => {
             const card = document.createElement('div');
             card.className = `link-card ${link.isOpen ? '' : 'closed'}`;
-            if (link.isOpen) card.onclick = () => window.location.href = link.url;
+            
+            if (link.isOpen) {
+                card.style.cursor = "pointer";
+                card.onclick = () => window.location.href = link.url;
+            }
             
             card.innerHTML = `
                 <div class="icon">${link.icon || '🔗'}</div>
@@ -129,25 +231,53 @@
 
     async function submitRequest() {
         const pin = localStorage.getItem('userPin');
+        const submitBtn = document.getElementById('submitBtn');
         const days = Array.from(document.querySelectorAll('#daysSelect input:checked')).map(c => c.value);
+        
+        const name = document.getElementById('reqName').value;
+        const url = document.getElementById('reqUrl').value;
+        
+        if (!name || !url) {
+            alert("חובה למלא שם אתר וכתובת");
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "שולח...";
+
         const body = {
-            pin: pin,
-            name: document.getElementById('reqName').value,
-            url: document.getElementById('reqUrl').value,
+            pin: pin, // שולח את ה-PIN כדי שהסקריפט ידע למי לשייך
+            name: name,
+            url: url,
             icon: document.getElementById('reqIcon').value,
             days: days,
             hours: document.getElementById('reqHours').value
         };
 
-        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) });
-        const result = await res.json();
-        if (result.success) {
-            alert("הבקשה נשלחה למנהל!");
+        try {
+            const res = await fetch(API_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', // פותר בעיות CORS עם גוגל סקריפט ב-POST
+                body: JSON.stringify(body) 
+            });
+            
+            // בגלל no-cors לא ניתן לקרוא את התשובה, אז נניח הצלחה וננקה
+            alert("הבקשה נשלחה בהצלחה למנהל המערכת!");
+            document.getElementById('reqName').value = "";
+            document.getElementById('reqUrl').value = "";
             closeModal();
+        } catch (e) {
+            alert("שגיאה בשליחת הבקשה");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "שלח בקשה לאישור";
         }
     }
 
-    function logout() { localStorage.clear(); location.reload(); }
+    function logout() { 
+        localStorage.removeItem('userPin'); 
+        location.reload(); 
+    }
 </script>
 </body>
 </html>
