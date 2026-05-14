@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TachlesPDF — Sidebar Redesign</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d18;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Heebo', sans-serif;
+    direction: rtl;
+  }
+
+  .sidebar-demo {
+    display: flex;
+    gap: 0;
+    height: 640px;
+    width: 720px;
+    background: #13131f;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+
+  .sidebar {
+    width: 72px;
+    background: #1e1e2d;
+    border-left: 1px solid #2a2a3e;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
+  }
+
+  .group + .group {
+    border-top: 1px solid #2a2a3e;
+    margin-top: 2px;
+    padding-top: 6px;
+  }
+
+  .group-label {
+    font-size: 9px;
+    color: #4a4a62;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  .tool-btn {
+    position: relative;
+    width: 56px;
+    height: 52px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    transition: background 0.15s ease, color 0.15s ease;
+    margin: 1px 8px;
+    color: #8888a8;
+    border-right: 2px solid transparent;
+  }
+
+  .tool-btn:hover {
+    background: #2d2d3f;
+    color: #c8c8e0;
+  }
+
+  .tool-btn.active {
+    background: #1a2340;
+    color: #4d9fff;
+    border-right: 2px solid #4d9fff;
+    margin-right: 6px;
+  }
+
+  .tool-btn .ti {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .tool-btn .btn-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  .rotate-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 2px;
+    padding: 2px 6px;
+    width: 100%;
+  }
+
+  .rotate-btn {
+    flex: 1;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8888a8;
+    transition: background 0.15s ease, color 0.15s ease;
+    position: relative;
+  }
+
+  .rotate-btn:hover {
+    background: #2d2d3f;
+    color: #c8c8e0;
+  }
+
+  .rotate-btn .ti { font-size: 16px; }
+
+  /* Tooltips */
+  .tooltip {
+    position: absolute;
+    right: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #2d2d3f;
+    color: #e1e1e6;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 100;
+    border: 1px solid #3a3a52;
+    font-family: 'Heebo', sans-serif;
+  }
+
+  .tooltip::after {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-left-color: #2d2d3f;
+  }
+
+  .tool-btn:hover .tooltip,
+  .rotate-btn:hover .tooltip { opacity: 1; }
+
+  /* Main content area */
+  .main-content {
+    flex: 1;
+    background: #13131f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 20px;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4a4a62;
+    font-size: 11px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4d9fff;
+    flex-shrink: 0;
+  }
+
+  .chip {
+    background: #1a2340;
+    color: #4d9fff;
+    border: 1px solid #2a3a5e;
+    border-radius: 4px;
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .page-mock {
+    width: 220px;
+    height: 300px;
+    background: #f5f2ec;
+    border-radius: 4px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .page-mock-inner {
+    width: 180px;
+    height: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .line-mock {
+    height: 8px;
+    background: #d0ccc4;
+    border-radius: 2px;
+  }
+  .line-mock.short  { width: 60%; }
+  .line-mock.shorter { width: 40%; }
+
+  .sub-status {
+    font-size: 10px;
+    color: #3a3a52;
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar-demo">
+
+  <div class="sidebar">
+
+    <div class="group">
+      <div class="group-label">היסטוריה</div>
+      <button class="tool-btn" onclick="setActive(this)">
+        <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
+        <span class="btn-label">ביטול</span>
+        <span class="tooltip">ביטול (Ctrl+Z)</span>
+      </button>
+      <button class="tool-btn" onclick="setActive(this)">
+        <i class="ti ti-arrow-forward-up" aria-hidden="true"></i>
+        <span class="btn-label">בצע שוב</span>
+        <span class="tooltip">בצע שוב (Ctrl+Y)</span>
+      </button>
+    </div>
+
+    <div class="group">
+      <div class="group-label">עריכה</div>
+      <button class="tool-btn active" onclick="setActive(this)">
+        <i class="ti ti-pointer" aria-hidden="true"></i>
+        <span class="btn-label">כלי בחירה</span>
+        <span class="tooltip">כלי בחירה / הזזה</span>
+      </button>
+      <button class="tool-btn" onclick="setActive(this)">
+        <i class="ti ti-crop" aria-hidden="true"></i>
+        <span class="btn-label">חיתוך</span>
+        <span class="tooltip">חיתוך (Crop)</span>
+      </button>
+    </div>
+
+    <div class="group">
+      <div class="group-label">מחיקה</div>
+      <button class="tool-btn" onclick="setActive(this)">
+        <i class="ti ti-scissors" aria-hidden="true"></i>
+        <span class="btn-label">חיתוך חיצוני</span>
+        <span class="tooltip">מחיקה מחוץ לבחירה</span>
+      </button>
+      <button class="tool-btn" onclick="setActive(this)">
+        <i class="ti ti-eraser" aria-hidden="true"></i>
+        <span class="btn-label">מחיקת בחירה</span>
+        <span class="tooltip">מחיקה בתוך הבחירה</span>
+      </button>
+    </div>
+
+    <div class="group">
+      <div class="group-label">הוספה</div>
+      <button class="tool-btn" onclick="setActive(this)">
+        <i class="ti ti-text-size" aria-hidden="true"></i>
+        <span class="btn-label">הוספת טקסט</span>
+        <span class="tooltip">הוסף טקסט לעמוד</span>
+      </button>
+      <button class="tool-btn" onclick="setActive(this)">
+        <i class="ti ti-photo-plus" aria-hidden="true"></i>
+        <span class="btn-label">הוספת תמונה</span>
+        <span class="tooltip">הוסף תמונה על עמוד</span>
+      </button>
+      <button class="tool-btn" onclick="setActive(this)">
+        <i class="ti ti-copy" aria-hidden="true"></i>
+        <span class="btn-label">שכפול אזור</span>
+        <span class="tooltip">העתק אזור לעמודים</span>
+      </button>
+    </div>
+
+    <div class="group">
+      <div class="group-label">סיבוב</div>
+      <div class="rotate-row">
+        <button class="rotate-btn" onclick="pulse(this)" aria-label="סובב שמאלה 90°">
+          <i class="ti ti-rotate-counterclockwise-2" aria-hidden="true"></i>
+          <span class="tooltip">סובב שמאלה 90°</span>
+        </button>
+        <button class="rotate-btn" onclick="pulse(this)" aria-label="סובב 180°">
+          <i class="ti ti-rotate-clockwise-2" aria-hidden="true"></i>
+          <span class="tooltip">סובב 180°</span>
+        </button>
+        <button class="rotate-btn" onclick="pulse(this)" aria-label="סובב ימינה 90°">
+          <i class="ti ti-rotate" aria-hidden="true"></i>
+          <span class="tooltip">סובב ימינה 90°</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="main-content">
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span>document.pdf — עמוד 3 מתוך 12</span>
+      <div class="chip" id="active-chip">כלי בחירה פעיל</div>
+    </div>
+    <div class="page-mock">
+      <div class="page-mock-inner">
+        <div class="line-mock"></div>
+        <div class="line-mock short"></div>
+        <div class="line-mock"></div>
+        <div class="line-mock shorter"></div>
+        <div class="line-mock"></div>
+        <div class="line-mock"></div>
+        <div class="line-mock short"></div>
+        <div style="height:12px"></div>
+        <div class="line-mock"></div>
+        <div class="line-mock"></div>
+        <div class="line-mock shorter"></div>
+        <div class="line-mock"></div>
+      </div>
+    </div>
+    <div class="sub-status">זום 100% · 148 × 210mm</div>
+  </div>
+
+</div>
+
+<script>
+function setActive(btn) {
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const label = btn.querySelector('.btn-label')?.textContent || '';
+  const chip = document.getElementById('active-chip');
+  if (chip && label) chip.textContent = label + ' פעיל';
+}
+
+function pulse(btn) {
+  btn.style.background = '#1a2340';
+  btn.style.color = '#4d9fff';
+  setTimeout(() => {
+    btn.style.background = '';
+    btn.style.color = '';
+  }, 300);
+}
+</script>
+
+</body>
+</html>
