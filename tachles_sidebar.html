@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>תכלעס PDF — הדמיית ממשק חדש</title>
+<title>תכלעס PDF — ממשק מאוחד</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -23,7 +23,7 @@
   .app-container {
     display: flex;
     height: 700px;
-    width: 900px;
+    width: 1000px;
     background: #13131f;
     border-radius: 16px;
     overflow: hidden;
@@ -33,25 +33,70 @@
 
   /* סרגל צדי */
   .sidebar {
-    width: 85px;
+    width: 180px;
     background: #1e1e2d;
     border-left: 1px solid #2a2a3e;
     display: flex;
     flex-direction: column;
-    padding: 12px 0;
-    overflow-y: auto;
+    padding: 0;
+    overflow: hidden;
     flex-shrink: 0;
+    transition: width 0.3s ease;
+    position: relative;
   }
+
+  .sidebar.collapsed {
+    width: 65px;
+  }
+
+  .sidebar-toggle {
+    position: absolute;
+    top: 15px;
+    left: -18px;
+    width: 32px;
+    height: 32px;
+    background: #1e1e2d;
+    border: 1px solid #2a2a3e;
+    border-radius: 50%;
+    color: #ffd700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    z-index: 10;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  }
+  
+  .sidebar-toggle:hover { background: #4d9fff; color: white; }
+  .sidebar.collapsed .sidebar-toggle .ti { transform: rotate(180deg); }
+
+  .sidebar-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffd700;
+    font-weight: 600;
+    border-bottom: 1px solid #2a2a3e;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .sidebar.collapsed .sidebar-header { display: none; }
 
   .group {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     align-items: center;
-    padding-bottom: 8px;
+    justify-content: center;
+    padding: 0 10px 10px 10px;
     margin-bottom: 8px;
+    gap: 10px;
   }
 
-  .group + .group {
+  .sidebar.collapsed .group + .group {
     border-top: 1px solid #2a2a3e;
     padding-top: 12px;
   }
@@ -60,14 +105,18 @@
     font-size: 10px;
     color: #5c5c7d;
     font-weight: 600;
+    width: 100%;
+    text-align: center;
     margin-bottom: 6px;
     text-transform: uppercase;
   }
 
+  .sidebar.collapsed .group-label { display: none; }
+
   .tool-btn {
     position: relative;
-    width: 68px;
-    height: 58px;
+    width: 75px;
+    height: 70px;
     border: none;
     background: transparent;
     border-radius: 10px;
@@ -78,22 +127,14 @@
     justify-content: center;
     gap: 4px;
     transition: all 0.2s ease;
-    margin: 2px 0;
     color: #8888a8;
   }
 
-  .tool-btn:hover {
-    background: #2d2d3f;
-    color: #ffffff;
-  }
+  .sidebar.collapsed .tool-btn { width: 55px; height: 55px; }
 
-  .tool-btn.active {
-    background: #1a2340;
-    color: #4d9fff;
-    box-shadow: inset 0 0 0 1px #4d9fff33;
-  }
+  .tool-btn:hover { background: #2d2d3f; color: #ffffff; }
+  .tool-btn.active { background: #1a2340; color: #4d9fff; box-shadow: inset 0 0 0 1px #4d9fff33; }
 
-  /* סימון צד לכפתור פעיל */
   .tool-btn.active::after {
     content: '';
     position: absolute;
@@ -105,131 +146,39 @@
     border-radius: 4px 0 0 4px;
   }
 
-  .tool-btn .ti { font-size: 20px; }
-  .tool-btn .btn-label { font-size: 10px; font-weight: 500; }
+  .tool-btn .ti { font-size: 24px; }
+  .tool-btn .btn-label { font-size: 10px; font-weight: 500; text-align: center; }
+  .sidebar.collapsed .tool-btn .btn-label { display: none; }
 
-  /* שורת סיבוב */
-  .rotate-row {
-    display: flex;
-    width: 75px;
-    gap: 2px;
-    justify-content: center;
-  }
+  .rotate-row { display: flex; width: 100%; gap: 5px; justify-content: center; flex-wrap: wrap; }
+  .sidebar.collapsed .rotate-row { flex-direction: column; gap: 8px; }
+
   .rotate-btn {
     flex: 1;
-    height: 32px;
+    min-width: 48px;
+    height: 48px;
     background: #252538;
     border: none;
     border-radius: 6px;
     color: #8888a8;
     cursor: pointer;
-    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
+  
   .rotate-btn:hover { background: #4d9fff; color: white; }
 
   /* תוכן מרכזי */
-  .main-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: #0f0f1a;
-  }
-
-  .top-nav {
-    height: 50px;
-    background: #1e1e2d;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    justify-content: space-between;
-    border-bottom: 1px solid #2a2a3e;
-  }
-
-  .file-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #a1a1c2; }
+  .main-area { flex: 1; display: flex; flex-direction: column; background: #0f0f1a; }
+  .top-nav { height: 50px; background: #1e1e2d; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; border-bottom: 1px solid #2a2a3e; }
   .status-tag { background: #1a2340; color: #4d9fff; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
 
-  .canvas {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    overflow: auto;
-  }
+  .canvas { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; }
+  .pdf-page { width: 320px; height: 450px; background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.5); padding: 30px; display: flex; flex-direction: column; gap: 15px; }
+  .mock-img { width: 100%; height: 180px; background: #f0f0f5; border: 1px dashed #d1d1e0; }
 
-  .pdf-page {
-    width: 320px;
-    height: 450px;
-    background: white;
-    border-radius: 2px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    padding: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .mock-img { width: 100%; height: 180px; background: #f0f0f5; border-radius: 4px; border: 1px dashed #d1d1e0; }
-  .mock-line { height: 10px; background: #e6e6f0; border-radius: 5px; }
-  .mock-line.half { width: 60%; }
-
-  /* חלון אודות (Modal) */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(4px);
-  }
-
-  .about-modal {
-    background: #1e1e2d;
-    width: 400px;
-    border-radius: 20px;
-    padding: 30px;
-    text-align: center;
-    border: 1px solid #3a3a52;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-  }
-
-  .about-modal h2 { color: #4d9fff; margin-bottom: 5px; font-size: 24px; }
-  .version { font-size: 12px; color: #5c5c7d; margin-bottom: 20px; }
-  .about-text { font-size: 14px; line-height: 1.6; color: #c8c8e0; margin-bottom: 20px; }
-  .contact-box { background: #13131f; padding: 15px; border-radius: 12px; font-size: 13px; color: #a1a1c2; margin-bottom: 20px; }
-  .contact-box b { color: #e1e1e6; }
-  
-  .geula-footer {
-    border-top: 1px solid #2a2a3e;
-    padding-top: 15px;
-    font-weight: 600;
-    color: #ffd700; /* זהב */
-    font-size: 13px;
-  }
-
-  .close-btn {
-    background: #4d9fff;
-    color: white;
-    border: none;
-    padding: 10px 30px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    margin-top: 20px;
-  }
-
-  /* תוספת להפצת אור */
-  .light-banner {
-    background: linear-gradient(90deg, #1e1e2d, #2d2d45);
-    padding: 8px;
-    text-align: center;
-    font-size: 11px;
-    color: #4d9fff;
-    border-top: 1px solid #2a2a3e;
-  }
-
+  .light-banner { background: linear-gradient(90deg, #1e1e2d, #2d2d45); padding: 8px; text-align: center; font-size: 11px; color: #4d9fff; border-top: 1px solid #2a2a3e; }
 </style>
 </head>
 <body>
@@ -238,23 +187,18 @@
   
   <div class="main-area">
     <div class="top-nav">
-      <div class="file-info">
-        <i class="ti ti-file-pdf"></i>
-        <span>document_ready.pdf</span>
-        <span class="status-tag" id="active-tool">כלי בחירה פעיל</span>
+      <div style="font-size: 13px; color: #a1a1c2;">
+        <i class="ti ti-file-pdf"></i> document_ready.pdf
+        <span class="status-tag" id="active-tool" style="margin-right:10px;">כלי בחירה פעיל</span>
       </div>
-      <button onclick="toggleAbout()" style="background:none; border:none; color:#5c5c7d; cursor:pointer; font-size:13px; font-family: inherit;">
-        אודות <i class="ti ti-info-circle"></i>
-      </button>
+      <div style="color:#5c5c7d; font-size:12px;">תכלעס PDF v1.3.0</div>
     </div>
 
     <div class="canvas">
       <div class="pdf-page">
         <div class="mock-img"></div>
-        <div class="mock-line"></div>
-        <div class="mock-line"></div>
-        <div class="mock-line half"></div>
-        <div class="mock-img" style="height: 100px;"></div>
+        <div style="height:10px; background:#e6e6f0; width:100%;"></div>
+        <div style="height:10px; background:#e6e6f0; width:60%;"></div>
       </div>
     </div>
 
@@ -263,7 +207,14 @@
     </div>
   </div>
 
-  <div class="sidebar">
+  <div class="sidebar" id="appSidebar">
+    <button class="sidebar-toggle" onclick="toggleSidebarWidth()">
+        <i class="ti ti-chevron-left"></i>
+    </button>
+
+    <div class="sidebar-header">תכלעס פקודות</div>
+
+    <!-- קבוצה 1: היסטוריה -->
     <div class="group">
       <div class="group-label">היסטוריה</div>
       <button class="tool-btn" onclick="updateTool('ביטול', this)">
@@ -276,8 +227,9 @@
       </button>
     </div>
 
+    <!-- קבוצה מאוחדת: עריכה ומחיקה -->
     <div class="group">
-      <div class="group-label">עריכה</div>
+      <div class="group-label">כלי עריכה</div>
       <button class="tool-btn active" onclick="updateTool('כלי בחירה', this)">
         <i class="ti ti-pointer"></i>
         <span class="btn-label">כלי בחירה</span>
@@ -286,10 +238,6 @@
         <i class="ti ti-crop"></i>
         <span class="btn-label">חיתוך</span>
       </button>
-    </div>
-
-    <div class="group">
-      <div class="group-label">מחיקה</div>
       <button class="tool-btn" onclick="updateTool('חיתוך חיצוני', this)">
         <i class="ti ti-scissors"></i>
         <span class="btn-label">חיתוך חוץ</span>
@@ -300,6 +248,7 @@
       </button>
     </div>
 
+    <!-- קבוצה 3: הוספה -->
     <div class="group">
       <div class="group-label">הוספה</div>
       <button class="tool-btn" onclick="updateTool('הוספת טקסט', this)">
@@ -316,39 +265,17 @@
       </button>
     </div>
 
+    <!-- קבוצה 4: סיבוב -->
     <div class="group">
       <div class="group-label">סיבוב</div>
       <div class="rotate-row">
-        <button class="rotate-btn" title="סובב שמאלה" onclick="flash(this)"><i class="ti ti-rotate-2"></i></button>
-        <button class="rotate-btn" title="180°" onclick="flash(this)"><i class="ti ti-rotate-clockwise-2"></i></button>
-        <button class="rotate-btn" title="סובב ימינה" onclick="flash(this)"><i class="ti ti-rotate"></i></button>
+        <button class="rotate-btn" onclick="flash(this)"><i class="ti ti-rotate-2"></i></button>
+        <button class="rotate-btn" onclick="flash(this)"><i class="ti ti-rotate-clockwise-2"></i></button>
+        <button class="rotate-btn" onclick="flash(this)"><i class="ti ti-rotate"></i></button>
       </div>
     </div>
   </div>
 
-</div>
-
-<!-- מודל אודות -->
-<div class="modal-overlay" id="aboutModal">
-  <div class="about-modal">
-    <h2>תכלעס PDF</h2>
-    <div class="version">גרסה 1.3.0</div>
-    
-    <p class="about-text">
-      כלי שרת שנולד מתוך רצון לייעל את מלאכת היומיום ולהוסיף אור בעולם. בזמננו אנו, כל רגע שנחסך בעבודה גשמית הוא זמן שניתן להקדיש ללימוד, לתפילה ולהכנת העולם לקבלת פני משיח צדקנו.
-    </p>
-
-    <div class="contact-box">
-      <b>מפתח:</b> מיכאל דורון <br>
-      <b>דוא"ל:</b> mdafula@gmail.com
-    </div>
-
-    <div class="geula-footer">
-      יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד!
-    </div>
-
-    <button class="close-btn" onclick="toggleAbout()">תכלעס, סגור</button>
-  </div>
 </div>
 
 <script>
@@ -361,15 +288,11 @@
   function flash(btn) {
     btn.style.background = '#4d9fff';
     btn.style.color = 'white';
-    setTimeout(() => {
-      btn.style.background = '';
-      btn.style.color = '';
-    }, 200);
+    setTimeout(() => { btn.style.background = ''; btn.style.color = ''; }, 200);
   }
 
-  function toggleAbout() {
-    const modal = document.getElementById('aboutModal');
-    modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+  function toggleSidebarWidth() {
+    document.getElementById('appSidebar').classList.toggle('collapsed');
   }
 </script>
 
