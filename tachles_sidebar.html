@@ -1,299 +1,550 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>תכלעס PDF — ממשק מאוחד</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TachlesPDF — Wide Tools Panel</title>
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
-  body {
-    background: #0d0d18;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Heebo', sans-serif;
-    direction: rtl;
-    color: #e1e1e6;
-  }
+body{
+  background:#0b0b15;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Heebo',sans-serif;
+  direction:rtl;
+  color:#fff;
+}
 
-  .app-container {
-    display: flex;
-    height: 700px;
-    width: 1000px;
-    background: #13131f;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 30px 100px rgba(0,0,0,0.7);
-    border: 1px solid #2a2a3e;
-  }
+.app{
+  width:980px;
+  height:680px;
+  background:#141420;
+  border-radius:18px;
+  overflow:hidden;
+  display:flex;
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.65),
+    inset 0 1px 0 rgba(255,255,255,.03);
+}
 
-  /* סרגל צדי */
-  .sidebar {
-    width: 180px;
-    background: #1e1e2d;
-    border-left: 1px solid #2a2a3e;
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    overflow: hidden;
-    flex-shrink: 0;
-    transition: width 0.3s ease;
-    position: relative;
-  }
+/* ========= TOOLS PANEL ========= */
 
-  .sidebar.collapsed {
-    width: 65px;
-  }
+.tools-panel{
+  width:290px;
+  background:#1a1a28;
+  border-left:1px solid #2a2a3e;
+  display:flex;
+  flex-direction:column;
+}
 
-  .sidebar-toggle {
-    position: absolute;
-    top: 15px;
-    left: -18px;
-    width: 32px;
-    height: 32px;
-    background: #1e1e2d;
-    border: 1px solid #2a2a3e;
-    border-radius: 50%;
-    color: #ffd700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    z-index: 10;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-  }
-  
-  .sidebar-toggle:hover { background: #4d9fff; color: white; }
-  .sidebar.collapsed .sidebar-toggle .ti { transform: rotate(180deg); }
+.panel-header{
+  padding:18px 18px 14px;
+  border-bottom:1px solid #2a2a3e;
+}
 
-  .sidebar-header {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffd700;
-    font-weight: 600;
-    border-bottom: 1px solid #2a2a3e;
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
+.logo{
+  font-size:22px;
+  font-weight:700;
+  color:#f4f4f7;
+}
 
-  .sidebar.collapsed .sidebar-header { display: none; }
+.logo span{
+  color:#4d9fff;
+}
 
-  .group {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    padding: 0 10px 10px 10px;
-    margin-bottom: 8px;
-    gap: 10px;
-  }
+.sub{
+  margin-top:4px;
+  color:#6f718f;
+  font-size:12px;
+}
 
-  .sidebar.collapsed .group + .group {
-    border-top: 1px solid #2a2a3e;
-    padding-top: 12px;
-  }
+.tools-grid{
+  padding:16px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  overflow-y:auto;
+}
 
-  .group-label {
-    font-size: 10px;
-    color: #5c5c7d;
-    font-weight: 600;
-    width: 100%;
-    text-align: center;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-  }
+.group{
+  background:#202032;
+  border:1px solid #2d2d46;
+  border-radius:14px;
+  padding:12px;
+}
 
-  .sidebar.collapsed .group-label { display: none; }
+.group-title{
+  font-size:11px;
+  color:#8f91b0;
+  margin-bottom:10px;
+  font-weight:600;
+  letter-spacing:.4px;
+}
 
-  .tool-btn {
-    position: relative;
-    width: 75px;
-    height: 70px;
-    border: none;
-    background: transparent;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    transition: all 0.2s ease;
-    color: #8888a8;
-  }
+.tool-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
 
-  .sidebar.collapsed .tool-btn { width: 55px; height: 55px; }
+.tool-btn{
+  width:100%;
+  height:56px;
+  border:none;
+  background:#26263b;
+  border-radius:12px;
+  color:#9ca0c5;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 12px;
+  cursor:pointer;
+  transition:.18s ease;
+  position:relative;
+  border:1px solid transparent;
+}
 
-  .tool-btn:hover { background: #2d2d3f; color: #ffffff; }
-  .tool-btn.active { background: #1a2340; color: #4d9fff; box-shadow: inset 0 0 0 1px #4d9fff33; }
+.tool-btn:hover{
+  background:#30304a;
+  color:#eef2ff;
+  transform:translateY(-1px);
+}
 
-  .tool-btn.active::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 15%;
-    height: 70%;
-    width: 3px;
-    background: #4d9fff;
-    border-radius: 4px 0 0 4px;
-  }
+.tool-btn.active{
+  background:#1d2947;
+  color:#58a6ff;
+  border-color:#2e5fa8;
+  box-shadow:0 0 0 1px rgba(88,166,255,.15);
+}
 
-  .tool-btn .ti { font-size: 24px; }
-  .tool-btn .btn-label { font-size: 10px; font-weight: 500; text-align: center; }
-  .sidebar.collapsed .tool-btn .btn-label { display: none; }
+.tool-btn i{
+  font-size:20px;
+  flex-shrink:0;
+}
 
-  .rotate-row { display: flex; width: 100%; gap: 5px; justify-content: center; flex-wrap: wrap; }
-  .sidebar.collapsed .rotate-row { flex-direction: column; gap: 8px; }
+.tool-info{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
 
-  .rotate-btn {
-    flex: 1;
-    min-width: 48px;
-    height: 48px;
-    background: #252538;
-    border: none;
-    border-radius: 6px;
-    color: #8888a8;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .rotate-btn:hover { background: #4d9fff; color: white; }
+.tool-name{
+  font-size:13px;
+  font-weight:600;
+}
 
-  /* תוכן מרכזי */
-  .main-area { flex: 1; display: flex; flex-direction: column; background: #0f0f1a; }
-  .top-nav { height: 50px; background: #1e1e2d; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; border-bottom: 1px solid #2a2a3e; }
-  .status-tag { background: #1a2340; color: #4d9fff; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tool-desc{
+  font-size:10px;
+  color:#72759a;
+  margin-top:2px;
+}
 
-  .canvas { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; }
-  .pdf-page { width: 320px; height: 450px; background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.5); padding: 30px; display: flex; flex-direction: column; gap: 15px; }
-  .mock-img { width: 100%; height: 180px; background: #f0f0f5; border: 1px dashed #d1d1e0; }
+.tool-btn.active .tool-desc{
+  color:#8ebfff;
+}
 
-  .light-banner { background: linear-gradient(90deg, #1e1e2d, #2d2d45); padding: 8px; text-align: center; font-size: 11px; color: #4d9fff; border-top: 1px solid #2a2a3e; }
+.full{
+  grid-column:1 / -1;
+}
+
+/* ========= MAIN AREA ========= */
+
+.main{
+  flex:1;
+  background:#12121d;
+  display:flex;
+  flex-direction:column;
+}
+
+.topbar{
+  height:62px;
+  border-bottom:1px solid #252538;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 24px;
+}
+
+.doc-name{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#d9d9e5;
+  font-size:14px;
+}
+
+.doc-name i{
+  color:#4d9fff;
+  font-size:18px;
+}
+
+.status{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.badge{
+  background:#1d2947;
+  color:#69afff;
+  border:1px solid #2e5fa8;
+  border-radius:999px;
+  padding:5px 12px;
+  font-size:11px;
+}
+
+.canvas{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:30px;
+}
+
+.page{
+  width:340px;
+  height:470px;
+  background:#f6f2ea;
+  border-radius:6px;
+  box-shadow:
+    0 10px 35px rgba(0,0,0,.5),
+    0 0 0 1px rgba(255,255,255,.08);
+  position:relative;
+}
+
+.page-inner{
+  padding:28px;
+}
+
+.line{
+  height:9px;
+  background:#d4cec3;
+  border-radius:3px;
+  margin-bottom:11px;
+}
+
+.short{ width:70%; }
+.shorter{ width:45%; }
+
+.selection{
+  position:absolute;
+  top:145px;
+  right:55px;
+  width:180px;
+  height:95px;
+  border:2px dashed #4d9fff;
+  background:rgba(77,159,255,.08);
+  border-radius:6px;
+}
+
+.selection::before{
+  content:'אזור בחירה';
+  position:absolute;
+  top:-28px;
+  right:0;
+  background:#4d9fff;
+  color:#fff;
+  font-size:11px;
+  padding:4px 10px;
+  border-radius:999px;
+}
+
+.footer-status{
+  height:42px;
+  border-top:1px solid #252538;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  color:#7a7c99;
+  font-size:12px;
+}
+
+/* ========= TOOLTIP ========= */
+
+.tooltip{
+  position:absolute;
+  left:calc(100% + 10px);
+  top:50%;
+  transform:translateY(-50%);
+  background:#30304a;
+  color:#fff;
+  font-size:11px;
+  padding:6px 10px;
+  border-radius:8px;
+  opacity:0;
+  pointer-events:none;
+  transition:.15s;
+  white-space:nowrap;
+  border:1px solid #40405e;
+}
+
+.tool-btn:hover .tooltip{
+  opacity:1;
+}
+
 </style>
 </head>
+
 <body>
 
-<div class="app-container">
-  
-  <div class="main-area">
-    <div class="top-nav">
-      <div style="font-size: 13px; color: #a1a1c2;">
-        <i class="ti ti-file-pdf"></i> document_ready.pdf
-        <span class="status-tag" id="active-tool" style="margin-right:10px;">כלי בחירה פעיל</span>
+<div class="app">
+
+  <!-- TOOLS -->
+
+  <aside class="tools-panel">
+
+    <div class="panel-header">
+      <div class="logo">Tachles<span>PDF</span></div>
+      <div class="sub">מערכת עריכה מתקדמת למסמכי PDF</div>
+    </div>
+
+    <div class="tools-grid">
+
+      <div class="group">
+        <div class="group-title">היסטוריה</div>
+
+        <div class="tool-list">
+
+          <button class="tool-btn" onclick="setActive(this)">
+            <i class="ti ti-arrow-back-up"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">ביטול</div>
+              <div class="tool-desc">חזור פעולה אחת</div>
+            </div>
+
+            <div class="tooltip">Ctrl + Z</div>
+          </button>
+
+          <button class="tool-btn" onclick="setActive(this)">
+            <i class="ti ti-arrow-forward-up"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">בצע שוב</div>
+              <div class="tool-desc">שחזור פעולה</div>
+            </div>
+
+            <div class="tooltip">Ctrl + Y</div>
+          </button>
+
+        </div>
       </div>
-      <div style="color:#5c5c7d; font-size:12px;">תכלעס PDF v1.3.0</div>
+
+      <div class="group">
+        <div class="group-title">סיבוב</div>
+
+        <div class="tool-list">
+
+          <button class="tool-btn" onclick="pulse(this)">
+            <i class="ti ti-rotate"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">90° ימינה</div>
+              <div class="tool-desc">סיבוב עמוד</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" onclick="pulse(this)">
+            <i class="ti ti-rotate-clockwise-2"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">180°</div>
+              <div class="tool-desc">היפוך מלא</div>
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- מאוחד -->
+
+      <div class="group full">
+        <div class="group-title">עריכה ומחיקה</div>
+
+        <div class="tool-list">
+
+          <button class="tool-btn active" onclick="setActive(this)">
+            <i class="ti ti-pointer"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">בחירה והזזה</div>
+              <div class="tool-desc">סימון אזורים במסמך</div>
+            </div>
+
+            <div class="tooltip">בחירה / הזזה</div>
+          </button>
+
+          <button class="tool-btn" onclick="setActive(this)">
+            <i class="ti ti-crop"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">חיתוך</div>
+              <div class="tool-desc">חיתוך תוכן מהעמוד</div>
+            </div>
+
+            <div class="tooltip">Crop Tool</div>
+          </button>
+
+          <button class="tool-btn" onclick="setActive(this)">
+            <i class="ti ti-scissors"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">מחיקה חיצונית</div>
+              <div class="tool-desc">הסר מחוץ לאזור</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" onclick="setActive(this)">
+            <i class="ti ti-eraser"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">מחיקת בחירה</div>
+              <div class="tool-desc">מחיקה מתוך הסימון</div>
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+      <div class="group full">
+        <div class="group-title">הוספה</div>
+
+        <div class="tool-list">
+
+          <button class="tool-btn" onclick="setActive(this)">
+            <i class="ti ti-text-size"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">טקסט</div>
+              <div class="tool-desc">הוסף טקסט למסמך</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" onclick="setActive(this)">
+            <i class="ti ti-photo-plus"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">תמונה</div>
+              <div class="tool-desc">הטמעת תמונה בעמוד</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" onclick="setActive(this)">
+            <i class="ti ti-copy"></i>
+
+            <div class="tool-info">
+              <div class="tool-name">שכפול אזור</div>
+              <div class="tool-desc">העתקה לעמודים נוספים</div>
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+
+  <main class="main">
+
+    <div class="topbar">
+
+      <div class="doc-name">
+        <i class="ti ti-file-type-pdf"></i>
+        <span>document.pdf</span>
+      </div>
+
+      <div class="status">
+        <div class="badge" id="active-chip">בחירה והזזה פעיל</div>
+      </div>
+
     </div>
 
     <div class="canvas">
-      <div class="pdf-page">
-        <div class="mock-img"></div>
-        <div style="height:10px; background:#e6e6f0; width:100%;"></div>
-        <div style="height:10px; background:#e6e6f0; width:60%;"></div>
+
+      <div class="page">
+
+        <div class="page-inner">
+
+          <div class="line"></div>
+          <div class="line short"></div>
+          <div class="line"></div>
+          <div class="line shorter"></div>
+
+          <div style="height:25px"></div>
+
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line short"></div>
+
+          <div style="height:35px"></div>
+
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line shorter"></div>
+
+        </div>
+
+        <div class="selection"></div>
+
       </div>
+
     </div>
 
-    <div class="light-banner">
-      בכל פעולה קטנה מוסיפים אור בעולם. יחי המלך המשיח!
-    </div>
-  </div>
-
-  <div class="sidebar" id="appSidebar">
-    <button class="sidebar-toggle" onclick="toggleSidebarWidth()">
-        <i class="ti ti-chevron-left"></i>
-    </button>
-
-    <div class="sidebar-header">תכלעס פקודות</div>
-
-    <!-- קבוצה 1: היסטוריה -->
-    <div class="group">
-      <div class="group-label">היסטוריה</div>
-      <button class="tool-btn" onclick="updateTool('ביטול', this)">
-        <i class="ti ti-arrow-back-up"></i>
-        <span class="btn-label">ביטול</span>
-      </button>
-      <button class="tool-btn" onclick="updateTool('בצע שוב', this)">
-        <i class="ti ti-arrow-forward-up"></i>
-        <span class="btn-label">בצע שוב</span>
-      </button>
+    <div class="footer-status">
+      <span>עמוד 3 מתוך 12</span>
+      <span>זום 100% · 148×210mm</span>
     </div>
 
-    <!-- קבוצה מאוחדת: עריכה ומחיקה -->
-    <div class="group">
-      <div class="group-label">כלי עריכה</div>
-      <button class="tool-btn active" onclick="updateTool('כלי בחירה', this)">
-        <i class="ti ti-pointer"></i>
-        <span class="btn-label">כלי בחירה</span>
-      </button>
-      <button class="tool-btn" onclick="updateTool('חיתוך (Crop)', this)">
-        <i class="ti ti-crop"></i>
-        <span class="btn-label">חיתוך</span>
-      </button>
-      <button class="tool-btn" onclick="updateTool('חיתוך חיצוני', this)">
-        <i class="ti ti-scissors"></i>
-        <span class="btn-label">חיתוך חוץ</span>
-      </button>
-      <button class="tool-btn" onclick="updateTool('מחיקת בחירה', this)">
-        <i class="ti ti-eraser"></i>
-        <span class="btn-label">מחיקת פנים</span>
-      </button>
-    </div>
-
-    <!-- קבוצה 3: הוספה -->
-    <div class="group">
-      <div class="group-label">הוספה</div>
-      <button class="tool-btn" onclick="updateTool('הוספת טקסט', this)">
-        <i class="ti ti-text-size"></i>
-        <span class="btn-label">טקסט</span>
-      </button>
-      <button class="tool-btn" onclick="updateTool('הוספת תמונה', this)">
-        <i class="ti ti-photo-plus"></i>
-        <span class="btn-label">תמונה</span>
-      </button>
-      <button class="tool-btn" onclick="updateTool('שכפול אזור', this)">
-        <i class="ti ti-copy"></i>
-        <span class="btn-label">שכפול</span>
-      </button>
-    </div>
-
-    <!-- קבוצה 4: סיבוב -->
-    <div class="group">
-      <div class="group-label">סיבוב</div>
-      <div class="rotate-row">
-        <button class="rotate-btn" onclick="flash(this)"><i class="ti ti-rotate-2"></i></button>
-        <button class="rotate-btn" onclick="flash(this)"><i class="ti ti-rotate-clockwise-2"></i></button>
-        <button class="rotate-btn" onclick="flash(this)"><i class="ti ti-rotate"></i></button>
-      </div>
-    </div>
-  </div>
+  </main>
 
 </div>
 
 <script>
-  function updateTool(name, btn) {
-    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('active-tool').textContent = name + ' פעיל';
-  }
 
-  function flash(btn) {
-    btn.style.background = '#4d9fff';
-    btn.style.color = 'white';
-    setTimeout(() => { btn.style.background = ''; btn.style.color = ''; }, 200);
-  }
+function setActive(btn){
 
-  function toggleSidebarWidth() {
-    document.getElementById('appSidebar').classList.toggle('collapsed');
-  }
+  document
+    .querySelectorAll('.tool-btn')
+    .forEach(b => b.classList.remove('active'));
+
+  btn.classList.add('active');
+
+  const label = btn.querySelector('.tool-name')?.textContent;
+
+  document.getElementById('active-chip').textContent =
+    label + ' פעיל';
+}
+
+function pulse(btn){
+
+  btn.style.transform = 'scale(.97)';
+  btn.style.background = '#1d2947';
+  btn.style.color = '#58a6ff';
+
+  setTimeout(() => {
+
+    btn.style.transform = '';
+    btn.style.background = '';
+    btn.style.color = '';
+
+  }, 220);
+}
+
 </script>
 
 </body>
