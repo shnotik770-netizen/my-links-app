@@ -3,616 +3,432 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0d1117">
 <title>תפריט שבת 🕯️</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;700;900&family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Heebo:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════════
-   DESIGN: Kitchen Blackboard — dark, warm, tactile
-   Feels like chalk on slate. Gold = candlelight.
-   ═══════════════════════════════════════════════ */
-:root {
-  --bg:       #0d1117;
-  --bg2:      #161b22;
-  --bg3:      #1f2937;
-  --surface:  #1c2333;
-  --surface2: #252e3f;
-  --gold:     #d4a843;
-  --gold2:    #f0c060;
-  --gold3:    #8a6520;
-  --cream:    #f5ead0;
-  --cream2:   rgba(245,234,208,.65);
-  --cream3:   rgba(245,234,208,.35);
-  --cream4:   rgba(245,234,208,.15);
-  --green:    #2ea043;
-  --green2:   #3fb950;
-  --red:      #da3633;
-  --blue:     #388bfd;
-  --txt:      #e6edf3;
-  --txt2:     #8b949e;
-  --txt3:     #484f58;
-  --brd:      rgba(255,255,255,.08);
-  --brd2:     rgba(255,255,255,.14);
-  --sh:       0 4px 24px rgba(0,0,0,.5);
-  --r:        14px;
-  --r2:       9px;
-  --tr:       all .2s cubic-bezier(.4,0,.2,1);
-
-  /* category accent colors */
-  --c-fish:   #3b82f6; --c-meat: #ef4444; --c-chicken: #f59e0b;
-  --c-sides:  #8b5cf6; --c-salads:#10b981; --c-cakes: #ec4899; --c-cookies:#f97316;
+:root{
+  --bg:#111318;--bg2:#1e2330;
+  --gold:#d4a843;--gold2:#f0c860;--gold3:#9a7520;
+  --sage:#4e9a57;--red:#c0392b;
+  --txt:#eee8d8;--txt2:#b8a888;--txt3:#6a5e4a;
+  --brd:rgba(255,255,255,.07);--brd2:rgba(255,255,255,.13);
+  --l-bg:#fdf8f0;--l-bg2:#f5ead8;--l-card:#fffef8;
+  --l-txt:#2c1810;--l-txt2:#6a5040;--l-txt3:#9a8070;
+  --l-brd:#e8d5b7;--l-brd2:#d0b890;
+  --l-navy:#1a1a2e;--l-navy2:#0f3460;
+  --r:13px;--tr:all .18s cubic-bezier(.4,0,.2,1);
 }
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{height:100%;scroll-behavior:smooth}
-body{
-  font-family:'Heebo',sans-serif;
-  background:var(--bg);
-  color:var(--txt);
-  min-height:100%;
-  direction:rtl;
-  overflow-x:hidden;
-}
+html{scroll-behavior:smooth}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;direction:rtl;overflow-x:hidden}
 
-/* ── SCROLLBAR ────────────────────────────────── */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+/* ── SKELETON LOADER (shows instantly) ─────────── */
+.skel{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);
+  background-size:200% 100%;animation:skel 1.4s ease infinite;border-radius:7px}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-/* ── LOADING ──────────────────────────────────── */
-#ld{
-  position:fixed;inset:0;background:rgba(13,17,23,.85);
-  backdrop-filter:blur(6px);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;z-index:999;gap:14px;
-}
-#ld.hide{display:none}
-.spin{
-  width:40px;height:40px;
-  border:2.5px solid rgba(212,168,67,.18);
-  border-top-color:var(--gold);border-radius:50%;
-  animation:spin .7s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-#ld p{color:var(--gold);font-size:.9rem;font-family:'Frank Ruhl Libre',serif}
+/* ── TOAST ──────────────────────────────────────── */
+#toasts{position:fixed;bottom:18px;left:14px;z-index:9999;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.toast{padding:10px 15px;border-radius:9px;color:#fff;font-size:.82rem;font-weight:600;
+  max-width:290px;box-shadow:0 4px 20px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;
+  animation:tIn .22s ease;pointer-events:auto}
+@keyframes tIn{from{transform:translateX(-105%);opacity:0}}
+.toast.ok{background:linear-gradient(135deg,#059669,#047857)}
+.toast.err{background:linear-gradient(135deg,#dc2626,#9b1c1c)}
+.toast.inf{background:linear-gradient(135deg,#1e2330,#0f3460);border:1px solid var(--brd2)}
 
-/* ── HEADER ───────────────────────────────────── */
-.hdr{
-  background:var(--bg2);
-  border-bottom:1px solid var(--brd);
-  position:sticky;top:0;z-index:80;
-  box-shadow:0 2px 20px rgba(0,0,0,.4);
+/* ── SYNCING INDICATOR ──────────────────────────── */
+#syncBar{
+  position:fixed;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold3),var(--gold2),var(--gold3));
+  background-size:200% 100%;z-index:9998;display:none;
+  animation:syncAnim 1.2s linear infinite;
 }
-.hdr-inner{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:11px 16px;gap:12px;
-}
-.logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.logo-mark{
-  width:36px;height:36px;border-radius:9px;
+#syncBar.show{display:block}
+@keyframes syncAnim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── HEADER ─────────────────────────────────────── */
+.hdr{background:linear-gradient(160deg,#0d1017,#1a1f2e);position:sticky;top:0;z-index:100;
+  border-bottom:1px solid var(--brd);box-shadow:0 2px 16px rgba(0,0,0,.5)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:11px 16px}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-mark{width:36px;height:36px;border-radius:9px;
   background:linear-gradient(135deg,var(--gold),var(--gold3));
-  display:flex;align-items:center;justify-content:center;font-size:18px;
-  box-shadow:0 3px 10px rgba(212,168,67,.35);
-  flex-shrink:0;
-}
-.logo h1{
-  font-family:'Frank Ruhl Libre',serif;
-  font-size:1.15rem;color:var(--gold2);line-height:1;
-}
-.logo span{font-size:.66rem;color:var(--txt2);display:block;margin-top:1px}
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+  box-shadow:0 3px 10px rgba(212,168,67,.4)}
+.logo h1{font-family:'Frank Ruhl Libre',serif;font-size:1.2rem;color:var(--gold2);line-height:1}
+.logo span{font-size:.66rem;color:var(--txt3);display:block;margin-top:1px}
+.hdr-right{display:flex;gap:6px;align-items:center}
+.hdr-btn{background:rgba(212,168,67,.09);border:1px solid rgba(212,168,67,.18);
+  color:var(--gold2);padding:6px 12px;border-radius:7px;
+  font-family:'Heebo',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:var(--tr)}
+.hdr-btn:hover{background:rgba(212,168,67,.18)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--txt3);flex-shrink:0;transition:var(--tr)}
+.sync-dot.fresh{background:#34d399}
+.sync-dot.stale{background:var(--gold);animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-/* SHABBAT DATE SELECTOR in header */
-.shab-selector{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  gap:8px;min-width:0;
-}
-.shab-label{
-  font-family:'Frank Ruhl Libre',serif;
-  font-size:.92rem;color:var(--cream2);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  max-width:180px;
-  cursor:pointer;
-  padding:5px 10px;border-radius:7px;
-  border:1px solid transparent;transition:var(--tr);
-}
-.shab-label:hover{border-color:var(--brd2);background:var(--surface)}
-.shab-nav{
-  background:none;border:1px solid var(--brd);color:var(--txt2);
-  width:28px;height:28px;border-radius:7px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.8rem;transition:var(--tr);flex-shrink:0;
-}
-.shab-nav:hover{border-color:var(--gold);color:var(--gold);background:rgba(212,168,67,.08)}
-.shab-nav:disabled{opacity:.3;cursor:not-allowed}
-
-.hdr-btns{display:flex;gap:6px;flex-shrink:0}
-.hbtn{
-  background:var(--surface);border:1px solid var(--brd);
-  color:var(--txt2);padding:6px 10px;border-radius:7px;
-  font-family:'Heebo',sans-serif;font-size:.76rem;font-weight:600;
-  cursor:pointer;transition:var(--tr);white-space:nowrap;
-  display:flex;align-items:center;gap:5px;
-}
-.hbtn:hover{border-color:var(--gold);color:var(--gold);background:rgba(212,168,67,.06)}
-.hbtn.active{background:rgba(212,168,67,.12);border-color:var(--gold);color:var(--gold2)}
-
-/* ── NAV TABS ─────────────────────────────────── */
-.nav{
-  display:flex;background:var(--bg2);
-  border-bottom:1px solid var(--brd);
-  overflow-x:auto;scrollbar-width:none;
-  padding:0 12px;
-}
+/* ── NAV ────────────────────────────────────────── */
+.nav{display:flex;padding:0 12px;gap:1px;overflow-x:auto;scrollbar-width:none}
 .nav::-webkit-scrollbar{display:none}
-.ntab{
-  flex-shrink:0;padding:10px 16px;background:none;border:none;
-  color:var(--txt2);font-family:'Heebo',sans-serif;font-size:.83rem;
-  font-weight:600;cursor:pointer;border-bottom:2.5px solid transparent;
-  transition:var(--tr);white-space:nowrap;display:flex;align-items:center;gap:6px;
-}
-.ntab:hover{color:var(--cream3)}
+.ntab{flex-shrink:0;padding:9px 14px;background:transparent;border:none;
+  color:var(--txt3);font-family:'Heebo',sans-serif;font-size:.83rem;font-weight:600;
+  cursor:pointer;border-bottom:3px solid transparent;transition:var(--tr);
+  white-space:nowrap;display:flex;align-items:center;gap:5px}
+.ntab:hover{color:var(--txt2)}
 .ntab.on{color:var(--gold2);border-bottom-color:var(--gold)}
-.ntab .ni{font-size:1rem}
 
-/* ── PROGRESS BAR (cooking page) ──────────────── */
-.prog-bar{
-  height:3px;background:var(--brd);position:relative;overflow:hidden;
-}
-.prog-fill{
-  height:100%;
-  background:linear-gradient(90deg,var(--gold3),var(--gold2));
-  transition:width .4s cubic-bezier(.4,0,.2,1);
-}
-
-/* ── MAIN ─────────────────────────────────────── */
-.main{max-width:680px;margin:0 auto;padding:0 0 80px}
+/* ── MAIN ───────────────────────────────────────── */
+.main{max-width:880px;margin:0 auto;padding:18px 13px 80px}
 .page{display:none}.page.on{display:block}
 
-/* ════════════════════════════════════════════════
-   COOKING PAGE (HOME)
-   ════════════════════════════════════════════════ */
-#cook-header{
-  padding:14px 16px 10px;
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--brd);
-  background:var(--bg2);position:sticky;top:0;
-  /* below the main header which is also sticky — handled by JS offset */
+/* ═══════════════════════════════════════════════
+   HOME / COOK SCREEN (dark)
+═══════════════════════════════════════════════ */
+.cook-header{
+  background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.15);
+  border-radius:var(--r);padding:14px 16px;margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
 }
+.cook-shab-title{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;color:var(--gold2);line-height:1.2}
+.cook-shab-sub{font-size:.75rem;color:var(--txt3);margin-top:2px}
+.cook-shab-notes{font-size:.74rem;color:var(--txt2);margin-top:2px}
 
-.cook-meta{flex:1;min-width:0}
-.cook-date{
-  font-family:'Frank Ruhl Libre',serif;
-  font-size:1.05rem;color:var(--cream);font-weight:700;
-  display:flex;align-items:center;gap:7px;
-}
-.cook-notes{font-size:.74rem;color:var(--txt2);margin-top:2px}
+.prog-bar{width:110px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:3px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold2));border-radius:2px;transition:width .35s ease}
+.prog-txt{font-size:.69rem;color:var(--txt3);text-align:left}
 
-.cook-progress-wrap{text-align:left;flex-shrink:0;margin-right:12px}
-.cook-ratio{
-  font-family:'Frank Ruhl Libre',serif;
-  font-size:1.6rem;font-weight:900;color:var(--gold2);line-height:1;
-}
-.cook-ratio-lbl{font-size:.64rem;color:var(--txt2);margin-top:1px}
+/* flat cook list */
+.cook-list{display:flex;flex-direction:column}
+.cook-divider{display:flex;align-items:center;gap:8px;padding:9px 0 4px}
+.cook-divider span{font-size:.66rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
+.cook-divider::after{content:'';flex:1;height:1px;background:var(--brd)}
 
-/* empty state */
-.cook-empty{
-  padding:60px 20px;text-align:center;
-}
-.cook-empty .ei{font-size:3rem;margin-bottom:14px}
-.cook-empty h3{font-family:'Frank Ruhl Libre',serif;font-size:1.3rem;color:var(--cream2);margin-bottom:8px}
-.cook-empty p{font-size:.85rem;color:var(--txt2);line-height:1.7}
+.cook-row{display:flex;align-items:center;gap:10px;padding:9px 3px;
+  border-bottom:1px solid var(--brd);transition:var(--tr);cursor:pointer;border-radius:6px}
+.cook-row:last-child{border-bottom:none}
+.cook-row:active{background:rgba(255,255,255,.03)}
+.cook-row.done{opacity:.35}
+.cook-row.done .cr-name{text-decoration:line-through;font-size:.8rem}
 
-/* category group */
-.cook-group{margin:0}
-.cook-cat-hdr{
-  display:flex;align-items:center;gap:9px;
-  padding:9px 16px 7px;
-  position:sticky;
-  background:var(--bg);
-  border-bottom:1px solid var(--brd);
-  z-index:10;
-}
-.cook-cat-hdr .ci{font-size:.95rem}
-.cook-cat-hdr .cn{
-  font-family:'Frank Ruhl Libre',serif;font-size:.88rem;font-weight:700;
-  color:var(--txt2);flex:1;
-}
-.cook-cat-hdr .cc{
-  font-size:.7rem;color:var(--txt3);font-weight:600;
-}
-.cat-line{width:3px;height:16px;border-radius:2px;flex-shrink:0}
+.c-circle{width:28px;height:28px;border-radius:50%;border:1.8px solid var(--brd2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--tr);font-size:.9rem}
+.cook-row.done .c-circle{background:var(--sage);border-color:var(--sage);color:#fff;transform:scale(.82)}
 
-/* food row — the heart of the UI */
-.food-row{
-  display:flex;align-items:center;gap:0;
-  border-bottom:1px solid var(--brd);
-  transition:var(--tr);
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  overflow:hidden;
-  position:relative;
-}
-.food-row:active{background:rgba(255,255,255,.03)}
+.cr-info{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:nowrap;gap:0;overflow:hidden}
+.cr-cat{font-size:.64rem;color:var(--txt3);font-weight:700;white-space:nowrap;flex-shrink:0}
+.cr-sep{color:var(--txt3);margin:0 4px;font-size:.65rem;flex-shrink:0}
+.cr-name{font-weight:700;color:var(--txt);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;transition:var(--tr)}
+.cr-src{font-size:.68rem;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;flex-shrink:0}
 
-/* the check area */
-.frow-check{
-  width:52px;min-height:52px;display:flex;align-items:center;
-  justify-content:center;flex-shrink:0;
-  padding:8px 0;
-}
-.check-ring{
-  width:30px;height:30px;border-radius:50%;
-  border:2px solid var(--brd2);
-  display:flex;align-items:center;justify-content:center;
-  transition:var(--tr);font-size:.9rem;color:transparent;
-}
-.food-row.done .check-ring{
-  background:var(--green);border-color:var(--green);
-  color:#fff;font-size:1rem;
-}
-.food-row.done .check-ring::after{content:'✓'}
+.expand-btn{background:none;border:1px solid var(--brd2);color:var(--txt3);
+  width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0}
+.expand-btn:hover{border-color:var(--gold3);color:var(--gold2)}
+.expand-btn.open{transform:rotate(90deg);border-color:var(--gold3);color:var(--gold2)}
 
-/* main content area */
-.frow-body{
-  flex:1;padding:12px 0 12px 4px;min-width:0;
-  transition:var(--tr);
-}
-.food-row.done .frow-body{opacity:.38}
+.recipe-panel{overflow:hidden;max-height:0;transition:max-height .28s ease,padding .28s ease;
+  background:rgba(0,0,0,.22);border-radius:0 0 8px 8px;
+  font-size:.8rem;color:var(--txt2);line-height:1.72;padding:0 13px;
+  white-space:pre-wrap;border:1px solid transparent;margin-bottom:0}
+.recipe-panel.open{max-height:350px;padding:11px 13px;border-color:var(--brd);border-top:none;margin-bottom:3px}
 
-.frow-name{
-  font-weight:700;font-size:.95rem;color:var(--txt);
-  transition:var(--tr);line-height:1.3;
-}
-.food-row.done .frow-name{text-decoration:line-through;font-size:.82rem;font-weight:400}
+.done-banner{display:none;padding:18px;text-align:center;
+  background:rgba(5,150,105,.09);border:1px solid rgba(5,150,105,.22);
+  border-radius:var(--r);margin-top:10px}
+.done-banner.show{display:block}
+.done-banner h2{font-family:'Frank Ruhl Libre',serif;font-size:1.3rem;color:#34d399;margin-bottom:3px}
+.done-banner p{font-size:.8rem;color:var(--txt3)}
 
-.frow-sub{
-  font-size:.72rem;color:var(--txt2);margin-top:3px;
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-}
-.frow-cat-dot{
-  width:6px;height:6px;border-radius:50%;
-  flex-shrink:0;margin-top:1px;
-}
+.cook-no-shab{text-align:center;padding:44px 18px;
+  border:1px dashed rgba(212,168,67,.18);border-radius:var(--r)}
+.cook-no-shab .ei{font-size:2.8rem;margin-bottom:11px}
+.cook-no-shab h3{font-family:'Frank Ruhl Libre',serif;color:var(--gold2);margin-bottom:5px;font-size:1.15rem}
+.cook-no-shab p{font-size:.82rem;color:var(--txt3);line-height:1.6;margin-bottom:14px}
 
-/* expanded recipe panel */
-.frow-recipe{
-  max-height:0;overflow:hidden;
-  transition:max-height .32s cubic-bezier(.4,0,.2,1),
-             padding .32s cubic-bezier(.4,0,.2,1);
-  background:var(--surface);
-  font-size:.82rem;line-height:1.8;
-  color:var(--cream2);
-  white-space:pre-wrap;
-  border-bottom:1px solid var(--brd);
-  padding:0 16px 0 52px;
-}
-.frow-recipe.open{
-  max-height:600px;
-  padding:14px 16px 14px 52px;
-}
-.recipe-src{
-  font-size:.7rem;color:var(--txt2);
-  margin-bottom:8px;
-  display:flex;align-items:center;gap:4px;
-}
+.cook-btns{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
 
-/* expand indicator */
-.frow-expand{
-  width:36px;min-height:52px;display:flex;align-items:center;
-  justify-content:center;flex-shrink:0;
-  color:var(--txt3);font-size:.75rem;transition:var(--tr);
-  padding:8px 0;
-}
-.food-row.expanded .frow-expand{transform:rotate(180deg)}
-.food-row.done .frow-expand{opacity:.25}
+/* skeleton cook rows */
+.skel-row{display:flex;align-items:center;gap:10px;padding:9px 3px;border-bottom:1px solid var(--brd)}
+.skel-circle{width:28px;height:28px;border-radius:50%;flex-shrink:0}
+.skel-line{height:13px;flex:1}
 
-/* "all done" banner */
-.all-done{
-  margin:16px;padding:20px;border-radius:var(--r);
-  background:linear-gradient(135deg,rgba(46,160,67,.12),rgba(46,160,67,.06));
-  border:1px solid rgba(46,160,67,.25);
-  text-align:center;display:none;
-}
-.all-done.show{display:block}
-.all-done h3{
-  font-family:'Frank Ruhl Libre',serif;font-size:1.3rem;
-  color:var(--green2);margin-bottom:5px;
-}
-.all-done p{font-size:.83rem;color:var(--txt2)}
+/* ═══════════════════════════════════════════════
+   LIGHT PAGES
+═══════════════════════════════════════════════ */
+.lp{background:var(--l-bg);margin:-18px -13px;padding:18px 13px 80px;min-height:100vh;color:var(--l-txt)}
 
-/* ════════════════════════════════════════════════
-   BUTTONS (global)
-   ════════════════════════════════════════════════ */
-.btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:8px 16px;border-radius:var(--r2);
-  font-family:'Heebo',sans-serif;font-size:.85rem;font-weight:700;
-  cursor:pointer;border:none;transition:var(--tr);white-space:nowrap;
-}
-.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
-.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold3));color:#0d0a02;box-shadow:0 3px 12px rgba(212,168,67,.3)}
-.btn-gold:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 18px rgba(212,168,67,.42)}
-.btn-ghost{background:var(--surface);color:var(--txt);border:1px solid var(--brd2)}
-.btn-ghost:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
-.btn-red{background:rgba(218,54,51,.12);color:#f85149;border:1px solid rgba(218,54,51,.25)}
-.btn-red:hover:not(:disabled){background:rgba(218,54,51,.2)}
-.btn-green{background:linear-gradient(135deg,var(--green),#196127);color:#fff}
-.btn-green:hover:not(:disabled){transform:translateY(-1px)}
-.btn-sm{padding:5px 10px;font-size:.76rem;border-radius:7px}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.sec-title{font-family:'Frank Ruhl Libre',serif;font-size:1.4rem;font-weight:700;
+  color:var(--l-txt);display:flex;align-items:center;gap:8px}
+.sec-ico{width:34px;height:34px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),var(--gold3));
+  display:flex;align-items:center;justify-content:center;font-size:.95rem}
 
-/* ════════════════════════════════════════════════
-   FORMS
-   ════════════════════════════════════════════════ */
-.lbl{display:block;font-size:.74rem;font-weight:700;color:var(--txt2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-.inp,.sel,.ta{
-  width:100%;padding:9px 12px;border:1.5px solid var(--brd2);
-  border-radius:var(--r2);font-family:'Heebo',sans-serif;
-  font-size:.9rem;color:var(--txt);background:var(--surface);
-  transition:var(--tr);direction:rtl;
-}
-.inp:focus,.sel:focus,.ta:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,67,.12)}
-.ta{resize:vertical;min-height:88px}
-.fg{margin-bottom:14px}
-.frow2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:480px){.frow2{grid-template-columns:1fr}}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;
+  border-radius:8px;font-family:'Heebo',sans-serif;font-size:.83rem;font-weight:700;
+  cursor:pointer;border:none;transition:var(--tr);white-space:nowrap}
+.btn:disabled{opacity:.38;cursor:not-allowed;transform:none!important}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold3));color:var(--l-navy);
+  box-shadow:0 3px 10px rgba(212,168,67,.28)}
+.btn-gold:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 16px rgba(212,168,67,.4)}
+.btn-ghost{background:var(--l-card);color:var(--l-txt2);border:1.5px solid var(--l-brd2)}
+.btn-ghost:hover:not(:disabled){background:var(--l-bg2)}
+.btn-red{background:#fff0ee;color:var(--red);border:1.5px solid #f5c6c2}
+.btn-red:hover:not(:disabled){background:#fde8e4}
+.btn-green{background:linear-gradient(135deg,#4e9a57,#2d7a36);color:#fff}
+.btn-green:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 13px rgba(46,122,54,.28)}
+.btn-navy{background:linear-gradient(135deg,var(--l-navy),var(--l-navy2));color:var(--gold2)}
+.btn-sm{padding:5px 10px;font-size:.75rem;border-radius:7px;gap:3px}
+.btn-xs{padding:3px 8px;font-size:.69rem;border-radius:6px;gap:3px}
 
-/* ════════════════════════════════════════════════
-   MANAGEMENT PAGES (Foods / Planning / History / Absent)
-   ════════════════════════════════════════════════ */
-.page-inner{padding:16px}
+/* Inputs */
+.lbl{display:block;font-size:.74rem;font-weight:700;color:var(--l-txt2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.inp,.sel,.ta{width:100%;padding:9px 11px;border:1.5px solid var(--l-brd);border-radius:8px;
+  font-family:'Heebo',sans-serif;font-size:.88rem;color:var(--l-txt);background:var(--l-card);transition:var(--tr);direction:rtl}
+.inp:focus,.sel:focus,.ta:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,67,.11)}
+.ta{resize:vertical;min-height:84px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:540px){.frow{grid-template-columns:1fr}}
+.fg{margin-bottom:13px}
 
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
-.sec-title{font-family:'Frank Ruhl Libre',serif;font-size:1.4rem;font-weight:700;color:var(--cream);display:flex;align-items:center;gap:9px}
-.sec-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold3));display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+/* Search */
+.srch-bar{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+.srch-wrap{position:relative;flex:1;min-width:160px}
+.srch-ico{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--l-txt3);pointer-events:none}
+.srch-wrap input{width:100%;padding:8px 32px 8px 11px;border:1.5px solid var(--l-brd);border-radius:8px;
+  font-family:'Heebo',sans-serif;font-size:.84rem;background:var(--l-card);transition:var(--tr);
+  direction:rtl;color:var(--l-txt)}
+.srch-wrap input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,67,.09)}
 
-/* cards */
-.card{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);padding:18px;margin-bottom:12px}
+/* Chips */
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:4px 11px;border-radius:20px;border:1.5px solid var(--l-brd);
+  background:var(--l-card);color:var(--l-txt2);font-size:.73rem;font-weight:700;
+  cursor:pointer;transition:var(--tr);font-family:'Heebo',sans-serif}
+.chip:hover{border-color:var(--gold);color:var(--gold3)}
+.chip.on{background:var(--l-navy);border-color:var(--l-navy);color:var(--gold2)}
 
-/* foods grid */
-.foods-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:11px}
-@media(max-width:600px){.foods-grid{grid-template-columns:1fr}}
-
-.fcard{
-  background:var(--surface);border:1.5px solid var(--brd);
-  border-radius:var(--r);padding:15px 15px 12px;
-  transition:var(--tr);position:relative;overflow:hidden;
-}
-.fcard::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;background:var(--cat-clr,var(--gold))}
-.fcard:hover{box-shadow:var(--sh);transform:translateY(-2px);border-color:var(--brd2)}
-.fcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
-.fname{font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;font-weight:700;color:var(--txt);line-height:1.25}
-.fav-btn{background:none;border:none;color:var(--gold);font-size:1.1rem;cursor:pointer;flex-shrink:0;transition:var(--tr);padding:2px}
+/* Food grid */
+.foods-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:11px}
+.fcard{background:var(--l-card);border:1.5px solid var(--l-brd);border-radius:var(--r);
+  padding:13px 13px 10px;transition:var(--tr);position:relative;overflow:hidden}
+.fcard::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;background:var(--cat-c,var(--gold))}
+.fcard:hover{box-shadow:0 4px 18px rgba(44,24,16,.1);transform:translateY(-2px)}
+.fcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:7px;margin-bottom:6px}
+.fname{font-family:'Frank Ruhl Libre',serif;font-size:1rem;font-weight:700;color:var(--l-txt);line-height:1.25}
+.fav-btn{color:var(--gold);font-size:1.05rem;cursor:pointer;flex-shrink:0;background:none;border:none;padding:1px;transition:var(--tr)}
 .fav-btn:hover{transform:scale(1.3)}
-.cat-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.69rem;font-weight:700;margin-bottom:8px;background:var(--cat-bg,#222);color:var(--cat-txt,#aaa)}
-.fmeta{font-size:.76rem;color:var(--txt2);margin-bottom:10px;line-height:1.55}
+.cat-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.67rem;font-weight:700;
+  margin-bottom:7px;background:var(--cat-bg,#f0f0f0);color:var(--cat-txt,#666)}
+.fmeta{font-size:.74rem;color:var(--l-txt3);margin-bottom:8px;line-height:1.5}
 .fmeta span{display:block}
-.fcard-btns{display:flex;gap:5px;flex-wrap:wrap}
+.fcard-btns{display:flex;gap:4px;flex-wrap:wrap}
+.copy-btn{background:none;border:1px solid var(--l-brd2);color:var(--l-txt3);
+  padding:3px 8px;border-radius:5px;font-size:.69rem;cursor:pointer;
+  font-family:'Heebo',sans-serif;transition:var(--tr);display:inline-flex;align-items:center;gap:3px}
+.copy-btn:hover{border-color:var(--gold3);color:var(--gold3)}
 
-/* chips */
-.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px}
-.chip{padding:4px 11px;border-radius:20px;border:1px solid var(--brd2);background:var(--surface);color:var(--txt2);font-size:.75rem;font-weight:600;cursor:pointer;transition:var(--tr);font-family:'Heebo',sans-serif}
-.chip:hover{border-color:var(--gold);color:var(--gold)}
-.chip.on{background:rgba(212,168,67,.12);border-color:var(--gold);color:var(--gold2)}
+/* Category colors */
+[data-cat="דגים"]   {--cat-c:#3b82f6;--cat-bg:#eff6ff;--cat-txt:#1d4ed8}
+[data-cat="בשר"]   {--cat-c:#dc2626;--cat-bg:#fef2f2;--cat-txt:#991b1b}
+[data-cat="עוף"]   {--cat-c:#f59e0b;--cat-bg:#fffbeb;--cat-txt:#92400e}
+[data-cat="תוספות"]{--cat-c:#8b5cf6;--cat-bg:#f5f3ff;--cat-txt:#5b21b6}
+[data-cat="סלטים"] {--cat-c:#10b981;--cat-bg:#ecfdf5;--cat-txt:#065f46}
+[data-cat="חלות"]  {--cat-c:#d97706;--cat-bg:#fef9ee;--cat-txt:#92400e}
+[data-cat="עוגות"] {--cat-c:#ec4899;--cat-bg:#fdf2f8;--cat-txt:#9d174d}
+[data-cat="עוגיות"]{--cat-c:#c0622f;--cat-bg:#fff7ed;--cat-txt:#9a3412}
 
-/* search */
-.srch-wrap{position:relative;margin-bottom:14px}
-.srch-ico{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--txt2);pointer-events:none;font-size:.9rem}
-.srch-inp{width:100%;padding:9px 36px 9px 12px;border:1.5px solid var(--brd2);border-radius:var(--r2);font-family:'Heebo',sans-serif;font-size:.88rem;color:var(--txt);background:var(--surface);transition:var(--tr);direction:rtl}
-.srch-inp:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,67,.1)}
-
-/* category colors */
-[data-cat="דגים"]   {--cat-clr:var(--c-fish);   --cat-bg:rgba(59,130,246,.12); --cat-txt:#93c5fd}
-[data-cat="בשר"]   {--cat-clr:var(--c-meat);   --cat-bg:rgba(239,68,68,.12);  --cat-txt:#fca5a5}
-[data-cat="עוף"]   {--cat-clr:var(--c-chicken);--cat-bg:rgba(245,158,11,.12); --cat-txt:#fcd34d}
-[data-cat="תוספות"]{--cat-clr:var(--c-sides);  --cat-bg:rgba(139,92,246,.12); --cat-txt:#c4b5fd}
-[data-cat="סלטים"] {--cat-clr:var(--c-salads); --cat-bg:rgba(16,185,129,.12); --cat-txt:#6ee7b7}
-[data-cat="עוגות"] {--cat-clr:var(--c-cakes);  --cat-bg:rgba(236,72,153,.12); --cat-txt:#f9a8d4}
-[data-cat="עוגיות"]{--cat-clr:var(--c-cookies);--cat-bg:rgba(249,115,22,.12); --cat-txt:#fdba74}
-
-/* PLANNING */
+/* Planning */
 .plan-layout{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
 @media(max-width:760px){.plan-layout{grid-template-columns:1fr}}
+.plan-cats{display:flex;flex-direction:column;gap:11px}
 
-.plan-cats{display:flex;flex-direction:column;gap:10px}
-.pcat{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden}
-.pcat-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;transition:var(--tr)}
-.pcat-hdr:hover{opacity:.85}
-.pcat-hdr h3{font-family:'Frank Ruhl Libre',serif;font-size:.95rem;font-weight:700;color:#fff;flex:1}
-.pcat-cnt{background:rgba(255,255,255,.18);color:#fff;border-radius:20px;padding:1px 8px;font-size:.7rem;font-weight:700}
-.pcat-chev{color:#fff;transition:var(--tr);font-size:.72rem}
-.pcat.coll .pcat-chev{transform:rotate(-90deg)}
-.pcat.coll .pcat-foods{display:none}
-.pcat-foods{padding:6px 10px;display:flex;flex-direction:column;gap:3px}
+.cat-sec{background:var(--l-card);border:1.5px solid var(--l-brd);border-radius:var(--r);overflow:hidden}
+.cat-hdr{padding:11px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;transition:var(--tr)}
+.cat-hdr:hover{opacity:.88}
+.cat-hdr h3{font-family:'Frank Ruhl Libre',serif;font-size:.92rem;font-weight:700;color:#fff;flex:1}
+.cat-cnt{background:rgba(255,255,255,.22);color:#fff;border-radius:20px;padding:1px 8px;font-size:.68rem;font-weight:700}
+.cat-chev{color:#fff;transition:var(--tr);font-size:.72rem}
+.cat-sec.coll .cat-chev{transform:rotate(-90deg)}
+.cat-sec.coll .cat-foods{display:none}
+.cat-foods{padding:7px 11px;display:flex;flex-direction:column;gap:3px}
 
-.fci{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:var(--tr);border:1px solid transparent}
-.fci:hover{background:rgba(255,255,255,.04)}
-.fci.sel{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25)}
-.cbox{width:19px;height:19px;border:1.5px solid var(--brd2);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--tr);font-size:.78rem}
-.fci.sel .cbox{background:var(--green);border-color:var(--green);color:#fff}
-.fci-lbl{flex:1}
-.fci-name{font-weight:600;color:var(--txt);font-size:.85rem}
-.fci-meta{font-size:.69rem;color:var(--txt2);margin-top:1px}
+.fci{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;cursor:pointer;
+  transition:var(--tr);border:1.5px solid transparent}
+.fci:hover{background:var(--l-bg2)}
+.fci.sel{background:#f0fdf4;border-color:#4e9a57}
+.fci input{display:none}
+.cbox{width:19px;height:19px;border:1.8px solid var(--l-brd2);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--tr);font-size:.75rem}
+.fci.sel .cbox{background:var(--sage);border-color:var(--sage);color:#fff}
+.fci-name{font-weight:600;color:var(--l-txt);font-size:.84rem}
+.fci-meta{font-size:.68rem;color:var(--l-txt3);margin-top:1px}
 
-/* sidebar summary */
-.sidebar{position:sticky;top:120px}
-.sum-card{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
-.sum-hdr{background:linear-gradient(135deg,var(--bg3),rgba(15,52,96,.6));padding:14px 18px;border-bottom:1px solid var(--brd)}
+.quick-add-row{display:flex;gap:5px;padding:7px 11px;border-top:1px dashed var(--l-brd);margin-top:2px}
+.quick-add-row input{flex:1;padding:6px 9px;border:1.5px solid var(--l-brd);border-radius:6px;
+  font-family:'Heebo',sans-serif;font-size:.8rem;color:var(--l-txt);background:var(--l-card);
+  transition:var(--tr);direction:rtl}
+.quick-add-row input:focus{outline:none;border-color:var(--gold)}
+
+/* Sidebar */
+.sidebar{position:sticky;top:84px}
+.sum-card{background:var(--l-card);border:1.5px solid var(--l-brd);border-radius:var(--r);overflow:hidden;
+  box-shadow:0 3px 16px rgba(44,24,16,.08)}
+.sum-hdr{background:linear-gradient(135deg,var(--l-navy),var(--l-navy2));padding:13px 16px}
 .sum-hdr h3{font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;color:var(--gold2)}
-.sum-hdr p{font-size:.72rem;color:var(--txt2);margin-top:2px}
-.sum-body{padding:16px}
-.sum-num{text-align:center;padding:12px;background:var(--bg3);border-radius:9px;margin-bottom:12px}
-.sum-val{font-family:'Frank Ruhl Libre',serif;font-size:2.4rem;font-weight:900;color:var(--cream);line-height:1}
-.sum-lbl{font-size:.7rem;color:var(--txt2);margin-top:2px}
-.sel-list{max-height:220px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
-.sel-chip{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg3);border-radius:7px;font-size:.8rem;color:var(--txt);font-weight:500}
-.rm-btn{background:none;border:none;cursor:pointer;color:var(--txt2);font-size:.9rem;line-height:1;transition:var(--tr)}
+.sum-hdr p{font-size:.71rem;color:rgba(255,250,230,.36);margin-top:2px}
+.sum-body{padding:14px}
+.sum-num{text-align:center;padding:11px;background:var(--l-bg2);border-radius:8px;margin-bottom:11px}
+.sum-num-val{font-family:'Frank Ruhl Libre',serif;font-size:2.2rem;font-weight:900;color:var(--l-navy);line-height:1}
+.sum-num-lbl{font-size:.69rem;color:var(--l-txt3);margin-top:2px}
+.sel-list{max-height:210px;overflow-y:auto;margin-bottom:11px;display:flex;flex-direction:column;gap:3px}
+.sel-chip{display:flex;align-items:center;justify-content:space-between;
+  padding:5px 9px;background:var(--l-bg2);border-radius:6px;font-size:.77rem;color:var(--l-txt);font-weight:500}
+.rm-btn{background:none;border:none;cursor:pointer;color:var(--l-txt3);font-size:.88rem;padding:1px;transition:var(--tr);line-height:1}
 .rm-btn:hover{color:var(--red)}
 
-/* HISTORY */
+/* History */
 .shab-list{display:flex;flex-direction:column;gap:10px}
-.shab-card{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;transition:var(--tr)}
-.shab-card:hover{box-shadow:var(--sh)}
-.shab-top{padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.shab-date{font-family:'Frank Ruhl Libre',serif;font-size:1rem;font-weight:700;color:var(--cream);display:flex;align-items:center;gap:6px}
-.shab-body{padding:12px 16px}
-.ftags{display:flex;flex-wrap:wrap;gap:5px}
-.ftag{padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:600;background:var(--bg3);color:var(--txt2);border:1px solid var(--brd)}
+.shab-card{background:var(--l-card);border:1.5px solid var(--l-brd);border-radius:var(--r);overflow:hidden;transition:var(--tr)}
+.shab-card:hover{box-shadow:0 3px 14px rgba(44,24,16,.09)}
+.shab-top{padding:11px 16px;background:linear-gradient(135deg,#f8f2e0,#efe5c8);
+  border-bottom:1px solid var(--l-brd);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.shab-date{font-family:'Frank Ruhl Libre',serif;font-size:1rem;font-weight:700;color:var(--l-txt);display:flex;align-items:center;gap:6px}
+.shab-body{padding:11px 16px}
+.food-tags{display:flex;flex-wrap:wrap;gap:5px}
+.ftag{padding:3px 9px;border-radius:20px;font-size:.71rem;font-weight:600;
+  background:var(--l-bg2);color:var(--l-txt2);border:1px solid var(--l-brd)}
 
-/* hist by food */
-.hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
-.hfcard{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);padding:14px 16px;transition:var(--tr)}
-.hfcard:hover{box-shadow:var(--sh);transform:translateY(-1px)}
-.hf-name{font-family:'Frank Ruhl Libre',serif;font-size:.97rem;font-weight:700;margin-bottom:7px}
-.hf-bar{height:4px;background:var(--brd);border-radius:2px;margin:7px 0;overflow:hidden}
-.hf-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold3),var(--gold2))}
-.hf-stats{display:flex;justify-content:space-between;font-size:.74rem;color:var(--txt2)}
+/* Absent */
+.abs-list{display:flex;flex-direction:column;gap:7px}
+.abs-item{display:flex;align-items:center;gap:11px;padding:11px 13px;
+  background:var(--l-card);border:1.5px solid var(--l-brd);border-radius:10px;transition:var(--tr)}
+.abs-item:hover{box-shadow:0 2px 8px rgba(44,24,16,.06)}
+.abs-days{width:48px;height:48px;border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1.1}
+.abs-days.hot{background:#fef2f2;color:#dc2626}
+.abs-days.warm{background:#fff7ed;color:#ea580c}
+.abs-days.cool{background:#fefce8;color:#ca8a04}
+.abs-num{font-size:1.05rem}.abs-lbl{font-size:.56rem;font-weight:700}
 
-/* absent */
-.abs-list{display:flex;flex-direction:column;gap:8px}
-.abs-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--surface);border:1px solid var(--brd);border-radius:11px;transition:var(--tr)}
-.abs-item:hover{box-shadow:var(--sh)}
-.abs-days{width:48px;height:48px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1.1}
-.abs-days.hot{background:rgba(218,54,51,.12);color:#f85149}
-.abs-days.warm{background:rgba(234,88,12,.12);color:#fb923c}
-.abs-days.cool{background:rgba(202,138,4,.12);color:#fbbf24}
-.abs-num{font-size:1.1rem}.abs-lbl{font-size:.56rem;font-weight:700}
-.abs-info{flex:1}
-.abs-name{font-weight:700;color:var(--txt);font-size:.9rem}
-.abs-meta{font-size:.74rem;color:var(--txt2);margin-top:1px}
-
-/* MODAL */
-.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;transition:var(--tr)}
+/* Modal */
+.backdrop{position:fixed;inset:0;background:rgba(8,10,15,.72);backdrop-filter:blur(5px);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:14px;
+  opacity:0;visibility:hidden;transition:var(--tr)}
 .backdrop.open{opacity:1;visibility:visible}
-.modal{background:var(--bg2);border:1px solid var(--brd2);border-radius:var(--r);padding:24px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;transform:translateY(16px) scale(.97);transition:var(--tr);box-shadow:0 24px 72px rgba(0,0,0,.6)}
+.modal{background:var(--l-card);border-radius:var(--r);padding:22px;width:100%;max-width:500px;
+  max-height:90vh;overflow-y:auto;transform:translateY(14px) scale(.97);transition:var(--tr);
+  box-shadow:0 20px 70px rgba(0,0,0,.45)}
 .backdrop.open .modal{transform:none}
-.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.mtitle{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;color:var(--cream)}
-.mclose{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--txt2);padding:3px 6px;border-radius:5px;transition:var(--tr);line-height:1}
-.mclose:hover{background:var(--surface);color:var(--txt)}
-.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--brd)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.mtitle{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;color:var(--l-txt)}
+.mclose{background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--l-txt3);
+  padding:2px 7px;border-radius:5px;transition:var(--tr);line-height:1}
+.mclose:hover{background:var(--l-bg2);color:var(--l-txt)}
+.mfoot{display:flex;gap:7px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--l-brd)}
+.recipe-box{background:var(--l-bg2);border-radius:8px;padding:12px;font-size:.84rem;line-height:1.78;
+  color:var(--l-txt2);margin-top:9px;white-space:pre-wrap;border:1px solid var(--l-brd)}
 
-/* SHABBAT PICKER MODAL */
-.shab-pick-list{display:flex;flex-direction:column;gap:7px;max-height:60vh;overflow-y:auto}
-.shab-pick-item{
-  display:flex;align-items:center;gap:12px;padding:11px 14px;
-  background:var(--surface);border:1.5px solid var(--brd);
-  border-radius:10px;cursor:pointer;transition:var(--tr);
-}
-.shab-pick-item:hover{border-color:var(--gold);background:rgba(212,168,67,.06)}
-.shab-pick-item.current{border-color:var(--gold);background:rgba(212,168,67,.1)}
-.spi-date{font-family:'Frank Ruhl Libre',serif;font-size:1rem;font-weight:700;color:var(--cream);flex:1}
-.spi-meta{font-size:.74rem;color:var(--txt2)}
-.spi-badge{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(212,168,67,.18);color:var(--gold2)}
+/* Empty states */
+.empty{text-align:center;padding:44px 16px;color:var(--l-txt3)}
+.empty .ei{font-size:2.6rem;margin-bottom:10px}
+.empty h3{font-family:'Frank Ruhl Libre',serif;font-size:1.15rem;color:var(--l-txt2);margin-bottom:5px}
+.empty p{font-size:.83rem;line-height:1.6}
+.empty-dk{text-align:center;padding:44px 16px;color:var(--txt3)}
+.empty-dk .ei{font-size:2.6rem;margin-bottom:10px}
+.empty-dk h3{font-family:'Frank Ruhl Libre',serif;font-size:1.15rem;color:var(--txt2);margin-bottom:5px}
+.empty-dk p{font-size:.83rem;line-height:1.6}
 
-/* TOAST */
-.toasts{position:fixed;bottom:18px;left:14px;z-index:999;display:flex;flex-direction:column;gap:6px;max-width:290px}
-.toast{padding:10px 15px;border-radius:10px;color:#fff;font-size:.82rem;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:toastIn .25s ease}
-.toast.ok{background:linear-gradient(135deg,#1a7f37,#196127)}
-.toast.err{background:linear-gradient(135deg,#b91c1c,#991b1b)}
-.toast.inf{background:linear-gradient(135deg,#1c2333,#252e3f);border:1px solid var(--brd2)}
-@keyframes toastIn{from{transform:translateX(-110%);opacity:0}to{transform:none;opacity:1}}
-
-/* EMPTY */
-.empty{text-align:center;padding:50px 18px;color:var(--txt2)}
-.empty .ei{font-size:3rem;margin-bottom:12px}
-.empty h3{font-family:'Frank Ruhl Libre',serif;font-size:1.2rem;color:var(--cream2);margin-bottom:6px}
-.empty p{font-size:.85rem;line-height:1.65}
-
-/* CANDLE flicker */
-.candles{display:flex;gap:14px;margin-bottom:10px}
-.candle{display:flex;flex-direction:column;align-items:center}
-.flame{width:9px;height:15px;background:linear-gradient(to top,#f59e0b,#fde68a 55%,#fff);border-radius:50% 50% 22% 22%;animation:flicker 2.2s ease-in-out infinite alternate;filter:drop-shadow(0 0 5px rgba(245,158,11,.55))}
-@keyframes flicker{0%{transform:scaleX(1) rotate(-2deg)}45%{transform:scaleX(.91) scaleY(1.07) rotate(1.5deg);filter:drop-shadow(0 0 8px rgba(245,158,11,.8))}100%{transform:scaleX(1.04) scaleY(.93) rotate(-1deg)}}
-.candle-b{width:11px;height:28px;background:linear-gradient(to bottom,#fef3c7,#d1d5db);border-radius:2px 2px 3px 3px;margin-top:-1px}
-
-@media(max-width:480px){
-  .hdr-inner{flex-wrap:wrap;gap:8px}
-  .shab-selector{order:3;width:100%;justify-content:center}
-  .logo-mark{width:30px;height:30px;font-size:15px}
-  .logo h1{font-size:1rem}
-  .modal{padding:18px}
+@media(max-width:540px){
+  .hdr-top{padding:9px 12px}.main{padding:14px 11px 80px}
+  .cr-name{max-width:110px}.cr-src{max-width:60px}
+  .foods-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
-<div id="ld"><div class="spin"></div><p>מכין את המטבח...</p></div>
-<div class="toasts" id="toasts"></div>
+<div id="syncBar"></div>
+<div id="toasts"></div>
 
-<!-- ══ HEADER ══════════════════════════════════ -->
-<header class="hdr" id="mainHdr">
-  <div class="hdr-inner">
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-top">
     <div class="logo">
       <div class="logo-mark">🕯️</div>
-      <div>
-        <h1>תפריט שבת</h1>
-        <span id="hdrSub">בחר שבת...</span>
-      </div>
+      <div><h1>תפריט שבת</h1><span>ניהול תפריטי שבת משפחתיים</span></div>
     </div>
-    <!-- shabbat navigator (visible on cooking tab) -->
-    <div class="shab-selector" id="shabSelector" style="display:none">
-      <button class="shab-nav" id="shabPrev" onclick="navShab(-1)" title="שבת קודמת">‹</button>
-      <div class="shab-label" onclick="openShabPicker()" id="shabLabel">–</div>
-      <button class="shab-nav" id="shabNext" onclick="navShab(1)" title="שבת הבאה">›</button>
-    </div>
-    <div class="hdr-btns">
-      <button class="hbtn" onclick="go('planning')">📅 תכנן</button>
-      <button class="hbtn" onclick="openSettings()">⚙️</button>
+    <div class="hdr-right">
+      <span class="sync-dot" id="syncDot" title="מצב נתונים"></span>
+      <button class="hdr-btn" onclick="forceRefresh()">🔄</button>
+      <button class="hdr-btn" onclick="openSettings()">⚙️</button>
     </div>
   </div>
-
-  <!-- progress bar — cooking page only -->
-  <div class="prog-bar" id="mainProg" style="display:none">
-    <div class="prog-fill" id="progFill" style="width:0%"></div>
-  </div>
-
-  <!-- NAV TABS -->
   <nav class="nav">
-    <button class="ntab on" id="tab-cook"     onclick="go('cook')"><span class="ni">👨‍🍳</span>בישול</button>
-    <button class="ntab"    id="tab-foods"    onclick="go('foods')"><span class="ni">🍽️</span>מאכלים</button>
-    <button class="ntab"    id="tab-planning" onclick="go('planning')"><span class="ni">📅</span>תכנון</button>
-    <button class="ntab"    id="tab-history"  onclick="go('history')"><span class="ni">📜</span>היסטוריה</button>
-    <button class="ntab"    id="tab-absent"   onclick="go('absent')"><span class="ni">⏳</span>חסר?</button>
+    <button class="ntab on" id="tab-home"     onclick="go('home')">🍳 שבת נוכחית</button>
+    <button class="ntab"    id="tab-foods"    onclick="go('foods')">🍽️ מאכלים</button>
+    <button class="ntab"    id="tab-planning" onclick="go('planning')">📅 תכנון</button>
+    <button class="ntab"    id="tab-history"  onclick="go('history')">📜 היסטוריה</button>
+    <button class="ntab"    id="tab-absent"   onclick="go('absent')">⏳ חסרים</button>
   </nav>
 </header>
 
 <main class="main">
 
-<!-- ══ COOKING PAGE (HOME) ═══════════════════════ -->
-<div class="page on" id="page-cook">
+<!-- HOME -->
+<div class="page on" id="page-home">
   <div id="cookContent">
-    <div class="cook-empty">
-      <div class="ei">🕯️</div>
-      <h3>טוען את תפריט השבת...</h3>
+    <!-- skeleton while loading from cache -->
+    <div class="cook-header" style="opacity:.5">
+      <div>
+        <div class="skel" style="width:160px;height:18px;margin-bottom:6px"></div>
+        <div class="skel" style="width:100px;height:11px"></div>
+      </div>
+      <div><div class="prog-bar" style="margin-bottom:4px"><div class="prog-fill" style="width:0%"></div></div></div>
     </div>
+    <div class="cook-list">
+      ${[1,2,3,4,5].map(()=>`<div class="skel-row"><div class="skel skel-circle"></div><div class="skel skel-line"></div></div>`).join('')}
+    </div>
+  </div>
+  <div class="done-banner" id="doneBanner">
+    <h2>🎉 הכל מוכן! שבת שלום!</h2>
+    <p>כל המאכלים הוכנו — שתהיה שבת נפלאה ✨</p>
+  </div>
+  <div class="cook-btns">
+    <button class="btn btn-gold btn-sm" onclick="go('planning')">📅 תכנן שבת חדשה</button>
+    <button class="btn btn-ghost btn-sm" onclick="go('history')">📜 היסטוריה</button>
+    <button class="btn btn-ghost btn-sm" id="homePickBtn" onclick="pickShabbat()" style="display:none">🔀 החלף</button>
   </div>
 </div>
 
-<!-- ══ FOODS ══════════════════════════════════════ -->
+<!-- FOODS -->
 <div class="page" id="page-foods">
-  <div class="page-inner">
+  <div class="lp">
     <div class="sec-hdr">
-      <div class="sec-title"><div class="sec-icon">🍽️</div>מאכלים</div>
+      <div class="sec-title"><div class="sec-ico">🍽️</div>מאכלים</div>
       <button class="btn btn-gold btn-sm" onclick="openFoodModal()">➕ הוסף</button>
     </div>
-    <div class="srch-wrap">
-      <span class="srch-ico">🔍</span>
-      <input class="srch-inp" id="foodSearch" placeholder="חפש מאכל..." oninput="renderFoods()"/>
+    <div class="srch-bar">
+      <div class="srch-wrap"><span class="srch-ico">🔍</span><input id="foodSearch" placeholder="חפש מאכל..." oninput="renderFoods()"/></div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleFavF()"><span id="favIco">☆</span> אהובים</button>
     </div>
     <div class="chips" id="catChips"></div>
     <div class="foods-grid" id="foodsGrid"><div class="empty"><div class="ei">🍽️</div><p>טוען...</p></div></div>
   </div>
 </div>
 
-<!-- ══ PLANNING ════════════════════════════════════ -->
+<!-- PLANNING -->
 <div class="page" id="page-planning">
-  <div class="page-inner">
+  <div class="lp">
     <div class="sec-hdr">
-      <div class="sec-title"><div class="sec-icon">📅</div>תכנון שבת</div>
+      <div class="sec-title"><div class="sec-ico">📅</div>תכנון שבת</div>
       <button class="btn btn-ghost btn-sm" onclick="copyLast()">📋 העתק קודמת</button>
     </div>
     <div class="plan-layout">
-      <div class="plan-cats" id="planCats"><div class="empty"><div class="ei">⌛</div><p>טוען...</p></div></div>
+      <div class="plan-cats" id="planCats"><div class="empty"><div class="ei">📅</div><p>טוען...</p></div></div>
       <div class="sidebar">
         <div class="sum-card">
           <div class="sum-hdr"><h3>📋 סיכום השבת</h3><p>בחר מאכלים</p></div>
@@ -620,11 +436,11 @@ body{
             <div class="fg"><label class="lbl">תאריך שבת</label><input type="date" id="shabDate" class="inp"/></div>
             <div class="fg"><label class="lbl">הערות</label><input type="text" id="shabNotes" class="inp" placeholder="שבת עם אורחים..."/></div>
             <div class="sum-num">
-              <div class="sum-val" id="selCount">0</div>
-              <div class="sum-lbl">מאכלים נבחרו</div>
+              <div class="sum-num-val" id="selCount">0</div>
+              <div class="sum-num-lbl">מאכלים נבחרו</div>
             </div>
-            <div class="sel-list" id="selList"><div style="text-align:center;color:var(--txt2);font-size:.8rem;padding:8px">לא נבחרו מאכלים</div></div>
-            <button class="btn btn-green" style="width:100%" onclick="saveShabbat()">✅ שמור שבת</button>
+            <div class="sel-list" id="selList"><div style="text-align:center;color:var(--l-txt3);font-size:.77rem;padding:7px">לא נבחרו מאכלים</div></div>
+            <button class="btn btn-green" style="width:100%;margin-bottom:7px" onclick="saveShabbat()">✅ שמור שבת</button>
           </div>
         </div>
       </div>
@@ -632,56 +448,61 @@ body{
   </div>
 </div>
 
-<!-- ══ HISTORY ═════════════════════════════════════ -->
+<!-- HISTORY -->
 <div class="page" id="page-history">
-  <div class="page-inner">
+  <div class="lp">
     <div class="sec-hdr">
-      <div class="sec-title"><div class="sec-icon">📜</div>היסטוריה</div>
-      <button class="btn btn-ghost btn-sm" id="histToggle" onclick="toggleHistView()">👁️ לפי מאכלים</button>
+      <div class="sec-title"><div class="sec-ico">📜</div>היסטוריה</div>
+      <button class="btn btn-ghost btn-sm" id="histToggle" onclick="toggleHist()">👁️ לפי מאכלים</button>
     </div>
     <div id="histContent"><div class="empty"><div class="ei">📜</div><p>טוען...</p></div></div>
   </div>
 </div>
 
-<!-- ══ ABSENT ══════════════════════════════════════ -->
+<!-- ABSENT -->
 <div class="page" id="page-absent">
-  <div class="page-inner">
+  <div class="lp">
     <div class="sec-hdr">
-      <div class="sec-title"><div class="sec-icon">⏳</div>מה חסר?</div>
-      <button class="btn btn-ghost btn-sm" onclick="loadAbsent()">🔄</button>
+      <div class="sec-title"><div class="sec-ico">⏳</div>לא הוכן הרבה זמן</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadAbsent(true)">🔄 רענן</button>
     </div>
-    <p style="color:var(--txt2);font-size:.83rem;margin-bottom:14px;line-height:1.65">מאכלים שלא הוכנו יותר מ-30 יום</p>
+    <p style="color:var(--l-txt3);font-size:.83rem;margin-bottom:14px;line-height:1.6">מאכלים שלא הופיעו ב-30 יום האחרונים</p>
     <div class="abs-list" id="absList"><div class="empty"><div class="ei">⏳</div><p>טוען...</p></div></div>
   </div>
 </div>
 
 </main>
 
-<!-- ══ MODALS ═══════════════════════════════════════ -->
+<!-- MODALS -->
 
-<!-- Food modal -->
+<!-- Food -->
 <div class="backdrop" id="foodModal">
   <div class="modal">
     <div class="mhdr"><div class="mtitle" id="fmTitle">הוסף מאכל</div><button class="mclose" onclick="closeM('foodModal')">✕</button></div>
     <input type="hidden" id="fmId"/>
-    <div class="frow2">
+    <div class="frow">
       <div class="fg"><label class="lbl">שם *</label><input id="fmName" class="inp" placeholder="גפילטע פיש"/></div>
-      <div class="fg"><label class="lbl">קטגוריה *</label>
+      <div class="fg">
+        <label class="lbl">קטגוריה *</label>
         <select id="fmCat" class="sel">
           <option value="">בחר...</option>
-          <option value="דגים">🐟 דגים</option><option value="בשר">🥩 בשר</option>
-          <option value="עוף">🍗 עוף</option><option value="תוספות">🍚 תוספות</option>
-          <option value="סלטים">🥗 סלטים</option><option value="עוגות">🎂 עוגות</option>
+          <option value="דגים">🐟 דגים</option>
+          <option value="בשר">🥩 בשר</option>
+          <option value="עוף">🍗 עוף</option>
+          <option value="תוספות">🍚 תוספות</option>
+          <option value="סלטים">🥗 סלטים</option>
+          <option value="חלות">🍞 חלות</option>
+          <option value="עוגות">🎂 עוגות</option>
           <option value="עוגיות">🍪 עוגיות</option>
         </select>
       </div>
     </div>
     <div class="fg"><label class="lbl">ממי המתכון?</label><input id="fmSrc" class="inp" placeholder="סבתא רוזי..."/></div>
-    <div class="fg"><label class="lbl">מתכון</label><textarea id="fmRecipe" class="ta" placeholder="כתוב כאן..."></textarea></div>
+    <div class="fg"><label class="lbl">מתכון</label><textarea id="fmRecipe" class="ta" placeholder="כתוב את המתכון..."></textarea></div>
     <div class="fg"><label class="lbl">הערות</label><input id="fmNotes" class="inp" placeholder="הערות..."/></div>
-    <div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--surface2);border-radius:8px">
-      <input type="checkbox" id="fmFav" style="width:16px;height:16px;cursor:pointer;accent-color:var(--gold)"/>
-      <label for="fmFav" style="cursor:pointer;font-weight:700;color:var(--txt);font-size:.9rem">⭐ מאכל אהוב</label>
+    <div style="display:flex;align-items:center;gap:8px;padding:9px;background:var(--l-bg2);border-radius:8px">
+      <input type="checkbox" id="fmFav" style="width:15px;height:15px;cursor:pointer"/>
+      <label for="fmFav" style="cursor:pointer;font-weight:700;font-size:.85rem;color:var(--l-txt)">⭐ מאכל אהוב</label>
     </div>
     <div class="mfoot">
       <button class="btn btn-ghost" onclick="closeM('foodModal')">ביטול</button>
@@ -690,27 +511,28 @@ body{
   </div>
 </div>
 
-<!-- Recipe modal -->
+<!-- Recipe -->
 <div class="backdrop" id="recipeModal">
   <div class="modal">
     <div class="mhdr"><div class="mtitle" id="rmName"></div><button class="mclose" onclick="closeM('recipeModal')">✕</button></div>
     <div id="rmCat"></div>
-    <div id="rmSrc" style="font-size:.76rem;color:var(--txt2);margin-top:4px"></div>
-    <div style="background:var(--surface2);border-radius:9px;padding:14px;margin-top:12px;font-size:.85rem;line-height:1.8;color:var(--cream2);white-space:pre-wrap;border:1px solid var(--brd)" id="rmRecipe"></div>
-    <div id="rmNotes" style="margin-top:8px;font-size:.78rem;color:var(--txt2)"></div>
-    <div id="rmHist" style="margin-top:12px"></div>
+    <div id="rmSrc" style="font-size:.76rem;color:var(--l-txt3);margin-top:4px"></div>
+    <div class="recipe-box" id="rmRecipe"></div>
+    <div id="rmNotes" style="margin-top:7px;font-size:.78rem;color:var(--l-txt3)"></div>
+    <div id="rmHist" style="margin-top:11px"></div>
     <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="copyRecipeCurrent()">📋 העתק מתכון</button>
       <button class="btn btn-ghost" onclick="closeM('recipeModal')">סגור</button>
-      <button class="btn btn-gold" id="rmEdit">✏️ ערוך</button>
+      <button class="btn btn-gold" id="rmEditBtn">✏️ ערוך</button>
     </div>
   </div>
 </div>
 
-<!-- Delete modal -->
+<!-- Delete -->
 <div class="backdrop" id="delModal">
-  <div class="modal" style="max-width:370px">
+  <div class="modal" style="max-width:360px">
     <div class="mhdr"><div class="mtitle">🗑️ אישור מחיקה</div><button class="mclose" onclick="closeM('delModal')">✕</button></div>
-    <p id="delMsg" style="color:var(--txt2);line-height:1.7"></p>
+    <p id="delMsg" style="color:var(--l-txt2);line-height:1.7"></p>
     <div class="mfoot">
       <button class="btn btn-ghost" onclick="closeM('delModal')">ביטול</button>
       <button class="btn btn-red" id="delOk">🗑️ מחק</button>
@@ -718,575 +540,706 @@ body{
   </div>
 </div>
 
-<!-- Settings modal -->
+<!-- Settings -->
 <div class="backdrop" id="settingsModal">
-  <div class="modal" style="max-width:440px">
-    <div class="mhdr"><div class="mtitle">⚙️ הגדרות API</div><button class="mclose" onclick="closeM('settingsModal')">✕</button></div>
+  <div class="modal" style="max-width:430px">
+    <div class="mhdr"><div class="mtitle">⚙️ הגדרות</div><button class="mclose" onclick="closeM('settingsModal')">✕</button></div>
     <div class="fg">
-      <label class="lbl">Apps Script Web App URL</label>
-      <input id="settUrl" class="inp" style="direction:ltr;font-size:.8rem" placeholder="https://script.google.com/macros/s/.../exec"/>
-      <div style="font-size:.72rem;color:var(--txt2);margin-top:5px;line-height:1.6">Apps Script → Deploy → Manage Deployments → Copy URL</div>
+      <label class="lbl">Web App URL</label>
+      <input id="settUrl" class="inp" style="direction:ltr;font-size:.77rem" placeholder="https://script.google.com/macros/s/.../exec"/>
+    </div>
+    <div style="font-size:.72rem;color:var(--l-txt3);margin-top:-8px;margin-bottom:14px;line-height:1.6">
+      הנקודה ירוקה = נתונים עדכניים · צהובה = ישנים (נטענים ברקע)
     </div>
     <div class="mfoot">
       <button class="btn btn-ghost" onclick="closeM('settingsModal')">ביטול</button>
-      <button class="btn btn-gold" onclick="saveSettings()">💾 שמור</button>
+      <button class="btn btn-gold" onclick="saveSettings()">💾 שמור וטען</button>
     </div>
   </div>
 </div>
 
-<!-- Shabbat picker modal -->
-<div class="backdrop" id="shabPickModal">
-  <div class="modal" style="max-width:420px">
-    <div class="mhdr"><div class="mtitle">📅 בחר שבת</div><button class="mclose" onclick="closeM('shabPickModal')">✕</button></div>
-    <div class="shab-pick-list" id="shabPickList"></div>
+<!-- Pick Shabbat -->
+<div class="backdrop" id="pickModal">
+  <div class="modal" style="max-width:380px">
+    <div class="mhdr"><div class="mtitle">🔀 בחר שבת</div><button class="mclose" onclick="closeM('pickModal')">✕</button></div>
+    <div id="pickList" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto"></div>
   </div>
 </div>
 
-<!-- ══ SCRIPT ════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
 <script>
-// ─── CONFIG ────────────────────────────────────────────
+'use strict';
+
+// ── CONFIG ──────────────────────────────────────────────
 const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbywLRskBnD8H02OpbVB1u7J63PL166hrEbBoZgqZ6xLkoKeBn527Xz1PxTzWKRKXfJ54Q/exec';
 let API = localStorage.getItem('shabbat_api') || DEFAULT_API;
 
-// ─── STATE ──────────────────────────────────────────────
-let allFoods = [], allShabbats = [];
-let selIds = new Set();
-let activeCat = 'all', showFavOnly = false;
-let histView = 'shabbats';
-let cookingShabbat = null;   // current shabbat shown in cooking view
-let cookDone = new Set();    // checked food IDs in cooking view
+// ── CACHE ────────────────────────────────────────────────
+// Stale-while-revalidate: serve from cache instantly, refresh in background if stale
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-const CATS = ['דגים','בשר','עוף','תוספות','סלטים','עוגות','עוגיות'];
-const EMO  = {דגים:'🐟',בשר:'🥩',עוף:'🍗',תוספות:'🍚',סלטים:'🥗',עוגות:'🎂',עוגיות:'🍪'};
-const CLRS = {
-  דגים:'#1e3a5f',בשר:'#5a1a1a',עוף:'#5a3a00',
-  תוספות:'#3a1f6e',סלטים:'#0d4a35',עוגות:'#5a1a40',עוגיות:'#5a2a0d'
-};
-const CAT_CLRS = {
-  דגים:'#3b82f6',בשר:'#ef4444',עוף:'#f59e0b',
-  תוספות:'#8b5cf6',סלטים:'#10b981',עוגות:'#ec4899',עוגיות:'#f97316'
-};
-
-// ─── INIT ────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  // default next friday
-  const d = new Date(), day = d.getDay();
-  const diff = (5 - day + 7) % 7 || 7;
-  d.setDate(d.getDate() + diff);
-  document.getElementById('shabDate').value = d.toISOString().split('T')[0];
-  loadAll();
-});
-
-async function loadAll() {
-  ld(1);
+function cacheGet(key) {
   try {
-    [allFoods, allShabbats] = await Promise.all([
-      GET('getFoods').catch(() => []),
-      GET('getShabbats').catch(() => [])
-    ]);
-    // pick best shabbat for cooking view
-    cookingShabbat = pickBestShabbat();
-    renderCookPage();
-    renderCatChips();
-    renderFoods();
-    document.getElementById('hdrSub').textContent =
-      cookingShabbat ? fmtDateShort(cookingShabbat.date) : 'אין שבתות';
-  } catch(e) { toast('שגיאה בטעינה: '+e.message,'err'); }
-  finally { ld(0); }
+    const raw = localStorage.getItem('cache_' + key);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    return { data, age: Date.now() - ts, stale: Date.now() - ts > CACHE_TTL };
+  } catch { return null; }
+}
+function cacheSet(key, data) {
+  try { localStorage.setItem('cache_' + key, JSON.stringify({ data, ts: Date.now() })); } catch {}
+}
+function cacheClear() {
+  ['foods','shabbats'].forEach(k => localStorage.removeItem('cache_' + k));
 }
 
-// ─── SHABBAT SELECTION LOGIC ─────────────────────────────
-function pickBestShabbat() {
-  if (!allShabbats.length) return null;
-  const today = new Date(); today.setHours(0,0,0,0);
-  // find closest upcoming (including today)
-  const upcoming = allShabbats.filter(s => new Date(s.date) >= today)
-    .sort((a,b) => new Date(a.date) - new Date(b.date));
-  if (upcoming.length) return upcoming[0];
-  // fallback: most recent past
-  return allShabbats[0]; // already sorted desc
+function setDot(fresh) {
+  const d = document.getElementById('syncDot');
+  d.className = 'sync-dot ' + (fresh ? 'fresh' : 'stale');
+  d.title = fresh ? 'נתונים עדכניים' : 'מרענן ברקע...';
 }
 
-function shabIdx() {
-  if (!cookingShabbat) return -1;
-  return allShabbats.findIndex(s => s.id === cookingShabbat.id);
+// ── STATE ────────────────────────────────────────────────
+let allFoods    = [];
+let allShabbats = [];
+let selIds      = new Set();
+let activeCat   = 'all';
+let showFavOnly = false;
+let histView    = 'shabbats';
+let currentShab = null;
+let curRecipeFood = null;
+
+const CATS = ['דגים','בשר','עוף','תוספות','סלטים','חלות','עוגות','עוגיות'];
+const EMO  = {דגים:'🐟',בשר:'🥩',עוף:'🍗',תוספות:'🍚',סלטים:'🥗',חלות:'🍞',עוגות:'🎂',עוגיות:'🍪'};
+const CAT_CLR = {
+  דגים:'#1d4ed8',בשר:'#991b1b',עוף:'#92400e',תוספות:'#5b21b6',
+  סלטים:'#065f46',חלות:'#92400e',עוגות:'#9d174d',עוגיות:'#9a3412'
+};
+
+// Done-state persisted per shabbat
+function getDone(shabId)       { try { return new Set(JSON.parse(localStorage.getItem('done_'+shabId)||'[]')); } catch { return new Set(); } }
+function saveDone(shabId, set) { localStorage.setItem('done_'+shabId, JSON.stringify([...set])); }
+
+// ── HEB DATE CACHE ───────────────────────────────────────
+const hebCache = JSON.parse(localStorage.getItem('heb_cache')||'{}');
+async function getHeb(iso) {
+  if (hebCache[iso]) return hebCache[iso];
+  try {
+    const [y,m,d] = iso.split('-');
+    const r = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${y}&gm=${m}&gd=${d}&g2h=1`);
+    const j = await r.json();
+    hebCache[iso] = j.hebrew || '';
+    localStorage.setItem('heb_cache', JSON.stringify(hebCache));
+    return hebCache[iso];
+  } catch { return ''; }
 }
 
-function navShab(dir) {
-  const idx = shabIdx();
-  const newIdx = idx + dir;
-  if (newIdx < 0 || newIdx >= allShabbats.length) return;
-  cookingShabbat = allShabbats[newIdx];
-  cookDone.clear();
-  renderCookPage();
-  updateShabNav();
-}
-
-function updateShabNav() {
-  const idx = shabIdx();
-  document.getElementById('shabPrev').disabled = idx >= allShabbats.length - 1;
-  document.getElementById('shabNext').disabled = idx <= 0;
-  document.getElementById('shabLabel').textContent =
-    cookingShabbat ? fmtDateShort(cookingShabbat.date) : '–';
-  document.getElementById('hdrSub').textContent =
-    cookingShabbat ? fmtDateShort(cookingShabbat.date) : 'אין שבתות';
-}
-
-// ─── COOKING PAGE RENDER ──────────────────────────────────
-function renderCookPage() {
-  const el = document.getElementById('cookContent');
-  updateShabNav();
-
-  if (!cookingShabbat) {
-    el.innerHTML = `
-      <div class="cook-empty">
-        <div class="candles"><div class="candle"><div class="flame"></div><div class="candle-b"></div></div>
-        <div class="candle"><div class="flame"></div><div class="candle-b"></div></div></div>
-        <h3>אין שבת לטעון</h3>
-        <p>צור תפריט שבת ראשון בלשונית <strong>תכנון</strong></p>
-        <br><button class="btn btn-gold" onclick="go('planning')">📅 תכנן שבת</button>
-      </div>`;
-    document.getElementById('mainProg').style.display = 'none';
-    document.getElementById('shabSelector').style.display = 'none';
-    return;
-  }
-
-  document.getElementById('mainProg').style.display = 'block';
-  document.getElementById('shabSelector').style.display = 'flex';
-  updateProgress();
-
-  const foods = cookingShabbat.foods || [];
-  const byCat = {};
-  CATS.forEach(c => {
-    const fs = foods.filter(f => f.category === c);
-    if (fs.length) byCat[c] = fs;
-  });
-
-  // header section
-  let html = `
-    <div style="padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--brd);background:var(--bg2)">
-      <div>
-        <div style="font-family:'Frank Ruhl Libre',serif;font-size:1rem;color:var(--cream);font-weight:700;display:flex;align-items:center;gap:7px">
-          📅 ${fmtDate(cookingShabbat.date)}
-        </div>
-        ${cookingShabbat.notes ? `<div style="font-size:.72rem;color:var(--txt2);margin-top:2px">💬 ${e(cookingShabbat.notes)}</div>` : ''}
-      </div>
-      <div style="text-align:left">
-        <div class="cook-ratio" id="cookRatio">${cookDone.size}/${foods.length}</div>
-        <div style="font-size:.62rem;color:var(--txt2);margin-top:2px">הוכנו</div>
-      </div>
-    </div>`;
-
-  // food groups
-  Object.entries(byCat).forEach(([cat, fs]) => {
-    html += `
-      <div class="cook-group" id="grp-${cat}">
-        <div class="cook-cat-hdr" style="top:${document.getElementById('mainHdr').offsetHeight}px">
-          <div class="cat-line" style="background:${CAT_CLRS[cat]}"></div>
-          <span class="ci">${EMO[cat]}</span>
-          <span class="cn">${cat}</span>
-          <span class="cc" id="cc-${cat}">${fs.filter(f=>cookDone.has(f.id)).length}/${fs.length}</span>
-        </div>`;
-    fs.forEach(f => {
-      const isDone = cookDone.has(f.id);
-      html += `
-        <div class="food-row ${isDone?'done':''} ${expandedRows.has(f.id)?'expanded':''}"
-             id="fr-${f.id}" onclick="toggleDone('${f.id}','${cat}')">
-          <div class="frow-check"><div class="check-ring" id="cr-${f.id}"></div></div>
-          <div class="frow-body">
-            <div class="frow-name">${e(f.name)}</div>
-            <div class="frow-sub">
-              <div class="frow-cat-dot" style="background:${CAT_CLRS[cat]}"></div>
-              ${f.recipe_source ? `<span>📖 ${e(f.recipe_source)}</span>` : ''}
-              ${f.favorite ? '<span>⭐</span>' : ''}
-            </div>
-          </div>
-          ${f.recipe ? `<div class="frow-expand" onclick="event.stopPropagation();toggleExpand('${f.id}')">▾</div>` : '<div style="width:20px"></div>'}
-        </div>
-        ${f.recipe ? `
-          <div class="frow-recipe ${expandedRows.has(f.id)?'open':''}" id="rp-${f.id}">
-            ${f.recipe_source ? `<div class="recipe-src">📖 ${e(f.recipe_source)}</div>` : ''}${e(f.recipe)}
-          </div>` : ''}`;
-    });
-    html += `</div>`;
-  });
-
-  // all done banner
-  html += `
-    <div class="all-done ${cookDone.size === foods.length && foods.length > 0 ? 'show' : ''}" id="allDone">
-      <div class="candles" style="justify-content:center"><div class="candle"><div class="flame"></div><div class="candle-b"></div></div>
-      <div class="candle"><div class="flame"></div><div class="candle-b"></div></div></div>
-      <h3>🎉 הכל מוכן!</h3>
-      <p>שבת שלום ומבורכת! 🕯️</p>
-    </div>
-    <div style="height:16px"></div>`;
-
-  el.innerHTML = html;
-}
-
-// track expanded recipe rows (persists across re-renders within session)
-const expandedRows = new Set();
-
-function toggleDone(id, cat) {
-  cookDone.has(id) ? cookDone.delete(id) : cookDone.add(id);
-  const row = document.getElementById('fr-'+id);
-  if (row) row.classList.toggle('done', cookDone.has(id));
-  updateProgress();
-  // update category counter
-  if (cookingShabbat) {
-    const catFoods = (cookingShabbat.foods||[]).filter(f=>f.category===cat);
-    const doneInCat = catFoods.filter(f=>cookDone.has(f.id)).length;
-    const ccEl = document.getElementById('cc-'+cat);
-    if (ccEl) ccEl.textContent = doneInCat+'/'+catFoods.length;
-  }
-  // all done banner
-  const foods = cookingShabbat?.foods || [];
-  const banner = document.getElementById('allDone');
-  if (banner) banner.classList.toggle('show', cookDone.size===foods.length && foods.length>0);
-}
-
-function toggleExpand(id) {
-  expandedRows.has(id) ? expandedRows.delete(id) : expandedRows.add(id);
-  const row = document.getElementById('fr-'+id);
-  const rp  = document.getElementById('rp-'+id);
-  if (row) row.classList.toggle('expanded', expandedRows.has(id));
-  if (rp)  rp.classList.toggle('open', expandedRows.has(id));
-}
-
-function updateProgress() {
-  const foods = cookingShabbat?.foods || [];
-  const pct = foods.length ? Math.round(cookDone.size/foods.length*100) : 0;
-  const fill = document.getElementById('progFill');
-  const ratio = document.getElementById('cookRatio');
-  if (fill) fill.style.width = pct+'%';
-  if (ratio) ratio.textContent = cookDone.size+'/'+foods.length;
-}
-
-// ─── SHABBAT PICKER ───────────────────────────────────────
-function openShabPicker() {
-  const list = document.getElementById('shabPickList');
-  if (!allShabbats.length) { toast('אין שבתות שמורות','inf'); return; }
-  list.innerHTML = allShabbats.map(s => `
-    <div class="shab-pick-item ${s.id===cookingShabbat?.id?'current':''}" onclick="selectShab('${s.id}')">
-      <div>
-        <div class="spi-date">${fmtDate(s.date)}</div>
-        <div class="spi-meta">${s.foods?.length||0} מאכלים${s.notes?' • '+e(s.notes):''}</div>
-      </div>
-      ${s.id===cookingShabbat?.id?'<span class="spi-badge">פעילה</span>':''}
-    </div>`).join('');
-  openM('shabPickModal');
-}
-
-function selectShab(id) {
-  cookingShabbat = allShabbats.find(s=>s.id===id);
-  cookDone.clear();
-  closeM('shabPickModal');
-  renderCookPage();
-  updateShabNav();
-}
-
-// ─── API ─────────────────────────────────────────────────
-async function GET(action, params={}) {
+// ── API ──────────────────────────────────────────────────
+async function GET(action, params = {}) {
   const u = new URL(API);
   u.searchParams.set('action', action);
-  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
-  const r=await fetch(u); const j=await r.json();
-  if(!j.success) throw new Error(j.error);
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k,v));
+  const r = await fetch(u, { cache: 'no-store' });
+  const j = await r.json();
+  if (!j.success) throw new Error(j.error);
   return j.data;
 }
 async function POST(payload) {
-  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
-  const j=await r.json();
-  if(!j.success) throw new Error(j.error);
+  const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
+  const j = await r.json();
+  if (!j.success) throw new Error(j.error);
   return j.data;
 }
 
-// ─── NAVIGATION ───────────────────────────────────────────
+// ── SYNCING BAR ──────────────────────────────────────────
+let syncCount = 0;
+function syncOn()  { syncCount++; document.getElementById('syncBar').classList.add('show'); }
+function syncOff() { syncCount = Math.max(0,syncCount-1); if(!syncCount) document.getElementById('syncBar').classList.remove('show'); }
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const d = new Date(), day = d.getDay();
+  d.setDate(d.getDate() + ((5-day+7)%7||7));
+  document.getElementById('shabDate').value = d.toISOString().split('T')[0];
+
+  bootFromCache();   // instant render from cache
+  refreshInBg();     // then fetch fresh data silently
+});
+
+function bootFromCache() {
+  const cf = cacheGet('foods');
+  const cs = cacheGet('shabbats');
+
+  if (cf) allFoods = cf.data;
+  if (cs) allShabbats = cs.data;
+
+  // Render immediately if we have cached data
+  if (cf && cs) {
+    setDot(!cf.stale && !cs.stale);
+    renderHomeScreen();
+    renderCatChips();
+    renderFoods();
+  }
+}
+
+async function refreshInBg(force = false) {
+  const cf = cacheGet('foods');
+  const cs = cacheGet('shabbats');
+
+  // Skip if fresh and not forced
+  if (!force && cf && !cf.stale && cs && !cs.stale) {
+    setDot(true);
+    return;
+  }
+
+  setDot(false);
+  syncOn();
+  try {
+    const [foods, shabbats] = await Promise.all([
+      GET('getFoods'),
+      GET('getShabbats')
+    ]);
+
+    const foodsChanged    = JSON.stringify(foods)    !== JSON.stringify(allFoods);
+    const shabbatsChanged = JSON.stringify(shabbats) !== JSON.stringify(allShabbats);
+
+    allFoods    = foods    || [];
+    allShabbats = shabbats || [];
+    cacheSet('foods',    allFoods);
+    cacheSet('shabbats', allShabbats);
+    setDot(true);
+
+    // Re-render only if data changed
+    if (foodsChanged)    { renderCatChips(); renderFoods(); }
+    if (shabbatsChanged) { renderHomeScreen(); }
+
+    if (foodsChanged || shabbatsChanged) toast('נתונים עודכנו','inf');
+  } catch(e) {
+    setDot(false);
+    // Only show error if we have no cached data
+    if (!allFoods.length && !allShabbats.length) toast('שגיאת טעינה: '+e.message,'err');
+  } finally { syncOff(); }
+}
+
+function forceRefresh() {
+  cacheClear();
+  toast('מרענן...','inf');
+  refreshInBg(true).then(() => {
+    renderHomeScreen();
+    renderCatChips();
+    renderFoods();
+    if (document.getElementById('page-history').classList.contains('on')) renderHist();
+  });
+}
+
+// ── NAVIGATION ────────────────────────────────────────────
 function go(id) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(t => t.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
   document.getElementById('tab-'+id).classList.add('on');
-  if (id==='cook')     { document.getElementById('shabSelector').style.display='flex'; document.getElementById('mainProg').style.display='block'; }
-  else                 { document.getElementById('shabSelector').style.display='none';  document.getElementById('mainProg').style.display='none'; }
-  if (id==='history')  renderHist();
-  if (id==='absent')   loadAbsent();
+  if (id==='history') renderHist();
+  if (id==='absent')  loadAbsent();
   if (id==='planning') renderPlanning();
+  if (id==='home') renderHomeScreen();
 }
 
-// ─── FOODS ────────────────────────────────────────────────
+// ── HOME / COOK SCREEN ────────────────────────────────────
+function pickBestShabbat() {
+  if (!allShabbats.length) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = allShabbats.filter(s => new Date(s.date) >= today)
+    .sort((a,b) => new Date(a.date)-new Date(b.date));
+  return upcoming[0] || allShabbats[0];
+}
+
+async function renderHomeScreen(shabOverride) {
+  const shab = shabOverride || pickBestShabbat();
+  currentShab = shab;
+  const el = document.getElementById('cookContent');
+  document.getElementById('homePickBtn').style.display = allShabbats.length > 1 ? '' : 'none';
+
+  if (!shab) {
+    el.innerHTML = `<div class="cook-no-shab">
+      <div class="ei">🕯️</div>
+      <h3>אין שבת מתוכננת</h3>
+      <p>תכנן את השבת הקרובה כדי להתחיל</p>
+      <button class="btn btn-gold" onclick="go('planning')">📅 תכנן שבת</button>
+    </div>`;
+    document.getElementById('doneBanner').classList.remove('show');
+    return;
+  }
+
+  // Try to get heb date from cache (non-blocking)
+  const hebDate = await getHeb(shab.date);
+
+  const doneSet   = getDone(shab.id);
+  const total     = shab.foods.length;
+  const doneCount = shab.foods.filter(f => doneSet.has(f.id)).length;
+  const pct       = total ? Math.round(doneCount/total*100) : 0;
+
+  document.getElementById('doneBanner').classList.toggle('show', doneCount===total && total>0);
+
+  // Group by CATS order
+  const byCat = {};
+  CATS.forEach(c => { const fs=shab.foods.filter(f=>f.category===c); if(fs.length) byCat[c]=fs; });
+  const other = shab.foods.filter(f=>!CATS.includes(f.category));
+  if (other.length) byCat['אחר'] = other;
+
+  let rows = '';
+  Object.entries(byCat).forEach(([cat, foods]) => {
+    rows += `<div class="cook-divider"><span>${EMO[cat]||'·'} ${cat}</span></div>`;
+    foods.forEach(f => {
+      const done = doneSet.has(f.id);
+      rows += `
+        <div class="cook-row ${done?'done':''}" id="cr-${f.id}" onclick="toggleDone('${shab.id}','${f.id}')">
+          <div class="c-circle" id="cc-${f.id}">${done?'✓':''}</div>
+          <div class="cr-info">
+            <span class="cr-name">${esc(f.name)}</span>
+            ${f.recipe_source?`<span class="cr-sep">·</span><span class="cr-src">${esc(f.recipe_source)}</span>`:''}
+          </div>
+          <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
+            ${f.recipe?`<button class="expand-btn" id="eb-${f.id}" onclick="event.stopPropagation();xRecipe('${f.id}')" title="הצג מתכון">›</button>`:''}
+          </div>
+        </div>
+        ${f.recipe?`<div class="recipe-panel" id="rp-${f.id}">${esc(f.recipe)}</div>`:''}`;
+    });
+  });
+
+  el.innerHTML = `
+    <div class="cook-header">
+      <div>
+        <div class="cook-shab-title">🕯️ ${hebDate || fmtDate(shab.date)}</div>
+        ${hebDate?`<div class="cook-shab-sub">${fmtDate(shab.date)}</div>`:''}
+        ${shab.notes?`<div class="cook-shab-notes">💬 ${esc(shab.notes)}</div>`:''}
+      </div>
+      <div>
+        <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:${pct}%"></div></div>
+        <div class="prog-txt" id="progTxt">${doneCount}/${total} הוכנו</div>
+      </div>
+    </div>
+    <div class="cook-list">${rows||'<div class="empty-dk"><div class="ei">🍽️</div><p>אין מאכלים בשבת זו</p></div>'}</div>`;
+}
+
+function toggleDone(shabId, foodId) {
+  const doneSet = getDone(shabId);
+  doneSet.has(foodId) ? doneSet.delete(foodId) : doneSet.add(foodId);
+  saveDone(shabId, doneSet);
+
+  const row = document.getElementById('cr-'+foodId);
+  const cc  = document.getElementById('cc-'+foodId);
+  if (row) { row.classList.toggle('done', doneSet.has(foodId)); cc.textContent = doneSet.has(foodId)?'✓':''; }
+
+  if (currentShab) {
+    const total = currentShab.foods.length;
+    const done  = currentShab.foods.filter(f=>doneSet.has(f.id)).length;
+    const pct   = total?Math.round(done/total*100):0;
+    const pf    = document.getElementById('progFill');
+    const pt    = document.getElementById('progTxt');
+    if (pf) pf.style.width = pct+'%';
+    if (pt) pt.textContent = done+'/'+total+' הוכנו';
+    document.getElementById('doneBanner').classList.toggle('show', done===total && total>0);
+  }
+}
+
+function xRecipe(foodId) {
+  const eb = document.getElementById('eb-'+foodId);
+  const rp = document.getElementById('rp-'+foodId);
+  if (!rp) return;
+  const open = rp.classList.toggle('open');
+  if (eb) eb.classList.toggle('open', open);
+}
+
+function pickShabbat() {
+  const list = document.getElementById('pickList');
+  list.innerHTML = allShabbats.map(s=>`
+    <button style="display:flex;align-items:center;justify-content:space-between;width:100%;
+      padding:9px 12px;border-radius:8px;border:1.5px solid var(--l-brd);background:var(--l-card);
+      cursor:pointer;font-family:'Heebo',sans-serif;font-size:.85rem;color:var(--l-txt);
+      transition:all .15s;text-align:right"
+      onclick="chooseShab('${s.id}')" onmouseover="this.style.background='var(--l-bg2)'" onmouseout="this.style.background='var(--l-card)'">
+      <span>📅 ${fmtDate(s.date)}${s.notes?' · '+esc(s.notes):''}</span>
+      <span style="font-size:.72rem;color:var(--l-txt3)">${s.foods.length} מאכלים</span>
+    </button>`).join('');
+  openM('pickModal');
+}
+
+async function chooseShab(id) {
+  closeM('pickModal');
+  const shab = allShabbats.find(s=>s.id===id);
+  if (shab) await renderHomeScreen(shab);
+}
+
+// ── FOODS ────────────────────────────────────────────────
 function renderCatChips() {
-  const cnt={};allFoods.forEach(f=>{cnt[f.category]=(cnt[f.category]||0)+1});
-  document.getElementById('catChips').innerHTML=
-    `<button class="chip ${activeCat==='all'?'on':''}" onclick="filterCat('all')">🍽️ הכל (${allFoods.length})</button>`+
-    CATS.map(c=>`<button class="chip ${activeCat===c?'on':''}" onclick="filterCat('${c}')">${EMO[c]} ${c} (${cnt[c]||0})</button>`).join('');
+  const cnt = {};
+  allFoods.forEach(f => { cnt[f.category]=(cnt[f.category]||0)+1; });
+  document.getElementById('catChips').innerHTML =
+    `<button class="chip ${activeCat==='all'?'on':''}" onclick="setCat('all')">🍽️ הכל (${allFoods.length})</button>`+
+    CATS.map(c=>`<button class="chip ${activeCat===c?'on':''}" onclick="setCat('${c}')">${EMO[c]} ${c} (${cnt[c]||0})</button>`).join('');
 }
-function filterCat(c){activeCat=c;renderCatChips();renderFoods()}
-function toggleFavFilter(){showFavOnly=!showFavOnly;renderFoods()}
-
+function setCat(c) { activeCat=c; renderCatChips(); renderFoods(); }
+function toggleFavF() {
+  showFavOnly=!showFavOnly;
+  document.getElementById('favIco').textContent = showFavOnly?'⭐':'☆';
+  renderFoods();
+}
 function renderFoods() {
-  const q=document.getElementById('foodSearch').value.toLowerCase();
-  let fs=allFoods;
-  if(activeCat!=='all')fs=fs.filter(f=>f.category===activeCat);
-  if(showFavOnly)fs=fs.filter(f=>f.favorite);
-  if(q)fs=fs.filter(f=>f.name.toLowerCase().includes(q)||(f.recipe_source||'').toLowerCase().includes(q));
-  const g=document.getElementById('foodsGrid');
-  if(!fs.length){g.innerHTML='<div class="empty"><div class="ei">🔍</div><h3>לא נמצאו</h3></div>';return}
-  g.innerHTML=fs.map(fCardHTML).join('');
+  const q = (document.getElementById('foodSearch').value||'').toLowerCase();
+  let fs = allFoods;
+  if (activeCat!=='all') fs=fs.filter(f=>f.category===activeCat);
+  if (showFavOnly) fs=fs.filter(f=>f.favorite);
+  if (q) fs=fs.filter(f=>f.name.toLowerCase().includes(q)||(f.recipe_source||'').toLowerCase().includes(q));
+  const g = document.getElementById('foodsGrid');
+  if (!fs.length) { g.innerHTML='<div class="empty"><div class="ei">🔍</div><h3>לא נמצאו</h3></div>'; return; }
+  g.innerHTML = fs.map(fCardHTML).join('');
 }
-function fCardHTML(f){
-  return`<div class="fcard" data-cat="${f.category}">
-    <div class="fcard-top"><div class="fname">${e(f.name)}</div>
-    <button class="fav-btn" onclick="toggleFav('${f.id}',${!f.favorite})">${f.favorite?'⭐':'☆'}</button></div>
-    <div class="cat-badge" data-cat="${f.category}">${EMO[f.category]||''} ${e(f.category)}</div>
-    <div class="fmeta">${f.recipe_source?`<span>📖 ${e(f.recipe_source)}</span>`:''}${f.notes?`<span>💬 ${e(f.notes)}</span>`:''}</div>
+function fCardHTML(f) {
+  return `<div class="fcard" data-cat="${f.category}">
+    <div class="fcard-top">
+      <div class="fname">${esc(f.name)}</div>
+      <button class="fav-btn" onclick="toggleFav('${f.id}',${!f.favorite})">${f.favorite?'⭐':'☆'}</button>
+    </div>
+    <div class="cat-badge" data-cat="${f.category}">${EMO[f.category]||''} ${esc(f.category)}</div>
+    <div class="fmeta">
+      ${f.recipe_source?`<span>📖 ${esc(f.recipe_source)}</span>`:''}
+      ${f.notes?`<span>💬 ${esc(f.notes)}</span>`:''}
+    </div>
     <div class="fcard-btns">
-      <button class="btn btn-ghost btn-sm" onclick="viewRecipe('${f.id}')">📖 מתכון</button>
-      <button class="btn btn-ghost btn-sm" onclick="openFoodModal('${f.id}')">✏️</button>
-      <button class="btn btn-red btn-sm" onclick="confirmDel('${f.id}','${e(f.name)}')">🗑️</button>
+      <button class="btn btn-ghost btn-xs" onclick="viewRecipe('${f.id}')">📖 מתכון</button>
+      <button class="copy-btn" onclick="copyFoodRecipe('${f.id}')">📋 העתק</button>
+      <button class="btn btn-ghost btn-xs" onclick="openFoodModal('${f.id}')">✏️</button>
+      <button class="btn btn-red btn-xs" onclick="confirmDel('${f.id}','${esc(f.name)}')">🗑️</button>
     </div>
   </div>`;
 }
+function copyFoodRecipe(id) {
+  const f=allFoods.find(x=>x.id===id); if(!f) return;
+  const txt=[f.name,f.category,f.recipe_source?'מאת: '+f.recipe_source:'','',f.recipe||'אין מתכון'].filter(Boolean).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>toast('הועתק!','ok')).catch(()=>toast('לא ניתן','err'));
+}
 
-// ─── FOOD MODAL ───────────────────────────────────────────
-function openFoodModal(id=null){
-  document.getElementById('fmTitle').textContent=id?'ערוך מאכל':'הוסף מאכל';
-  document.getElementById('fmId').value=id||'';
-  const f=id?allFoods.find(x=>x.id===id):null;
-  document.getElementById('fmName').value=f?.name||'';
-  document.getElementById('fmCat').value=f?.category||'';
-  document.getElementById('fmSrc').value=f?.recipe_source||'';
-  document.getElementById('fmRecipe').value=f?.recipe||'';
-  document.getElementById('fmNotes').value=f?.notes||'';
-  document.getElementById('fmFav').checked=f?.favorite||false;
+// ── FOOD MODAL ────────────────────────────────────────────
+function openFoodModal(id=null) {
+  document.getElementById('fmTitle').textContent = id?'ערוך מאכל':'הוסף מאכל';
+  document.getElementById('fmId').value = id||'';
+  const f = id?allFoods.find(x=>x.id===id):null;
+  document.getElementById('fmName').value   = f?.name||'';
+  document.getElementById('fmCat').value    = f?.category||'';
+  document.getElementById('fmSrc').value    = f?.recipe_source||'';
+  document.getElementById('fmRecipe').value = f?.recipe||'';
+  document.getElementById('fmNotes').value  = f?.notes||'';
+  document.getElementById('fmFav').checked  = f?.favorite||false;
   openM('foodModal');
 }
-async function saveFood(){
+async function saveFood() {
   const name=document.getElementById('fmName').value.trim();
-  const cat=document.getElementById('fmCat').value;
-  if(!name){toast('נא להזין שם','err');return}
-  if(!cat){toast('נא לבחור קטגוריה','err');return}
-  const data={name,category:cat,recipe_source:document.getElementById('fmSrc').value.trim(),
-    recipe:document.getElementById('fmRecipe').value.trim(),notes:document.getElementById('fmNotes').value.trim(),
+  const cat =document.getElementById('fmCat').value;
+  if (!name) { toast('נא להזין שם','err'); return; }
+  if (!cat)  { toast('נא לבחור קטגוריה','err'); return; }
+  const data={name,category:cat,
+    recipe_source:document.getElementById('fmSrc').value.trim(),
+    recipe:document.getElementById('fmRecipe').value.trim(),
+    notes:document.getElementById('fmNotes').value.trim(),
     favorite:document.getElementById('fmFav').checked};
-  try{
-    ld(1);const id=document.getElementById('fmId').value;
+  try {
+    syncOn();
+    const id=document.getElementById('fmId').value;
     await POST(id?{action:'updateFood',id,data}:{action:'addFood',data});
-    toast(id?'עודכן!':'נוסף!','ok');
+    toast(id?'עודכן ✅':'נוסף ✅','ok');
     closeM('foodModal');
-    allFoods=await GET('getFoods');
-    renderCatChips();renderFoods();
-    // refresh cooking if needed
-    if(cookingShabbat){allShabbats=await GET('getShabbats');cookingShabbat=allShabbats.find(s=>s.id===cookingShabbat.id)||cookingShabbat;renderCookPage()}
-  }catch(err){toast('שגיאה: '+err.message,'err')}
-  finally{ld(0)}
+    cacheClear();
+    await refreshInBg(true);
+  } catch(e) { toast('שגיאה: '+e.message,'err'); }
+  finally { syncOff(); }
 }
-async function toggleFav(id,val){
-  const f=allFoods.find(x=>x.id===id);if(!f)return;
-  try{await POST({action:'updateFood',id,data:{...f,favorite:val}});allFoods=await GET('getFoods');renderFoods()}
-  catch(e){toast('שגיאה','err')}
+async function toggleFav(id, val) {
+  const f=allFoods.find(x=>x.id===id); if(!f) return;
+  try {
+    syncOn();
+    await POST({action:'updateFood',id,data:{...f,favorite:val}});
+    // Update cache locally without full reload
+    const idx = allFoods.findIndex(x=>x.id===id);
+    if (idx>=0) allFoods[idx] = {...f,favorite:val};
+    cacheSet('foods', allFoods);
+    renderFoods();
+  } catch(e) { toast('שגיאה','err'); }
+  finally { syncOff(); }
 }
 
-// ─── RECIPE VIEW ──────────────────────────────────────────
-async function viewRecipe(id){
-  const f=allFoods.find(x=>x.id===id);if(!f)return;
-  document.getElementById('rmName').textContent=(f.favorite?'⭐ ':'')+f.name;
-  document.getElementById('rmCat').innerHTML=`<div class="cat-badge" data-cat="${f.category}">${EMO[f.category]||''} ${f.category}</div>`;
-  document.getElementById('rmSrc').textContent=f.recipe_source?'📖 '+f.recipe_source:'';
-  document.getElementById('rmRecipe').textContent=f.recipe||'אין מתכון שמור';
-  document.getElementById('rmNotes').textContent=f.notes?'💬 '+f.notes:'';
-  document.getElementById('rmEdit').onclick=()=>{closeM('recipeModal');openFoodModal(id)};
-  try{
-    const h=await GET('getFoodHistory',{id});
-    document.getElementById('rmHist').innerHTML=h?.count>0
-      ?`<div style="background:var(--surface2);border-radius:8px;padding:11px;border:1px solid var(--brd)">
-          <b style="font-size:.8rem;color:var(--cream2)">📅 היסטוריה</b>
-          <div style="font-size:.8rem;color:var(--txt2);margin-top:4px">הוכן <b>${h.count}</b> פעמים${h.lastDate?', אחרון: '+fmtDate(h.lastDate):''}</div>
-          ${h.dates.slice(0,5).map(d=>`<div style="font-size:.73rem;color:var(--txt2);margin-top:2px">• ${fmtDate(d)}</div>`).join('')}
-        </div>`
-      :'<div style="font-size:.76rem;color:var(--txt2)">לא הוכן עדיין.</div>';
-  }catch(err){}
+// ── RECIPE MODAL ──────────────────────────────────────────
+async function viewRecipe(id) {
+  const f=allFoods.find(x=>x.id===id); if(!f) return;
+  curRecipeFood=f;
+  document.getElementById('rmName').textContent   = (f.favorite?'⭐ ':'')+f.name;
+  document.getElementById('rmCat').innerHTML      = `<div class="cat-badge" data-cat="${f.category}">${EMO[f.category]||''} ${f.category}</div>`;
+  document.getElementById('rmSrc').textContent    = f.recipe_source?'📖 מאת: '+f.recipe_source:'';
+  document.getElementById('rmRecipe').textContent = f.recipe||'אין מתכון שמור';
+  document.getElementById('rmNotes').textContent  = f.notes?'💬 '+f.notes:'';
+  document.getElementById('rmEditBtn').onclick    = ()=>{closeM('recipeModal');openFoodModal(id)};
+  document.getElementById('rmHist').innerHTML     = '';
   openM('recipeModal');
+  // Load history async in background
+  try {
+    const h = await GET('getFoodHistory',{id});
+    document.getElementById('rmHist').innerHTML = h?.count>0
+      ?`<div style="background:var(--l-bg2);border-radius:7px;padding:10px;border:1px solid var(--l-brd)">
+          <b style="font-size:.82rem">📅 היסטוריה</b>
+          <div style="font-size:.78rem;color:var(--l-txt2);margin-top:3px">הוכן <b>${h.count}</b> פעמים${h.lastDate?', אחרון: '+fmtDate(h.lastDate):''}</div>
+          ${h.dates.slice(0,4).map(d=>`<div style="font-size:.73rem;color:var(--l-txt3);margin-top:2px">• ${fmtDate(d)}</div>`).join('')}
+        </div>` :'';
+  } catch {}
+}
+function copyRecipeCurrent() {
+  if (!curRecipeFood) return;
+  const f=curRecipeFood;
+  const txt=[f.name,f.category,f.recipe_source?'מאת: '+f.recipe_source:'','',f.recipe||'אין מתכון'].filter(Boolean).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>toast('הועתק!','ok')).catch(()=>toast('לא ניתן','err'));
 }
 
-// ─── DELETE ───────────────────────────────────────────────
-function confirmDel(id,name){
-  document.getElementById('delMsg').innerHTML=`למחוק "<strong>${e(name)}</strong>"?<br><strong>לא ניתן לבטל.</strong>`;
-  document.getElementById('delOk').onclick=()=>doDelFood(id);openM('delModal');
+// ── DELETE ────────────────────────────────────────────────
+function confirmDel(id, name) {
+  document.getElementById('delMsg').innerHTML=`למחוק "<strong>${esc(name)}</strong>"?<br><strong>לא ניתן לבטל.</strong>`;
+  document.getElementById('delOk').onclick=()=>doDelFood(id);
+  openM('delModal');
 }
-async function doDelFood(id){
-  try{ld(1);await POST({action:'deleteFood',id});closeM('delModal');toast('נמחק','inf');
-    allFoods=await GET('getFoods');renderCatChips();renderFoods();}
-  catch(e){toast('שגיאה: '+e.message,'err')}finally{ld(0)}
+async function doDelFood(id) {
+  try {
+    syncOn();
+    await POST({action:'deleteFood',id});
+    closeM('delModal'); toast('נמחק','inf');
+    cacheClear(); await refreshInBg(true);
+  } catch(e) { toast('שגיאה: '+e.message,'err'); }
+  finally { syncOff(); }
 }
 
-// ─── PLANNING ─────────────────────────────────────────────
-function renderPlanning(){
+// ── PLANNING ──────────────────────────────────────────────
+function renderPlanning() {
   const el=document.getElementById('planCats');
-  if(!allFoods.length){el.innerHTML='<div class="empty"><div class="ei">🍽️</div><p>הוסף מאכלים תחילה</p></div>';return}
-  el.innerHTML=CATS.map(cat=>{
-    const fs=allFoods.filter(f=>f.category===cat);if(!fs.length)return'';
-    return`<div class="pcat" id="pcat-${cat}">
-      <div class="pcat-hdr" style="background:${CLRS[cat]||'#1c2333'}" onclick="togglePcat('pcat-${cat}')">
-        <h3>${EMO[cat]} ${cat}</h3><span class="pcat-cnt">${fs.length}</span><span class="pcat-chev">▼</span>
+  if (!allFoods.length) { el.innerHTML='<div class="empty"><div class="ei">🍽️</div><p>הוסף מאכלים תחילה</p></div>'; return; }
+  el.innerHTML = CATS.map(cat=>{
+    const fs=allFoods.filter(f=>f.category===cat);
+    if(!fs.length) return '';
+    return `<div class="cat-sec" id="catS-${cat}">
+      <div class="cat-hdr" style="background:${CAT_CLR[cat]||'#374151'}" onclick="toggleCatS('catS-${cat}')">
+        <h3>${EMO[cat]} ${cat}</h3><span class="cat-cnt">${fs.length}</span><span class="cat-chev">▼</span>
       </div>
-      <div class="pcat-foods">
+      <div class="cat-foods">
         ${fs.map(f=>`
           <div class="fci ${selIds.has(f.id)?'sel':''}" onclick="toggleSel('${f.id}')" id="fci-${f.id}">
             <div class="cbox">${selIds.has(f.id)?'✓':''}</div>
-            <div class="fci-lbl">
-              <div class="fci-name">${e(f.name)} ${f.favorite?'⭐':''}</div>
-              ${f.recipe_source?`<div class="fci-meta">📖 ${e(f.recipe_source)}</div>`:''}
+            <div>
+              <div class="fci-name">${esc(f.name)} ${f.favorite?'⭐':''}</div>
+              ${f.recipe_source?`<div class="fci-meta">📖 ${esc(f.recipe_source)}</div>`:''}
             </div>
           </div>`).join('')}
+        <div class="quick-add-row">
+          <input placeholder="+ מאכל חדש ב${cat}..." id="qa-${cat}"
+            onkeydown="if(event.key==='Enter') quickAdd('${cat}')"/>
+          <button class="btn btn-ghost btn-sm" onclick="quickAdd('${cat}')">➕</button>
+        </div>
       </div>
     </div>`;
   }).join('');
   updateSelSummary();
 }
-function togglePcat(id){document.getElementById(id).classList.toggle('coll')}
-function toggleSel(id){
+function toggleCatS(id) { document.getElementById(id).classList.toggle('coll'); }
+function toggleSel(id) {
   selIds.has(id)?selIds.delete(id):selIds.add(id);
   const el=document.getElementById('fci-'+id);
-  if(el){el.classList.toggle('sel',selIds.has(id));el.querySelector('.cbox').textContent=selIds.has(id)?'✓':''}
+  if(el){el.classList.toggle('sel',selIds.has(id));el.querySelector('.cbox').textContent=selIds.has(id)?'✓':'';}
   updateSelSummary();
 }
-function updateSelSummary(){
-  document.getElementById('selCount').textContent=selIds.size;
+function updateSelSummary() {
+  document.getElementById('selCount').textContent = selIds.size;
   const fs=allFoods.filter(f=>selIds.has(f.id));
-  document.getElementById('selList').innerHTML=fs.length
-    ?fs.map(f=>`<div class="sel-chip"><span>${EMO[f.category]||''} ${e(f.name)}</span><button class="rm-btn" onclick="toggleSel('${f.id}')">✕</button></div>`).join('')
-    :'<div style="text-align:center;color:var(--txt2);font-size:.78rem;padding:8px">לא נבחרו</div>';
+  document.getElementById('selList').innerHTML = fs.length
+    ? fs.map(f=>`<div class="sel-chip"><span>${EMO[f.category]||''} ${esc(f.name)}</span><button class="rm-btn" onclick="toggleSel('${f.id}')">✕</button></div>`).join('')
+    : '<div style="text-align:center;color:var(--l-txt3);font-size:.76rem;padding:6px">לא נבחרו מאכלים</div>';
 }
-
-async function saveShabbat(){
+async function quickAdd(category) {
+  const inp=document.getElementById('qa-'+category);
+  const name=inp.value.trim(); if(!name) return;
+  try {
+    syncOn();
+    const newFood=await POST({action:'addFood',data:{name,category,recipe_source:'',recipe:'',notes:'',favorite:false}});
+    inp.value='';
+    toast(`"${name}" נוסף ✅`,'ok');
+    // Add to local cache immediately
+    allFoods.push(newFood);
+    cacheSet('foods', allFoods);
+    selIds.add(newFood.id);
+    renderCatChips();
+    renderPlanning();
+    updateSelSummary();
+  } catch(e) { toast('שגיאה: '+e.message,'err'); }
+  finally { syncOff(); }
+}
+async function saveShabbat() {
   const date=document.getElementById('shabDate').value;
-  if(!date){toast('נא לבחור תאריך','err');return}
-  if(!selIds.size){toast('נא לבחור לפחות מאכל אחד','err');return}
-  try{
-    ld(1);
+  if(!date) { toast('נא לבחור תאריך','err'); return; }
+  if(!selIds.size) { toast('נא לבחור לפחות מאכל אחד','err'); return; }
+  try {
+    syncOn();
     const saved=await POST({action:'addShabbat',data:{date,notes:document.getElementById('shabNotes').value.trim(),foodIds:[...selIds]}});
     toast('השבת נשמרה! 🎉','ok');
-    allShabbats=await GET('getShabbats');
-    // auto-switch to cooking view showing the new shabbat
-    cookingShabbat=allShabbats.find(s=>s.id===saved.id)||pickBestShabbat();
-    cookDone.clear();
     selIds.clear();
-    renderCookPage();
-    updateShabNav();
-    go('cook');
-  }catch(e){toast('שגיאה: '+e.message,'err')}
-  finally{ld(0)}
+    cacheClear();
+    await refreshInBg(true);
+    renderPlanning();
+    go('home');
+    await renderHomeScreen(saved);
+  } catch(e) { toast('שגיאה: '+e.message,'err'); }
+  finally { syncOff(); }
 }
-
-async function copyLast(){
-  if(!allShabbats.length){toast('אין שבתות קודמות','err');return}
+async function copyLast() {
+  if(!allShabbats.length) { toast('אין שבתות קודמות','err'); return; }
   const last=allShabbats[0];
   selIds=new Set(last.foods.map(f=>f.id));
-  document.getElementById('shabNotes').value='העתק מ-'+fmtDateShort(last.date);
-  renderPlanning();toast(`הועתקו ${selIds.size} מאכלים`,'ok');
+  document.getElementById('shabNotes').value='העתק מ-'+fmtDate(last.date);
+  renderPlanning();
+  toast(`הועתקו ${selIds.size} מאכלים`,'ok');
 }
 
-// ─── HISTORY ──────────────────────────────────────────────
-function toggleHistView(){
+// ── HISTORY ───────────────────────────────────────────────
+function toggleHist() {
   histView=histView==='shabbats'?'foods':'shabbats';
   document.getElementById('histToggle').textContent=histView==='shabbats'?'👁️ לפי מאכלים':'👁️ לפי שבתות';
   renderHist();
 }
-function renderHist(){
+async function renderHist() {
   const el=document.getElementById('histContent');
-  if(histView==='shabbats'){
-    if(!allShabbats.length){el.innerHTML='<div class="empty"><div class="ei">📅</div><h3>אין שבתות</h3></div>';return}
+  if(histView==='shabbats') {
+    if(!allShabbats.length) { el.innerHTML='<div class="empty"><div class="ei">📅</div><h3>אין שבתות</h3><p>צור שבת ראשונה</p></div>'; return; }
+    // Fetch heb dates for all (cached)
+    await Promise.all(allShabbats.map(s=>getHeb(s.date)));
     el.innerHTML=`<div class="shab-list">${allShabbats.map(s=>`
       <div class="shab-card">
         <div class="shab-top">
-          <div class="shab-date">📅 ${fmtDate(s.date)}</div>
-          <div style="display:flex;gap:6px;align-items:center">
-            ${s.notes?`<span style="font-size:.74rem;color:var(--txt2)">${e(s.notes)}</span>`:''}
-            <span style="font-size:.72rem;color:var(--txt2)">${s.foods.length} מאכלים</span>
-            <button class="btn btn-red btn-sm" onclick="confirmDelShab('${s.id}','${fmtDate(s.date)}')">🗑️</button>
+          <div class="shab-date">📅 ${hebCache[s.date]||fmtDate(s.date)}${s.notes?` <span style="font-size:.72rem;color:var(--l-txt3);font-weight:400">· ${esc(s.notes)}</span>`:''}</div>
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:.71rem;color:var(--l-txt3)">${s.foods.length} מאכלים</span>
+            <button class="btn btn-ghost btn-xs" onclick="copyShabbat('${s.id}')">📋 העתק</button>
+            <button class="btn btn-red btn-xs" onclick="confirmDelShab('${s.id}','${fmtDate(s.date)}')">🗑️</button>
           </div>
         </div>
         <div class="shab-body">
-          <div class="ftags">${s.foods.length?s.foods.map(f=>`<span class="ftag">${EMO[f.category]||''} ${e(f.name)}</span>`).join(''):'<span style="font-size:.8rem;color:var(--txt2)">אין</span>'}</div>
+          <div class="food-tags">${s.foods.length
+            ?s.foods.map(f=>`<span class="ftag">${EMO[f.category]||''} ${esc(f.name)}</span>`).join('')
+            :'<span style="color:var(--l-txt3);font-size:.78rem">אין מאכלים</span>'}</div>
         </div>
       </div>`).join('')}</div>`;
-  }else{
+  } else {
     const fs=allFoods.map(f=>{
       const cnt=allShabbats.filter(s=>s.foods.some(sf=>sf.id===f.id)).length;
       const last=allShabbats.find(s=>s.foods.some(sf=>sf.id===f.id))?.date||null;
-      return{...f,cnt,last};
+      return {...f,cnt,last};
     }).sort((a,b)=>b.cnt-a.cnt);
     const mx=fs[0]?.cnt||1;
-    el.innerHTML=`<div class="hist-grid">${fs.map(f=>`
-      <div class="hfcard" data-cat="${f.category}">
+    el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:9px">
+      ${fs.map(f=>`<div class="card" style="padding:13px;background:var(--l-card);border:1.5px solid var(--l-brd);border-radius:var(--r)" data-cat="${f.category}">
         <div class="cat-badge" data-cat="${f.category}">${EMO[f.category]||''} ${f.category}</div>
-        <div class="hf-name">${e(f.name)} ${f.favorite?'⭐':''}</div>
-        <div class="hf-bar"><div class="hf-fill" style="width:${Math.max(f.cnt/mx*100,2)}%"></div></div>
-        <div class="hf-stats"><span>הוכן <b>${f.cnt}</b> פעמים</span><span>${f.last?fmtDateShort(f.last):'אף פעם'}</span></div>
+        <div style="font-family:'Frank Ruhl Libre',serif;font-size:.97rem;font-weight:700;margin-bottom:6px">${esc(f.name)} ${f.favorite?'⭐':''}</div>
+        <div style="height:4px;background:var(--l-brd);border-radius:2px;overflow:hidden;margin-bottom:5px">
+          <div style="height:100%;width:${Math.max(f.cnt/mx*100,2)}%;background:linear-gradient(90deg,var(--gold3),var(--gold));border-radius:2px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.73rem;color:var(--l-txt3)">
+          <span>×<b>${f.cnt}</b></span><span>${f.last?fmtDate(f.last):'אף פעם'}</span>
+        </div>
       </div>`).join('')}</div>`;
   }
 }
-function confirmDelShab(id,ds){
-  document.getElementById('delMsg').innerHTML=`למחוק שבת <strong>${e(ds)}</strong>?<br><strong>לא ניתן לבטל.</strong>`;
-  document.getElementById('delOk').onclick=()=>doDelShab(id);openM('delModal');
+async function copyShabbat(id) {
+  const shab=allShabbats.find(s=>s.id===id); if(!shab) return;
+  selIds=new Set(shab.foods.map(f=>f.id));
+  document.getElementById('shabNotes').value='העתק מ-'+fmtDate(shab.date);
+  go('planning'); renderPlanning();
+  toast(`הועתקו ${selIds.size} מאכלים · ערוך ושמור`,'ok');
 }
-async function doDelShab(id){
-  try{ld(1);await POST({action:'deleteShabbat',id});closeM('delModal');toast('נמחקה','inf');
-    allShabbats=await GET('getShabbats');
-    if(cookingShabbat?.id===id){cookingShabbat=pickBestShabbat();cookDone.clear();renderCookPage();updateShabNav()}
-    renderHist();}
-  catch(e){toast('שגיאה: '+e.message,'err')}finally{ld(0)}
+function confirmDelShab(id, dateStr) {
+  document.getElementById('delMsg').innerHTML=`למחוק שבת <strong>${esc(dateStr)}</strong>?<br><strong>לא ניתן לבטל.</strong>`;
+  document.getElementById('delOk').onclick=()=>doDelShab(id);
+  openM('delModal');
+}
+async function doDelShab(id) {
+  try {
+    syncOn();
+    await POST({action:'deleteShabbat',id});
+    closeM('delModal'); toast('נמחקה','inf');
+    cacheClear(); await refreshInBg(true);
+    renderHist();
+    if(currentShab?.id===id) { currentShab=null; renderHomeScreen(); }
+  } catch(e) { toast('שגיאה: '+e.message,'err'); }
+  finally { syncOff(); }
 }
 
-// ─── ABSENT ───────────────────────────────────────────────
-async function loadAbsent(){
+// ── ABSENT ────────────────────────────────────────────────
+async function loadAbsent(force=false) {
   const el=document.getElementById('absList');
+  const cached=cacheGet('absent');
+  if(cached && !cached.stale && !force) { renderAbsent(cached.data); return; }
   el.innerHTML='<div class="empty"><div class="ei">⏳</div><p>מחשב...</p></div>';
-  try{
-    ld(1);const fs=await GET('getLongAbsent');
-    if(!fs?.length){el.innerHTML='<div class="empty"><div class="ei">🎉</div><h3>כל הכבוד!</h3><p>כל המאכלים הוכנו לאחרונה</p></div>';return}
-    el.innerHTML=fs.map(f=>{
-      const cls=f.daysSince>90?'hot':f.daysSince>60?'warm':'cool';
-      const dn=f.daysSince===9999?'∞':f.daysSince;
-      return`<div class="abs-item">
-        <div class="abs-days ${cls}"><div class="abs-num">${dn}</div><div class="abs-lbl">ימים</div></div>
-        <div class="abs-info"><div class="abs-name">${EMO[f.category]||''} ${e(f.name)}</div>
-          <div class="abs-meta">${f.category} ${f.lastDate?'• '+fmtDateShort(f.lastDate):'• לא הוכן מעולם'}</div></div>
-        <button class="btn btn-ghost btn-sm" onclick="addToPlan('${f.id}')">📅</button>
-      </div>`;
-    }).join('');
-  }catch(err){toast('שגיאה: '+err.message,'err');el.innerHTML=''}
-  finally{ld(0)}
+  try {
+    syncOn();
+    const fs=await GET('getLongAbsent');
+    cacheSet('absent',fs);
+    renderAbsent(fs);
+  } catch(e) { toast('שגיאה: '+e.message,'err'); el.innerHTML=''; }
+  finally { syncOff(); }
 }
-function addToPlan(id){selIds.add(id);go('planning');renderPlanning();toast('נוסף ✅','ok')}
+function renderAbsent(fs) {
+  const el=document.getElementById('absList');
+  if(!fs?.length) { el.innerHTML='<div class="empty"><div class="ei">🎉</div><h3>כל הכבוד!</h3><p>כל המאכלים הוכנו לאחרונה</p></div>'; return; }
+  el.innerHTML=fs.map(f=>{
+    const cls=f.daysSince>90?'hot':f.daysSince>60?'warm':'cool';
+    const dn=f.daysSince===9999?'∞':f.daysSince;
+    return `<div class="abs-item">
+      <div class="abs-days ${cls}"><div class="abs-num">${dn}</div><div class="abs-lbl">ימים</div></div>
+      <div style="flex:1"><div style="font-weight:700;color:var(--l-txt);font-size:.88rem">${EMO[f.category]||''} ${esc(f.name)}</div>
+        <div style="font-size:.72rem;color:var(--l-txt3);margin-top:2px">${f.category} ${f.lastDate?'· '+fmtDate(f.lastDate):'· לא הוכן מעולם'}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="addToPlan('${f.id}')">📅 תכנן</button>
+    </div>`;
+  }).join('');
+}
+function addToPlan(id) { selIds.add(id); go('planning'); renderPlanning(); toast('נוסף לתכנון ✅','ok'); }
 
-// ─── SETTINGS ─────────────────────────────────────────────
-function openSettings(){document.getElementById('settUrl').value=API;openM('settingsModal')}
-function saveSettings(){
+// ── SETTINGS ──────────────────────────────────────────────
+function openSettings() { document.getElementById('settUrl').value=API; openM('settingsModal'); }
+function saveSettings() {
   const v=document.getElementById('settUrl').value.trim();
-  if(!v){toast('נא להזין URL','err');return}
-  API=v;localStorage.setItem('shabbat_api',v);
-  closeM('settingsModal');toast('נשמר! מרענן...','ok');loadAll();
+  if(!v) { toast('נא להזין URL','err'); return; }
+  API=v; localStorage.setItem('shabbat_api',v);
+  cacheClear(); closeM('settingsModal');
+  toast('נשמר! מרענן...','ok');
+  refreshInBg(true).then(()=>{renderHomeScreen();renderCatChips();renderFoods();});
 }
 
-// ─── MODAL HELPERS ────────────────────────────────────────
-function openM(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden'}
-function closeM(id){document.getElementById(id).classList.remove('open');document.body.style.overflow=''}
-document.querySelectorAll('.backdrop').forEach(el=>el.addEventListener('click',ev=>{if(ev.target===el)closeM(el.id)}));
+// ── MODAL HELPERS ─────────────────────────────────────────
+function openM(id)  { document.getElementById(id).classList.add('open');  document.body.style.overflow='hidden'; }
+function closeM(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+document.querySelectorAll('.backdrop').forEach(el=>
+  el.addEventListener('click', ev=>{ if(ev.target===el) closeM(el.id); }));
 
-// ─── UTILS ────────────────────────────────────────────────
-function ld(on){document.getElementById('ld').classList.toggle('hide',!on)}
-function toast(msg,type='inf'){
+// ── UTILS ─────────────────────────────────────────────────
+function toast(msg, type='inf') {
   const c=document.getElementById('toasts');
   const t=document.createElement('div');
   t.className=`toast ${type}`;
   t.textContent=({ok:'✅',err:'❌',inf:'ℹ️'}[type]||'')+' '+msg;
-  c.appendChild(t);setTimeout(()=>t.remove(),3200);
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),3200);
 }
-function e(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
-function fmtDate(d){try{return new Date(d).toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}catch{return d}}
-function fmtDateShort(d){try{return new Date(d).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}catch{return d}}
+function esc(s) {
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function fmtDate(d) {
+  try { return new Date(d).toLocaleDateString('he-IL',{weekday:'short',year:'numeric',month:'long',day:'numeric'}); }
+  catch { return d; }
+}
 </script>
 </body>
 </html>
