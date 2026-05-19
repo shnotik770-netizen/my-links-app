@@ -7,192 +7,109 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --purple: #7C3AED;
-    --pink: #EC4899;
-    --amber: #F59E0B;
-    --green: #10B981;
-    --blue: #3B82F6;
-    --red: #EF4444;
-    --card: rgba(255,255,255,0.97);
-    --radius: 18px;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Heebo', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    min-height: 100vh;
-    direction: rtl;
-    padding-bottom: 48px;
-  }
-  .blob-bg { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-  .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.22; animation: blobFloat 9s ease-in-out infinite; }
-  .blob-1 { width: 420px; height: 420px; background: #f093fb; top: -120px; right: -100px; animation-delay: 0s; }
-  .blob-2 { width: 320px; height: 320px; background: #4facfe; bottom: -60px; left: -60px; animation-delay: 3s; }
-  .blob-3 { width: 260px; height: 260px; background: #f5af19; top: 42%; left: 28%; animation-delay: 6s; }
-  @keyframes blobFloat { 0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(18px,-18px) scale(1.06);} }
-
-  .container { max-width: 540px; margin: 0 auto; padding: 0 16px; position: relative; z-index: 1; }
-
-  /* Header */
-  .header {
-    background: rgba(255,255,255,0.16);
-    backdrop-filter: blur(18px);
-    border-bottom: 1px solid rgba(255,255,255,0.24);
-    padding: 14px 16px;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .header-inner { max-width: 540px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-  .header-title { font-family: 'Fredoka One', cursive; color: #fff; font-size: 23px; }
-  .header-sub { color: rgba(255,255,255,0.82); font-size: 12px; margin-top: 1px; }
-  .header-score { background: rgba(255,255,255,0.2); border-radius: 14px; padding: 7px 16px; text-align: center; border: 1px solid rgba(255,255,255,0.3); }
-  .header-score-num { color: #FFD700; font-weight: 800; font-size: 28px; line-height: 1; font-family: 'Fredoka One', cursive; }
-  .header-score-label { color: #fff; font-size: 11px; }
-
-  .heb-date-banner {
-    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.28);
-    border-radius: 11px; padding: 7px 14px; margin: 10px 0 0;
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-  }
-  .heb-date-text { color: #fff; font-size: 14px; font-weight: 700; }
-  .heb-date-greg { color: rgba(255,255,255,0.72); font-size: 12px; }
-
-  .motivation {
-    background: var(--card); border-radius: var(--radius); padding: 13px 18px;
-    margin: 14px 0 10px; text-align: center;
-    box-shadow: 0 8px 32px rgba(124,58,237,0.14);
-    animation: slideDown 0.45s ease;
-  }
-  .motivation p { font-size: 15px; font-weight: 700; color: var(--purple); }
-  @keyframes slideDown { from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);} }
-
-  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-  .tab-btn {
-    flex: 1; padding: 10px 4px; border-radius: 13px; border: none;
-    font-family: 'Heebo', sans-serif; font-weight: 700; font-size: 13px;
-    cursor: pointer; transition: all 0.2s;
-    background: rgba(255,255,255,0.27); color: #fff;
-  }
-  .tab-btn.active { background: #fff; color: var(--purple); box-shadow: 0 4px 16px rgba(0,0,0,0.17); transform: translateY(-1px); }
-
-  .card {
-    background: var(--card); border-radius: var(--radius); padding: 20px;
-    margin-bottom: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-    animation: fadeUp 0.35s ease;
-  }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);} }
-  .card h3 { font-size: 15px; color: #1F2937; margin-bottom: 12px; font-weight: 700; }
-
-  select, input[type=text] {
-    width: 100%; padding: 11px 14px;
-    border-radius: 11px; border: 1.5px solid #E5E7EB;
-    font-family: 'Heebo', sans-serif; font-size: 14px;
-    background: #F9FAFB; color: #1F2937; outline: none; transition: border-color 0.2s;
-  }
-  select:focus, input[type=text]:focus { border-color: var(--purple); background: #fff; }
-
-  .kids-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-  .kid-btn {
-    padding: 8px 16px; border-radius: 22px; border: 2px solid #E5E7EB;
-    background: #F9FAFB; color: #374151;
-    font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: all 0.18s;
-  }
-  .kid-btn:hover { border-color: var(--purple); }
-  .kid-btn.selected { border-color: var(--purple); background: var(--purple); color: #fff; transform: scale(1.05); }
-
-  .add-kid-row { display: flex; gap: 8px; margin-bottom: 16px; }
-  .add-kid-row input { flex: 1; }
-  .btn-add {
-    padding: 11px 18px; background: var(--green); color: #fff;
-    border: none; border-radius: 11px; font-size: 22px; cursor: pointer; transition: transform 0.15s;
-  }
-  .btn-add:hover { transform: scale(1.1); }
-
-  .btn-save {
-    width: 100%; padding: 15px;
-    background: linear-gradient(135deg, var(--purple), var(--pink));
-    color: #fff; border: none; border-radius: 14px;
-    font-family: 'Fredoka One', cursive; font-size: 18px; letter-spacing: 0.5px;
-    cursor: pointer; transition: all 0.2s;
-    box-shadow: 0 4px 16px rgba(124,58,237,0.35);
-  }
-  .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.45); }
-  .btn-save:disabled { background: #9CA3AF; box-shadow: none; cursor: not-allowed; transform: none; }
-
-  .alert { border-radius: 11px; padding: 10px 14px; font-size: 13px; margin-bottom: 12px; }
-  .alert-error   { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; }
-  .alert-success { background: #F0FDF4; color: #16A34A; border: 1px solid #86EFAC; }
-  .alert-info    { background: #EFF6FF; color: #1D4ED8; border: 1px solid #93C5FD; }
-
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .stat-card { background: var(--card); border-radius: 16px; padding: 14px 8px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-  .stat-icon { font-size: 24px; margin-bottom: 3px; }
-  .stat-num { font-family: 'Fredoka One', cursive; font-size: 28px; color: #1F2937; line-height: 1; }
-  .stat-label { font-size: 11px; color: #6B7280; margin-top: 2px; }
-
-  .week-block { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-  .week-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-  .week-title { font-weight: 700; color: #1F2937; font-size: 14px; }
-  .week-sub { font-size: 12px; color: #6B7280; margin-top: 2px; }
-  .week-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-  .week-badge.great { background: #D1FAE5; color: #065F46; }
-  .week-badge.good  { background: #FEF3C7; color: #92400E; }
-  .week-badge.low   { background: #FEE2E2; color: #991B1B; }
-
-  .week-days { display: flex; gap: 6px; justify-content: flex-start; flex-wrap: wrap; }
-  .day-dot {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; cursor: default;
-  }
-  .day-dot.done   { background: var(--purple); color: #fff; }
-  .day-dot.miss   { background: #F3F4F6; color: #9CA3AF; border: 1.5px dashed #D1D5DB; }
-  .day-dot.today  { background: var(--amber); color: #fff; }
-  .day-dot.future { background: transparent; color: #D1D5DB; border: 1.5px dashed #E5E7EB; }
-
-  .chart-wrap { position: relative; height: 200px; }
-
-  .badges-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .badge-card {
-    border-radius: 14px; padding: 14px 10px; text-align: center;
-    border: 2px solid #E5E7EB; background: #F9FAFB; opacity: 0.44; transition: all 0.3s;
-  }
-  .badge-card.earned {
-    background: linear-gradient(135deg, #FFF7ED, #FEF3C7);
-    border-color: var(--amber); opacity: 1;
-    box-shadow: 0 4px 16px rgba(245,158,11,0.18);
-  }
-  .badge-icon { font-size: 32px; margin-bottom: 5px; }
-  .badge-label { font-weight: 700; font-size: 13px; color: #1F2937; }
-  .badge-desc { font-size: 11px; color: #6B7280; margin-top: 3px; }
-  .badge-earned-tag { color: #059669; font-weight: 700; font-size: 11px; margin-top: 5px; }
-
-  .footer-btns { display: flex; gap: 8px; margin-top: 4px; }
-  .btn-ghost {
-    flex: 1; padding: 10px;
-    background: rgba(255,255,255,0.22); color: #fff;
-    border: 1px solid rgba(255,255,255,0.36); border-radius: 11px;
-    font-family: 'Heebo', sans-serif; font-weight: 600; font-size: 13px;
-    cursor: pointer; transition: background 0.2s;
-  }
-  .btn-ghost:hover { background: rgba(255,255,255,0.32); }
-
-  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-left: 6px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  #loading-screen {
-    position: fixed; inset: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 14px; z-index: 999;
-  }
-  .load-icon { font-size: 60px; animation: bounce 0.85s ease infinite alternate; }
-  @keyframes bounce { from{transform:translateY(0);}to{transform:translateY(-14px);} }
-  #loading-screen p { color: #fff; font-size: 17px; font-weight: 700; font-family: 'Heebo', sans-serif; }
-  #loading-screen small { color: rgba(255,255,255,0.7); font-size: 13px; font-family: 'Heebo', sans-serif; }
-
-  .section-heading { color: #fff; font-size: 15px; font-weight: 700; margin: 14px 0 8px; }
+:root{--purple:#7C3AED;--pink:#EC4899;--amber:#F59E0B;--green:#10B981;--card:rgba(255,255,255,0.97);--radius:18px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Heebo',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 50%,#f093fb 100%);min-height:100vh;direction:rtl;padding-bottom:48px;}
+.blob-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.22;animation:blobFloat 9s ease-in-out infinite;}
+.blob-1{width:420px;height:420px;background:#f093fb;top:-120px;right:-100px;}
+.blob-2{width:320px;height:320px;background:#4facfe;bottom:-60px;left:-60px;animation-delay:3s;}
+.blob-3{width:260px;height:260px;background:#f5af19;top:42%;left:28%;animation-delay:6s;}
+@keyframes blobFloat{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(18px,-18px) scale(1.06);}}
+.container{max-width:540px;margin:0 auto;padding:0 16px;position:relative;z-index:1;}
+.header{background:rgba(255,255,255,0.16);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,0.24);padding:14px 16px;position:sticky;top:0;z-index:100;}
+.header-inner{max-width:540px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+.header-title{font-family:'Fredoka One',cursive;color:#fff;font-size:23px;}
+.header-sub{color:rgba(255,255,255,0.82);font-size:12px;margin-top:1px;}
+.header-score{background:rgba(255,255,255,0.2);border-radius:14px;padding:7px 16px;text-align:center;border:1px solid rgba(255,255,255,0.3);}
+.header-score-num{color:#FFD700;font-weight:800;font-size:28px;line-height:1;font-family:'Fredoka One',cursive;}
+.header-score-label{color:#fff;font-size:11px;}
+.heb-date-banner{background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.28);border-radius:11px;padding:7px 14px;margin:10px 0 0;display:flex;align-items:center;justify-content:center;gap:7px;}
+.heb-date-text{color:#fff;font-size:14px;font-weight:700;}
+.heb-date-greg{color:rgba(255,255,255,0.72);font-size:12px;}
+.motivation{background:var(--card);border-radius:var(--radius);padding:13px 18px;margin:14px 0 10px;text-align:center;box-shadow:0 8px 32px rgba(124,58,237,0.14);}
+.motivation p{font-size:15px;font-weight:700;color:var(--purple);}
+.tabs{display:flex;gap:6px;margin-bottom:12px;}
+.tab-btn{flex:1;padding:9px 2px;border-radius:13px;border:none;font-family:'Heebo',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:all 0.2s;background:rgba(255,255,255,0.27);color:#fff;}
+.tab-btn.active{background:#fff;color:var(--purple);box-shadow:0 4px 16px rgba(0,0,0,0.17);transform:translateY(-1px);}
+.card{background:var(--card);border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:0 8px 32px rgba(0,0,0,0.1);}
+.card h3{font-size:15px;color:#1F2937;margin-bottom:12px;font-weight:700;}
+select,input[type=text]{width:100%;padding:11px 14px;border-radius:11px;border:1.5px solid #E5E7EB;font-family:'Heebo',sans-serif;font-size:14px;background:#F9FAFB;color:#1F2937;outline:none;transition:border-color 0.2s;}
+select:focus,input[type=text]:focus{border-color:var(--purple);background:#fff;}
+.day-kids-preview{border-radius:11px;padding:10px 14px;font-size:13px;font-weight:600;margin-top:8px;margin-bottom:16px;transition:all 0.2s;}
+.day-kids-preview.has-kids{background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border:1.5px solid #86EFAC;color:#15803D;}
+.day-kids-preview.no-kids{background:#F9FAFB;border:1.5px solid #E5E7EB;color:#9CA3AF;font-weight:400;}
+.kids-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.kid-btn{padding:9px 16px;border-radius:22px;border:2px solid #E5E7EB;background:#F9FAFB;color:#374151;font-family:'Heebo',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.18s;position:relative;user-select:none;}
+.kid-btn:hover:not(.already-done){border-color:var(--purple);}
+.kid-btn.selected{border-color:var(--purple);background:var(--purple);color:#fff;transform:scale(1.05);}
+.kid-btn.already-done{border-color:#6EE7B7;background:#ECFDF5;color:#065F46;cursor:not-allowed;pointer-events:none;opacity:0.85;}
+.kid-btn.already-done::after{content:"✓";position:absolute;top:-7px;right:-7px;background:var(--green);color:#fff;border-radius:50%;width:19px;height:19px;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800;}
+.add-kid-row{display:flex;gap:8px;margin-bottom:16px;}
+.add-kid-row input{flex:1;}
+.btn-add{padding:11px 18px;background:var(--green);color:#fff;border:none;border-radius:11px;font-size:22px;cursor:pointer;transition:transform 0.15s;}
+.btn-add:hover{transform:scale(1.1);}
+.sel-summary{background:linear-gradient(135deg,#EDE9FE,#FAE8FF);border:1.5px solid #C4B5FD;border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:14px;color:#5B21B6;font-weight:700;display:none;text-align:center;}
+.btn-continue{width:100%;padding:17px;background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;border-radius:14px;font-family:'Fredoka One',cursive;font-size:21px;letter-spacing:0.5px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 18px rgba(16,185,129,0.42);display:none;}
+.btn-continue.show{display:block;}
+.btn-continue:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(16,185,129,0.52);}
+.btn-continue:disabled{background:#9CA3AF;box-shadow:none;cursor:not-allowed;transform:none;}
+.alert{border-radius:11px;padding:10px 14px;font-size:13px;margin-bottom:12px;}
+.alert-error{background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5;}
+.alert-success{background:#F0FDF4;color:#16A34A;border:1px solid #86EFAC;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-card{background:var(--card);border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.08);}
+.stat-icon{font-size:24px;margin-bottom:3px;}
+.stat-num{font-family:'Fredoka One',cursive;font-size:28px;color:#1F2937;line-height:1;}
+.stat-label{font-size:11px;color:#6B7280;margin-top:2px;}
+.week-block{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.08);}
+.week-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.week-title{font-weight:700;color:#1F2937;font-size:14px;}
+.week-sub{font-size:12px;color:#6B7280;margin-top:2px;}
+.week-badge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;}
+.week-badge.great{background:#D1FAE5;color:#065F46;}
+.week-badge.good{background:#FEF3C7;color:#92400E;}
+.week-badge.low{background:#FEE2E2;color:#991B1B;}
+.week-days{display:flex;gap:5px;flex-wrap:wrap;}
+.day-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:default;transition:transform 0.15s;}
+.day-dot:hover{transform:scale(1.1);}
+.day-dot.done{background:var(--purple);color:#fff;}
+.day-dot.miss{background:#F3F4F6;color:#9CA3AF;border:1.5px dashed #D1D5DB;}
+.day-dot.today-empty{background:var(--amber);color:#fff;}
+.day-dot.future{background:transparent;color:#D1D5DB;border:1.5px dashed #E5E7EB;}
+.chart-wrap{position:relative;height:200px;}
+.hist-toggle{display:flex;gap:6px;margin-bottom:14px;}
+.hist-toggle-btn{flex:1;padding:8px;border-radius:10px;border:1.5px solid #E5E7EB;background:#F9FAFB;color:#374151;font-family:'Heebo',sans-serif;font-weight:600;font-size:13px;cursor:pointer;}
+.hist-toggle-btn.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+.hist-section{margin-bottom:14px;}
+.hist-section-title{font-size:13px;font-weight:700;color:#6B7280;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #F3F4F6;}
+.hist-entry{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:10px;background:#F9FAFB;margin-bottom:6px;}
+.hist-kid-name{font-weight:700;color:#1F2937;font-size:14px;}
+.hist-check{background:#EDE9FE;color:#5B21B6;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:600;}
+.hist-by-kid-item{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,0.07);}
+.kih-name{font-weight:700;font-size:15px;color:#1F2937;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.kih-count{background:var(--purple);color:#fff;border-radius:20px;padding:2px 10px;font-size:12px;}
+.kih-dates{display:flex;flex-wrap:wrap;gap:6px;}
+.kih-date-chip{background:#EDE9FE;color:#5B21B6;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;}
+.badges-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.badge-card{border-radius:14px;padding:14px 10px;text-align:center;border:2px solid #E5E7EB;background:#F9FAFB;opacity:0.44;transition:all 0.3s;}
+.badge-card.earned{background:linear-gradient(135deg,#FFF7ED,#FEF3C7);border-color:var(--amber);opacity:1;box-shadow:0 4px 16px rgba(245,158,11,0.18);}
+.badge-icon{font-size:32px;margin-bottom:5px;}
+.badge-label{font-weight:700;font-size:13px;color:#1F2937;}
+.badge-desc{font-size:11px;color:#6B7280;margin-top:3px;}
+.badge-earned-tag{color:#059669;font-weight:700;font-size:11px;margin-top:5px;}
+.footer-btns{display:flex;gap:8px;margin-top:4px;}
+.btn-ghost{flex:1;padding:10px;background:rgba(255,255,255,0.22);color:#fff;border:1px solid rgba(255,255,255,0.36);border-radius:11px;font-family:'Heebo',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:background 0.2s;}
+.btn-ghost:hover{background:rgba(255,255,255,0.32);}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loading-screen{position:fixed;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 50%,#f093fb 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:999;}
+.load-icon{font-size:60px;animation:bounce 0.85s ease infinite alternate;}
+@keyframes bounce{from{transform:translateY(0);}to{transform:translateY(-14px);}}
+#loading-screen p{color:#fff;font-size:17px;font-weight:700;font-family:'Heebo',sans-serif;}
+#loading-screen small{color:rgba(255,255,255,0.7);font-size:13px;font-family:'Heebo',sans-serif;}
+.section-heading{color:#fff;font-size:15px;font-weight:700;margin:14px 0 8px;}
+.empty-state{text-align:center;color:#9CA3AF;font-size:14px;padding:20px 0;}
 </style>
 </head>
 <body>
@@ -204,9 +121,7 @@
 </div>
 
 <div class="blob-bg">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
+  <div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div>
 </div>
 
 <div class="header">
@@ -230,35 +145,40 @@
 </div>
 
 <div class="container" style="margin-top:14px;">
-
   <div class="motivation"><p id="motivation-text">טוען...</p></div>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('log')">📝 רישום</button>
     <button class="tab-btn" onclick="switchTab('stats')">📊 שבועי</button>
+    <button class="tab-btn" onclick="switchTab('history')">📖 היסטוריה</button>
     <button class="tab-btn" onclick="switchTab('badges')">🏆 תגים</button>
   </div>
 
-  <!-- LOG -->
+  <!-- LOG TAB -->
   <div id="tab-log">
     <div class="card">
-      <h3>📅 איזה יום?</h3>
-      <select id="day-select" style="margin-bottom:16px;"></select>
+      <h3>📅 בחר יום</h3>
+      <select id="day-select" onchange="onDayChange()"></select>
+      <div id="day-kids-preview" class="day-kids-preview no-kids">טוען נתונים...</div>
+
       <h3>👦 עם מי שיחקת?</h3>
       <div class="kids-grid" id="kids-grid"></div>
+
       <div class="add-kid-row">
-        <input type="text" id="new-kid-input" placeholder="הוסף ילד חדש...">
+        <input type="text" id="new-kid-input" placeholder="הוסף ילד חדש לרשימה...">
         <button class="btn-add" onclick="addKid()">+</button>
       </div>
+
+      <div class="sel-summary" id="sel-summary"></div>
       <div id="log-alert"></div>
-      <button class="btn-save" id="save-btn" onclick="savePlay()">💾 שמור משחק! 🎮</button>
+      <button class="btn-continue" id="save-btn" onclick="savePlay()">✅ המשך וסמן הצלחה!</button>
     </div>
   </div>
 
-  <!-- STATS -->
+  <!-- STATS TAB -->
   <div id="tab-stats" style="display:none;">
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-num" id="stat-total">0</div><div class="stat-label">סה"כ ימים</div></div>
+      <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-num" id="stat-total">0</div><div class="stat-label">ימי הצלחה</div></div>
       <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-num" id="stat-streak">0</div><div class="stat-label">ימים ברצף</div></div>
       <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-num" id="stat-kids">0</div><div class="stat-label">ילדים שונים</div></div>
     </div>
@@ -270,7 +190,19 @@
     <div id="past-weeks-container"></div>
   </div>
 
-  <!-- BADGES -->
+  <!-- HISTORY TAB -->
+  <div id="tab-history" style="display:none;">
+    <div class="card">
+      <h3 style="text-align:center;">📖 היסטוריה</h3>
+      <div class="hist-toggle">
+        <button class="hist-toggle-btn active" onclick="setHistView('kid')">👤 לפי ילד</button>
+        <button class="hist-toggle-btn" onclick="setHistView('date')">📅 לפי תאריך</button>
+      </div>
+      <div id="history-content"></div>
+    </div>
+  </div>
+
+  <!-- BADGES TAB -->
   <div id="tab-badges" style="display:none;">
     <div class="card">
       <h3 style="text-align:center;">🏆 תגי הישגים</h3>
@@ -285,206 +217,454 @@
 </div>
 
 <script>
-// ══════════════════════════════════
-// CONFIG — שנה כאן את ה-URL שלך
-// ══════════════════════════════════
+// ══════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxbex-8ZM8rN5I3D9ez-tweTtNlHG3ytAoQpr9lNG6xAwpuvM54_KOjVNNa2bNdxy9O/exec";
 
-// ══════════════════════════════════
-// MOTIVATIONS — לפי יום בשבוע
-// ══════════════════════════════════
 const MOTIVATIONS = {
-  0: ["☀️ שבוע חדש! הגיע הזמן לפתוח אותו בחברות ובחיוך!","🚀 ראשון — יום מעולה להתחיל מחדש!"],
-  1: ["💪 יום שני? אתה כבר בדרך הנכונה!","🌟 כל יום שני הוא דף חלק — כתוב עליו משחק מגניב!"],
-  2: ["🎯 שלישי — אמצע השבוע, ואתה עוד כאן. כל הכבוד!","😊 חיוך אחד מדבק — פזר אותו היום!"],
-  3: ["🌈 רביעי — כבר חצי שבוע של גבורה חברתית!","🤝 חברות אמיתית נבנית כל יום. אתה בונה משהו מיוחד!"],
-  4: ["🎉 חמישי — עוד יום אחד ויש לך שבוע נהדר!","⭐ כל יום שאתה משחק — אתה כוכב של מישהו!"],
-  5: ["🏆 שישי — סיים את השבוע בגדול!","🌺 שישי מדהים! עשית את השבוע הזה שווה!"],
-  6: ["🌙 שבת שלום — שבוע חדש מגיע. אתה מוכן?","🦋 שבת — זמן לחשוב כמה חברים נגעת בליבם השבוע!"],
+  0:["☀️ שבוע חדש, הזדמנות חדשה! פתח אותו בחיוך!","🚀 ראשון — יום מעולה להתחיל מחדש!"],
+  1:["💪 יום שני? אתה כבר בדרך הנכונה!","🌟 כל יום שני — דף חלק, משחק מגניב!"],
+  2:["🎯 שלישי — אמצע השבוע, ואתה עוד כאן!","😊 חיוך אחד מדבק — פזר אותו היום!"],
+  3:["🌈 רביעי — כבר חצי שבוע של גבורה!","🤝 חברות אמיתית נבנית כל יום!"],
+  4:["🎉 חמישי — עוד יום ויש לך שבוע נהדר!","⭐ כל יום שאתה משחק — אתה כוכב של מישהו!"],
+  5:["🏆 שישי — סיים את השבוע בגדול!","🌺 שישי מדהים! עשית את השבוע הזה שווה!"],
+  6:["🌙 שבת שלום — שבוע חדש מגיע. מוכן?","🦋 שבת — זמן לחשוב כמה חברים נגעת בליבם!"],
 };
 
 const BADGES = [
-  {id:"start",   icon:"🌱", label:"יוצא לדרך",    desc:"משחק ראשון",             req:(p,k,s)=>p>=1},
-  {id:"five",    icon:"🤝", label:"חבר מתמיד",    desc:"5 ימי הצלחה",            req:(p,k,s)=>p>=5},
-  {id:"week1",   icon:"📅", label:"שבוע שלם",     desc:"7 ימי הצלחה",            req:(p,k,s)=>p>=7},
-  {id:"streak3", icon:"🔥", label:"בוער!",         desc:"3 ימים ברצף",            req:(p,k,s)=>s>=3},
-  {id:"diverse", icon:"🌍", label:"חובק עולם",     desc:"3 ילדים שונים",          req:(p,k,s)=>k>=3},
-  {id:"streak7", icon:"⚡", label:"סופרמן!",       desc:"7 ימים ברצף",            req:(p,k,s)=>s>=7},
-  {id:"social",  icon:"🎊", label:"נשמת הכיתה",   desc:"15 ימי הצלחה",           req:(p,k,s)=>p>=15},
-  {id:"king",    icon:"👑", label:"מלך הכיתה",    desc:"5 ילדים שונים",          req:(p,k,s)=>k>=5},
-  {id:"legend",  icon:"🏆", label:"אגדה!",         desc:"30 ימי הצלחה",           req:(p,k,s)=>p>=30},
-  {id:"super",   icon:"🌟", label:"סופר-גיבור",   desc:"60 ימי הצלחה",           req:(p,k,s)=>p>=60},
+  {id:"start",   icon:"🌱",label:"יוצא לדרך",  desc:"משחק ראשון",        req:(p,k,s)=>p>=1},
+  {id:"five",    icon:"🤝",label:"חבר מתמיד",  desc:"5 ימי הצלחה",       req:(p,k,s)=>p>=5},
+  {id:"week1",   icon:"📅",label:"שבוע שלם",   desc:"7 ימי הצלחה",       req:(p,k,s)=>p>=7},
+  {id:"streak3", icon:"🔥",label:"בוער!",       desc:"3 ימים ברצף",       req:(p,k,s)=>s>=3},
+  {id:"diverse", icon:"🌍",label:"חובק עולם",   desc:"3 ילדים שונים",     req:(p,k,s)=>k>=3},
+  {id:"streak7", icon:"⚡",label:"סופרמן!",     desc:"7 ימים ברצף",       req:(p,k,s)=>s>=7},
+  {id:"social",  icon:"🎊",label:"נשמת הכיתה", desc:"15 ימי הצלחה",      req:(p,k,s)=>p>=15},
+  {id:"king",    icon:"👑",label:"מלך הכיתה",  desc:"5 ילדים שונים",     req:(p,k,s)=>k>=5},
+  {id:"legend",  icon:"🏆",label:"אגדה!",       desc:"30 ימי הצלחה",      req:(p,k,s)=>p>=30},
+  {id:"super",   icon:"🌟",label:"סופר-גיבור", desc:"60 ימי הצלחה",      req:(p,k,s)=>p>=60},
 ];
 
-const COLORS = ["#7C3AED","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#06B6D4","#84CC16","#F97316"];
-const DAY_NAMES_SHORT = ["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
+const COLORS   = ["#7C3AED","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#06B6D4","#84CC16","#F97316"];
+const HE_DAYS  = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+const DAY_SHORT = ["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
 
-// ══════════════════════════════════
+// ══════════════════════════════════════
 // STATE
-// ══════════════════════════════════
-let kids = [];
-let plays = [];
+// ══════════════════════════════════════
+let kids        = [];
+let plays       = [];   // each play: {date:"YYYY-MM-DD", kidName, done:boolean, hebrewDate, ...}
 let selectedKid = "";
-let selectedDayIso = todayISO();
+let selectedDayIso = "";
 let hebDateCache = {};
 let chartInstance = null;
+let dayOptions  = [];
+let _histView   = "kid";
 
-// ══════════════════════════════════
+// ══════════════════════════════════════
+// DATE HELPERS — all LOCAL, no UTC shift
+// ══════════════════════════════════════
+function localISO(d) {
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+}
+function localTodayISO() { return localISO(new Date()); }
+function parseLocalDate(iso) {
+  const [y,m,d] = iso.split("-").map(Number);
+  return new Date(y, m-1, d);
+}
+
+// ══════════════════════════════════════
+// normalizeDate — converts ANY date string to YYYY-MM-DD
+// Handles: "2026-05-19", "Tue May 19 2026 00:00:00 GMT+0300...", Date objects
+// ══════════════════════════════════════
+function normalizeDate(val) {
+  if (!val) return "";
+  const s = String(val).trim();
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // Try parsing as Date
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    // Use local date of the parsed result
+    return localISO(parsed);
+  }
+  return s;
+}
+
+// ══════════════════════════════════════
+// isDone — handles true, "TRUE", "true", 1, "1"
+// ══════════════════════════════════════
+function isDone(p) {
+  const v = p.done;
+  if (v === true || v === 1) return true;
+  if (typeof v === "string") {
+    const s = v.trim().toUpperCase();
+    return s === "TRUE" || s === "1" || s === "YES";
+  }
+  return false;
+}
+
+// ══════════════════════════════════════
+// kidsPlayedOnDay — returns Set<kidName> for a given ISO date
+// ══════════════════════════════════════
+function kidsPlayedOnDay(iso) {
+  return new Set(
+    plays
+      .filter(p => normalizeDate(p.date) === iso && isDone(p))
+      .map(p => p.kidName.trim().toLowerCase())
+  );
+}
+
+// ══════════════════════════════════════
+// shortHebDate — strips year + niqqud from Hebcal string
+// "ג׳ בְּסִיוָן תשפ״ו" → "ג׳ בסיוון"
+// ══════════════════════════════════════
+function shortHebDate(fullHeb, iso) {
+  if (!fullHeb || fullHeb === iso) {
+    return parseLocalDate(iso).toLocaleDateString("he-IL", {day:"numeric", month:"long"});
+  }
+  const parts = fullHeb.trim().split(/\s+/);
+  // Drop last token if it looks like a Hebrew year
+  if (parts.length >= 3) {
+    const last = parts[parts.length-1];
+    if (/[״׳]/.test(last) || /^[\u05D0-\u05EA]{2,6}$/.test(last)) {
+      return parts.slice(0,-1).join(" ").replace(/[\u05B0-\u05C7]/g,"");
+    }
+  }
+  return fullHeb.replace(/[\u05B0-\u05C7]/g,"");
+}
+
+// ══════════════════════════════════════
 // INIT
-// ══════════════════════════════════
+// ══════════════════════════════════════
 async function init() {
   const day = new Date().getDay();
   const arr = MOTIVATIONS[day] || MOTIVATIONS[0];
-  document.getElementById("motivation-text").textContent = arr[Math.floor(Math.random() * arr.length)];
+  document.getElementById("motivation-text").textContent = arr[Math.floor(Math.random()*arr.length)];
   document.getElementById("greg-date-today").textContent =
-    new Date().toLocaleDateString("he-IL", {weekday:"long", day:"numeric", month:"long"});
+    new Date().toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"});
 
-  await Promise.all([
-    fetchTodayHebDate(),
-    buildDayDropdown(),
-  ]);
+  const todayHeb = await fetchHebDateForISO(localTodayISO());
+  document.getElementById("heb-date-today").textContent = shortHebDate(todayHeb, localTodayISO());
+
+  await buildDayDropdown();
   await refreshData();
   document.getElementById("loading-screen").style.display = "none";
 }
 
-// ══════════════════════════════════
+// ══════════════════════════════════════
 // HEBCAL
-// ══════════════════════════════════
+// ══════════════════════════════════════
 async function fetchHebDateForISO(iso) {
   if (hebDateCache[iso]) return hebDateCache[iso];
   try {
-    const [y,m,d] = iso.split("-");
-    const url = `https://www.hebcal.com/converter?cfg=json&gy=${y}&gm=${+m}&gd=${+d}&g2h=1`;
-    const res = await fetch(url);
+    const [y,m,d] = iso.split("-").map(Number);
+    const res = await fetch(`https://www.hebcal.com/converter?cfg=json&gy=${y}&gm=${m}&gd=${d}&g2h=1`);
     const data = await res.json();
-    const heb = data.hebrew || iso;
-    hebDateCache[iso] = heb;
-    return heb;
+    hebDateCache[iso] = data.hebrew || iso;
   } catch {
     hebDateCache[iso] = iso;
-    return iso;
   }
+  return hebDateCache[iso];
 }
 
-async function fetchTodayHebDate() {
-  const heb = await fetchHebDateForISO(todayISO());
-  document.getElementById("heb-date-today").textContent = heb;
-}
-
-// ══════════════════════════════════
-// DAY DROPDOWN (14 days)
-// ══════════════════════════════════
+// ══════════════════════════════════════
+// BUILD DROPDOWN — 7 days incl. today, local timezone
+// ══════════════════════════════════════
 async function buildDayDropdown() {
+  const today = new Date(); today.setHours(0,0,0,0);
   const isoList = [];
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
-    isoList.push(d.toISOString().split("T")[0]);
+  for (let i=0; i<7; i++) {
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    isoList.push(localISO(d));
   }
-  const hebDates = await Promise.all(isoList.map(iso => fetchHebDateForISO(iso)));
+  const hebs = await Promise.all(isoList.map(iso => fetchHebDateForISO(iso)));
+
+  dayOptions = isoList.map((iso,i) => {
+    const d = parseLocalDate(iso);
+    const dayName = HE_DAYS[d.getDay()];
+    const hebShort = shortHebDate(hebs[i], iso);
+    const prefix = i===0 ? "היום" : i===1 ? "אתמול" : "";
+    const label = prefix
+      ? `${prefix} — יום ${dayName}, ${hebShort}`
+      : `יום ${dayName}, ${hebShort}`;
+    return { iso, label };
+  });
+
   const sel = document.getElementById("day-select");
   sel.innerHTML = "";
-  isoList.forEach((iso, i) => {
-    const d = new Date(iso + "T00:00:00");
-    const label = i===0?"היום": i===1?"אתמול": d.toLocaleDateString("he-IL",{weekday:"long"});
+  dayOptions.forEach(o => {
     const opt = document.createElement("option");
-    opt.value = iso;
-    opt.textContent = `${label} — ${hebDates[i]}`;
+    opt.value = o.iso;
+    opt.textContent = o.label;
     sel.appendChild(opt);
   });
   selectedDayIso = isoList[0];
-  sel.onchange = () => { selectedDayIso = sel.value; };
+  sel.value = selectedDayIso;
 }
 
-// ══════════════════════════════════
+// ══════════════════════════════════════
 // GOOGLE SHEETS
-// ══════════════════════════════════
+// ══════════════════════════════════════
+async function gsGet(action) {
+  const url = `${SHEET_URL}?action=${action}&_t=${Date.now()}`;
+  const res = await fetch(url, { redirect:"follow" });
+  const txt = await res.text();
+  return JSON.parse(txt);
+}
+
+async function gsPost(payload) {
+  const res = await fetch(SHEET_URL, {
+    method: "POST",
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(payload),
+  });
+  const txt = await res.text();
+  return JSON.parse(txt);
+}
+
+// ══════════════════════════════════════
+// REFRESH — load from sheet, normalize dates
+// ══════════════════════════════════════
 async function refreshData() {
-  showAlert("log-alert","info","🔄 מתחבר לגוגל שיטס...");
   try {
-    const [kRes, pRes] = await Promise.all([
-      fetch(SHEET_URL + "?action=getKids"),
-      fetch(SHEET_URL + "?action=getPlays"),
+    const [kData, pData] = await Promise.all([
+      gsGet("getKids"),
+      gsGet("getPlays"),
     ]);
-    const kData = await kRes.json();
-    const pData = await pRes.json();
-    if (kData.kids) kids = kData.kids;
-    if (pData.plays) plays = pData.plays;
-    clearAlert("log-alert");
-    renderKids();
-    renderStats();
-    renderBadges();
+    if (Array.isArray(kData.kids))  kids  = kData.kids;
+    if (Array.isArray(pData.plays)) {
+      // Normalize every date to YYYY-MM-DD on load
+      plays = pData.plays.map(p => ({
+        ...p,
+        date: normalizeDate(p.date),
+        kidName: String(p.kidName).trim(),
+      }));
+    }
   } catch(e) {
-    showAlert("log-alert","error","❌ שגיאה בחיבור. בדוק חיבור לאינטרנט ואת ה-URL.");
+    console.warn("refreshData error:", e);
+  }
+  renderAll();
+}
+
+function renderAll() {
+  renderDayKidsPreview();
+  renderKids();
+  updateSelSummary();
+  updateContinueBtn();
+  renderStats();
+  renderHistory();
+  renderBadges();
+}
+
+// ══════════════════════════════════════
+// onDayChange
+// ══════════════════════════════════════
+function onDayChange() {
+  selectedDayIso = document.getElementById("day-select").value;
+  selectedKid = "";
+  renderDayKidsPreview();
+  renderKids();
+  updateSelSummary();
+  updateContinueBtn();
+}
+
+// ══════════════════════════════════════
+// DAY KIDS PREVIEW
+// ══════════════════════════════════════
+function renderDayKidsPreview() {
+  const el = document.getElementById("day-kids-preview");
+  const doneSet = kidsPlayedOnDay(selectedDayIso);
+  if (doneSet.size > 0) {
+    // Find original-case names
+    const names = plays
+      .filter(p => normalizeDate(p.date) === selectedDayIso && isDone(p))
+      .map(p => p.kidName.trim());
+    const uniqueNames = [...new Set(names)].join(" · ");
+    el.className = "day-kids-preview has-kids";
+    el.innerHTML = `✅ ביום זה שיחקו עם: <strong>${uniqueNames}</strong>`;
+  } else {
+    el.className = "day-kids-preview no-kids";
+    el.textContent = "עדיין לא שיחקו ביום זה";
   }
 }
 
-async function savePlay() {
-  if (!selectedKid) { showAlert("log-alert","error","⚠️ בחר ילד תחילה!"); return; }
-  const btn = document.getElementById("save-btn");
-  btn.disabled = true;
-  btn.innerHTML = 'שומר... <span class="spinner"></span>';
-  const iso = selectedDayIso;
-  const heb = await fetchHebDateForISO(iso);
-  try {
-    await fetch(SHEET_URL, {
-      method: "POST",
-      body: JSON.stringify({action:"addPlay", date:iso, hebrewDate:heb, kidName:selectedKid, done:true})
-    });
-    showAlert("log-alert","success","🎉 נשמר בהצלחה! כל הכבוד!");
-    await refreshData();
-  } catch {
-    showAlert("log-alert","error","❌ שגיאה בשמירה. נסה שוב.");
-  }
-  btn.disabled = false;
-  btn.innerHTML = "💾 שמור משחק! 🎮";
-}
-
-async function addKid() {
-  const input = document.getElementById("new-kid-input");
-  const name = input.value.trim();
-  if (!name) return;
-  try {
-    await fetch(SHEET_URL, {method:"POST", body:JSON.stringify({action:"addKid",name})});
-    input.value = "";
-    await refreshData();
-  } catch {
-    showAlert("log-alert","error","❌ שגיאה בהוספת ילד.");
-  }
-}
-
-// ══════════════════════════════════
+// ══════════════════════════════════════
 // RENDER KIDS
-// ══════════════════════════════════
+// ══════════════════════════════════════
 function renderKids() {
   const grid = document.getElementById("kids-grid");
   grid.innerHTML = "";
+  const doneSet = kidsPlayedOnDay(selectedDayIso); // lowercase names
+
   kids.forEach(k => {
+    const nameLower = k.name.trim().toLowerCase();
+    const alreadyDone = doneSet.has(nameLower);
+    const isSelected  = selectedKid.toLowerCase() === nameLower && !alreadyDone;
+
     const btn = document.createElement("button");
-    btn.className = "kid-btn" + (selectedKid===k.name?" selected":"");
     btn.textContent = k.name;
-    btn.onclick = () => { selectedKid = k.name; renderKids(); };
+
+    if (alreadyDone) {
+      btn.className = "kid-btn already-done";
+      btn.disabled  = true;
+    } else if (isSelected) {
+      btn.className = "kid-btn selected";
+    } else {
+      btn.className = "kid-btn";
+    }
+
+    if (!alreadyDone) {
+      btn.addEventListener("click", () => {
+        selectedKid = k.name;
+        renderKids();
+        updateSelSummary();
+        updateContinueBtn();
+      });
+    }
     grid.appendChild(btn);
   });
 }
 
-// ══════════════════════════════════
-// STATS
-// ══════════════════════════════════
-function renderStats() {
-  const done = plays.filter(p => p.done===true || p.done==="TRUE");
-  const kidCounts = {};
-  done.forEach(p => { kidCounts[p.kidName] = (kidCounts[p.kidName]||0)+1; });
-  const uniqueKids = Object.keys(kidCounts).length;
-  const totalDays = done.length;
+function updateSelSummary() {
+  const el = document.getElementById("sel-summary");
+  if (selectedKid) {
+    const opt = dayOptions.find(o => o.iso === selectedDayIso);
+    el.textContent = `✅ ${opt ? opt.label : selectedDayIso}  ·  עם ${selectedKid}`;
+    el.style.display = "block";
+  } else {
+    el.style.display = "none";
+  }
+}
 
-  // Streak
-  const sortedDates = [...new Set(done.map(p=>p.date))].sort().reverse();
-  const today = new Date(); today.setHours(0,0,0,0);
-  let streak = 0;
-  for (let i=0; i<sortedDates.length; i++) {
-    const d = new Date(sortedDates[i]+"T00:00:00"); d.setHours(0,0,0,0);
-    const diff = Math.round((today-d)/86400000);
-    if (diff===i || diff===i+1) streak++;
+function updateContinueBtn() {
+  const btn = document.getElementById("save-btn");
+  const doneSet = kidsPlayedOnDay(selectedDayIso);
+  const allowed = selectedKid && !doneSet.has(selectedKid.toLowerCase());
+  if (allowed) btn.classList.add("show");
+  else         btn.classList.remove("show");
+}
+
+// ══════════════════════════════════════
+// SAVE PLAY
+// ══════════════════════════════════════
+async function savePlay() {
+  if (!selectedKid) return;
+
+  // Hard guard — re-check with normalized data
+  const doneSet = kidsPlayedOnDay(selectedDayIso);
+  if (doneSet.has(selectedKid.toLowerCase())) {
+    showAlert("log-alert","error",`⛔ כבר שמרת משחק עם ${selectedKid} ביום זה!`);
+    selectedKid = "";
+    renderKids(); updateSelSummary(); updateContinueBtn();
+    return;
+  }
+
+  const btn = document.getElementById("save-btn");
+  btn.disabled = true;
+  btn.classList.remove("show");
+  btn.innerHTML = '<span class="spinner"></span>שומר...';
+  clearAlert("log-alert");
+
+  const iso = selectedDayIso; // always YYYY-MM-DD
+  const heb = await fetchHebDateForISO(iso);
+  const savedKid = selectedKid;
+
+  // Optimistic update
+  plays.push({ date: iso, hebrewDate: heb, kidName: savedKid, done: true });
+  selectedKid = "";
+  renderDayKidsPreview();
+  renderKids();
+  updateSelSummary();
+  updateContinueBtn();
+
+  try {
+    const result = await gsPost({
+      action: "addPlay",
+      date: iso,          // sends clean YYYY-MM-DD
+      hebrewDate: heb,
+      kidName: savedKid,
+      done: true
+    });
+
+    if (result.success === false && result.reason === "duplicate") {
+      showAlert("log-alert","error",`⛔ כבר קיים רישום עם ${savedKid} ביום זה בגיליון!`);
+      plays = plays.filter(p => !(p.date===iso && p.kidName===savedKid && !p.id));
+    } else {
+      showAlert("log-alert","success","🎉 נשמר בהצלחה! כל הכבוד!");
+    }
+
+    // Sync fresh data
+    const pData = await gsGet("getPlays");
+    if (Array.isArray(pData.plays)) {
+      plays = pData.plays.map(p => ({
+        ...p,
+        date: normalizeDate(p.date),
+        kidName: String(p.kidName).trim(),
+      }));
+    }
+    renderDayKidsPreview();
+    renderKids();
+    updateContinueBtn();
+    renderStats();
+    renderHistory();
+    renderBadges();
+
+  } catch(e) {
+    plays = plays.filter(p => !(p.date===iso && p.kidName===savedKid && !p.id));
+    showAlert("log-alert","error","❌ שגיאה בשמירה. נסה שוב.");
+    renderDayKidsPreview();
+    renderKids();
+    updateContinueBtn();
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = "✅ המשך וסמן הצלחה!";
+  updateContinueBtn();
+}
+
+// ══════════════════════════════════════
+// ADD KID
+// ══════════════════════════════════════
+async function addKid() {
+  const input = document.getElementById("new-kid-input");
+  const name = input.value.trim();
+  if (!name) return;
+  // Check duplicate locally first
+  const exists = kids.some(k => k.name.toLowerCase() === name.toLowerCase());
+  if (exists) { showAlert("log-alert","error","⚠️ ילד בשם זה כבר קיים ברשימה!"); return; }
+  input.value = "";
+  kids.push({ id:"tmp_"+Date.now(), name });
+  renderKids();
+  try {
+    await gsPost({ action:"addKid", name });
+    const kData = await gsGet("getKids");
+    if (Array.isArray(kData.kids)) kids = kData.kids;
+    renderKids();
+  } catch { /* keep optimistic */ }
+}
+
+// ══════════════════════════════════════
+// STATS
+// ══════════════════════════════════════
+function renderStats() {
+  const done = plays.filter(isDone);
+  const doneDays = new Set(done.map(p => normalizeDate(p.date)));
+  const totalDays = doneDays.size;
+  const kidCounts = {};
+  done.forEach(p => { kidCounts[p.kidName]=(kidCounts[p.kidName]||0)+1; });
+  const uniqueKids = Object.keys(kidCounts).length;
+
+  const sorted = [...doneDays].sort().reverse();
+  const todayD = new Date(); todayD.setHours(0,0,0,0);
+  let streak=0;
+  for (let i=0; i<sorted.length; i++) {
+    const d = parseLocalDate(sorted[i]);
+    const diff = Math.round((todayD-d)/86400000);
+    if (diff===i||diff===i+1) streak++;
     else break;
   }
 
@@ -501,139 +681,169 @@ function renderKidsChart(kidCounts) {
   const ctx = document.getElementById("kids-chart").getContext("2d");
   const labels = Object.keys(kidCounts);
   const data   = Object.values(kidCounts);
-  if (chartInstance) chartInstance.destroy();
+  if (chartInstance) { chartInstance.destroy(); chartInstance=null; }
   if (!labels.length) return;
   chartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        data,
-        backgroundColor: COLORS.slice(0,labels.length),
-        borderRadius: 8,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{
-        x:{ ticks:{font:{family:"Heebo",size:12}} },
-        y:{ ticks:{stepSize:1, font:{family:"Heebo",size:12}}, beginAtZero:true }
-      }
-    }
+    type:"bar",
+    data:{labels,datasets:[{data,backgroundColor:COLORS.slice(0,labels.length),borderRadius:8,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{family:"Heebo",size:12}}},y:{ticks:{stepSize:1,font:{family:"Heebo",size:12}},beginAtZero:true}}}
   });
 }
 
-// ══════════════════════════════════
+// ══════════════════════════════════════
 // WEEKLY VIEW
-// ══════════════════════════════════
-function isoFromDate(d) { return d.toISOString().split("T")[0]; }
-
-function getWeekStart(dateOrIso) {
-  const d = typeof dateOrIso==="string" ? new Date(dateOrIso+"T00:00:00") : new Date(dateOrIso);
-  d.setHours(0,0,0,0);
-  d.setDate(d.getDate() - d.getDay()); // Sunday = 0
-  return d;
+// ══════════════════════════════════════
+function getWeekStart(iso) {
+  const d = parseLocalDate(iso);
+  d.setDate(d.getDate()-d.getDay());
+  return localISO(d);
 }
 
 function renderWeeks(done) {
-  const playsByDate = {};
-  done.forEach(p => { playsByDate[p.date] = p; });
-
-  const weekStartsSet = new Set();
-  const today = new Date(); today.setHours(0,0,0,0);
-  weekStartsSet.add(isoFromDate(getWeekStart(today)));
-  done.forEach(p => {
-    weekStartsSet.add(isoFromDate(getWeekStart(new Date(p.date+"T00:00:00"))));
+  const playsByDate={};
+  done.forEach(p=>{
+    const iso=normalizeDate(p.date);
+    if(!playsByDate[iso]) playsByDate[iso]=new Set();
+    playsByDate[iso].add(p.kidName);
   });
-  const sorted = [...weekStartsSet].sort().reverse();
+  const weekSet=new Set();
+  weekSet.add(getWeekStart(localTodayISO()));
+  done.forEach(p=>weekSet.add(getWeekStart(normalizeDate(p.date))));
+  const sorted=[...weekSet].sort().reverse();
 
-  // Current week
-  const thisEl = document.getElementById("week-this-container");
-  thisEl.innerHTML = "";
-  if (sorted.length) thisEl.appendChild(buildWeekBlock(sorted[0], playsByDate, true));
+  const thisEl=document.getElementById("week-this-container");
+  thisEl.innerHTML="";
+  if(sorted.length) thisEl.appendChild(buildWeekBlock(sorted[0],playsByDate,true));
 
-  // Past weeks
-  const pastEl = document.getElementById("past-weeks-container");
-  pastEl.innerHTML = "";
-  if (sorted.length > 1) {
-    const h = document.createElement("div");
-    h.className="section-heading"; h.textContent="📚 שבועות קודמים";
+  const pastEl=document.getElementById("past-weeks-container");
+  pastEl.innerHTML="";
+  if(sorted.length>1){
+    const h=document.createElement("div");
+    h.className="section-heading";h.textContent="📚 שבועות קודמים";
     pastEl.appendChild(h);
-    sorted.slice(1).forEach(ws => pastEl.appendChild(buildWeekBlock(ws, playsByDate, false)));
+    sorted.slice(1).forEach(ws=>pastEl.appendChild(buildWeekBlock(ws,playsByDate,false)));
   }
 }
 
-function buildWeekBlock(weekStartISO, playsByDate, isCurrent) {
-  const ws = new Date(weekStartISO+"T00:00:00");
-  const days = [];
-  for (let i=0;i<7;i++) {
-    const d = new Date(ws); d.setDate(d.getDate()+i); days.push(d);
-  }
-  const today = new Date(); today.setHours(0,0,0,0);
-  const we = days[6];
+function buildWeekBlock(weekStartISO,playsByDate,isCurrent){
+  const ws=parseLocalDate(weekStartISO);
+  const days=[];
+  for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(d.getDate()+i);days.push(localISO(d));}
+  const todayIso=localTodayISO();
+  const doneCount=days.filter(iso=>playsByDate[iso]).length;
+  const pastDays=days.filter(iso=>iso<=todayIso).length;
 
-  const doneCount = days.filter(d => playsByDate[isoFromDate(d)]).length;
-  const pastDays  = days.filter(d => d<=today).length;
+  let bc="low",bt="המשך לנסות 💪";
+  if(doneCount>=5){bc="great";bt="שבוע מעולה! 🌟";}
+  else if(doneCount>=3){bc="good";bt="טוב מאוד! 👍";}
+  else if(isCurrent&&pastDays<3){bc="good";bt="בדרך הנכונה! 🚀";}
 
-  let badgeClass="low", badgeText="המשך לנסות 💪";
-  if (doneCount >= 5)                          { badgeClass="great"; badgeText="שבוע מעולה! 🌟"; }
-  else if (doneCount >= 3)                     { badgeClass="good";  badgeText="טוב מאוד! 👍"; }
-  else if (isCurrent && pastDays < 3)          { badgeClass="good";  badgeText="בדרך הנכונה! 🚀"; }
-
-  const wsLabel = ws.toLocaleDateString("he-IL",{day:"numeric",month:"numeric"});
-  const weLabel = we.toLocaleDateString("he-IL",{day:"numeric",month:"numeric"});
-
-  const block = document.createElement("div");
-  block.className = "week-block";
-  const uid = weekStartISO.replace(/-/g,"");
-  block.innerHTML = `
+  const wsL=parseLocalDate(days[0]).toLocaleDateString("he-IL",{day:"numeric",month:"numeric"});
+  const weL=parseLocalDate(days[6]).toLocaleDateString("he-IL",{day:"numeric",month:"numeric"});
+  const uid=weekStartISO.replace(/-/g,"");
+  const block=document.createElement("div");
+  block.className="week-block";
+  block.innerHTML=`
     <div class="week-header">
       <div>
-        <div class="week-title">${isCurrent?"📌 השבוע הנוכחי":"שבוע"} — ${wsLabel} עד ${weLabel}</div>
+        <div class="week-title">${isCurrent?"📌 השבוע הנוכחי":"שבוע"} — ${wsL} עד ${weL}</div>
         <div class="week-sub">${doneCount} / ${isCurrent?pastDays:7} ימי הצלחה</div>
       </div>
-      <span class="week-badge ${badgeClass}">${badgeText}</span>
+      <span class="week-badge ${bc}">${bt}</span>
     </div>
-    <div class="week-days" id="wdays-${uid}"></div>
-  `;
+    <div class="week-days" id="wdays-${uid}"></div>`;
 
-  requestAnimationFrame(() => {
-    const container = document.getElementById(`wdays-${uid}`);
-    if (!container) return;
-    days.forEach(d => {
-      const iso = isoFromDate(d);
-      const isToday = isoFromDate(d)===isoFromDate(today);
-      const isPast  = d<=today;
-      const played  = !!playsByDate[iso];
-      const dot = document.createElement("div");
-      dot.className = "day-dot " + (!isPast?"future": played?"done": isToday?"today":"miss");
-      dot.textContent = DAY_NAMES_SHORT[d.getDay()];
-      dot.title = iso + (played?" ✓":"");
-      container.appendChild(dot);
+  requestAnimationFrame(()=>{
+    const c=document.getElementById(`wdays-${uid}`);
+    if(!c)return;
+    days.forEach(iso=>{
+      const played=!!playsByDate[iso];
+      const isToday=iso===todayIso;
+      const isPast=iso<=todayIso;
+      const dot=document.createElement("div");
+      dot.className="day-dot "+(!isPast?"future":played?"done":isToday?"today-empty":"miss");
+      dot.textContent=DAY_SHORT[parseLocalDate(iso).getDay()];
+      dot.title=played?`${iso}: ${[...playsByDate[iso]].join(", ")}`:iso;
+      c.appendChild(dot);
     });
   });
   return block;
 }
 
-// ══════════════════════════════════
+// ══════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════
+function setHistView(view){
+  _histView=view;
+  document.querySelectorAll(".hist-toggle-btn").forEach((b,i)=>{
+    b.classList.toggle("active",(i===0&&view==="kid")||(i===1&&view==="date"));
+  });
+  renderHistory();
+}
+
+function renderHistory(){
+  const done=plays.filter(isDone);
+  const content=document.getElementById("history-content");
+  content.innerHTML="";
+  if(!done.length){content.innerHTML='<div class="empty-state">עדיין אין היסטוריה 📭</div>';return;}
+
+  if(_histView==="kid"){
+    const byKid={};
+    done.forEach(p=>{if(!byKid[p.kidName])byKid[p.kidName]=[];byKid[p.kidName].push(p);});
+    Object.entries(byKid).sort((a,b)=>b[1].length-a[1].length).forEach(([name,entries])=>{
+      const uniqueDates=[...new Set(entries.map(e=>normalizeDate(e.date)))].sort().reverse();
+      const chips=uniqueDates.map(iso=>{
+        const entry=entries.find(e=>normalizeDate(e.date)===iso);
+        const full=(entry&&entry.hebrewDate)||hebDateCache[iso]||"";
+        return `<span class="kih-date-chip" title="${iso}">${shortHebDate(full,iso)}</span>`;
+      }).join("");
+      const div=document.createElement("div");
+      div.className="hist-by-kid-item";
+      div.innerHTML=`<div class="kih-name"><span>👤 ${name}</span><span class="kih-count">${uniqueDates.length} פעמים</span></div><div class="kih-dates">${chips}</div>`;
+      content.appendChild(div);
+    });
+  } else {
+    const byDate={};
+    done.forEach(p=>{const iso=normalizeDate(p.date);if(!byDate[iso])byDate[iso]=[];byDate[iso].push(p);});
+    Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([iso,entries])=>{
+      const uniqueKids=[...new Set(entries.map(e=>e.kidName))];
+      const full=(entries[0]&&entries[0].hebrewDate)||hebDateCache[iso]||"";
+      const label=shortHebDate(full,iso);
+      const dayName=HE_DAYS[parseLocalDate(iso).getDay()];
+      const section=document.createElement("div");
+      section.className="hist-section";
+      section.innerHTML=`<div class="hist-section-title">יום ${dayName} — ${label}</div>`;
+      uniqueKids.forEach(name=>{
+        const row=document.createElement("div");
+        row.className="hist-entry";
+        row.innerHTML=`<span class="hist-kid-name">👤 ${name}</span><span class="hist-check">✓ שיחק</span>`;
+        section.appendChild(row);
+      });
+      content.appendChild(section);
+    });
+  }
+}
+
+// ══════════════════════════════════════
 // BADGES
-// ══════════════════════════════════
-function renderBadges() {
-  const done = plays.filter(p=>p.done===true||p.done==="TRUE");
+// ══════════════════════════════════════
+function renderBadges(){
+  const done=plays.filter(isDone);
+  const doneDays=new Set(done.map(p=>normalizeDate(p.date)));
+  const totalDays=doneDays.size;
   const kidCounts={};
   done.forEach(p=>{kidCounts[p.kidName]=(kidCounts[p.kidName]||0)+1;});
-  const uniqueKids=Object.keys(kidCounts).length, totalDays=done.length;
-  const sortedDates=[...new Set(done.map(p=>p.date))].sort().reverse();
-  const today=new Date();today.setHours(0,0,0,0);
+  const uniqueKids=Object.keys(kidCounts).length;
+  const sorted=[...doneDays].sort().reverse();
+  const todayD=new Date();todayD.setHours(0,0,0,0);
   let streak=0;
-  for(let i=0;i<sortedDates.length;i++){
-    const d=new Date(sortedDates[i]+"T00:00:00");d.setHours(0,0,0,0);
-    const diff=Math.round((today-d)/86400000);
+  for(let i=0;i<sorted.length;i++){
+    const d=parseLocalDate(sorted[i]);
+    const diff=Math.round((todayD-d)/86400000);
     if(diff===i||diff===i+1)streak++;else break;
   }
-  const grid=document.getElementById("badges-grid"); grid.innerHTML="";
+  const grid=document.getElementById("badges-grid");grid.innerHTML="";
   let earned=0;
   BADGES.forEach(b=>{
     const got=b.req(totalDays,uniqueKids,streak);
@@ -646,23 +856,21 @@ function renderBadges() {
   document.getElementById("badges-summary").textContent=`${earned} / ${BADGES.length} תגים הושגו`;
 }
 
-// ══════════════════════════════════
+// ══════════════════════════════════════
 // UI HELPERS
-// ══════════════════════════════════
-function switchTab(name) {
-  ["log","stats","badges"].forEach(t=>{
+// ══════════════════════════════════════
+function switchTab(name){
+  ["log","stats","history","badges"].forEach(t=>{
     document.getElementById(`tab-${t}`).style.display=t===name?"block":"none";
   });
   document.querySelectorAll(".tab-btn").forEach((btn,i)=>{
-    btn.classList.toggle("active",["log","stats","badges"][i]===name);
+    btn.classList.toggle("active",["log","stats","history","badges"][i]===name);
   });
 }
-function showAlert(id,type,msg){ document.getElementById(id).innerHTML=`<div class="alert alert-${type}">${msg}</div>`; }
-function clearAlert(id){ document.getElementById(id).innerHTML=""; }
-function todayISO(){ return new Date().toISOString().split("T")[0]; }
+function showAlert(id,type,msg){document.getElementById(id).innerHTML=`<div class="alert alert-${type}">${msg}</div>`;}
+function clearAlert(id){document.getElementById(id).innerHTML="";}
 
-// ══════════════════════════════════
-window.addEventListener("load", init);
+window.addEventListener("load",init);
 </script>
 </body>
 </html>
