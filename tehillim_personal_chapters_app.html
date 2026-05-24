@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תהילים אישיים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700;900&family=Noto+Sans+Hebrew:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--gold:#C9A84C;--gold-light:#F0D98A;--gold-dark:#8B6914;
+--parchment:#FAF7F0;--parchment-dark:#F0EAD6;--parchment-darker:#E8DFC5;
+--ink:#1A1208;--ink-light:#3D2E0F;--ink-muted:#7A6240;
+--blue-deep:#1B3A5C;--blue-mid:#2A5A8C;--blue-light:#D4E4F5;
+--red-accent:#8B1A1A;--green-muted:#2D5016;
+--shadow:0 2px 12px rgba(0,0,0,0.08);--shadow-hover:0 6px 24px rgba(0,0,0,0.14);
+--radius:12px;--radius-sm:8px;
+}
+body{font-family:'Noto Sans Hebrew',sans-serif;background:var(--parchment);color:var(--ink);min-height:100vh;direction:rtl}
+h1,h2,h3,h4{font-family:'Frank Ruhl Libre',serif}
+
+/* ===== LAYOUT ===== */
+#app{min-height:100vh}
+.header{background:linear-gradient(135deg,var(--blue-deep) 0%,#0D2540 100%);padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.header-logo{display:flex;align-items:center;gap:12px}
+.header-logo .logo-icon{width:42px;height:42px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Frank Ruhl Libre',serif;font-size:20px;color:var(--blue-deep);font-weight:900}
+.header-logo h1{color:white;font-size:1.4rem;font-weight:500;letter-spacing:0.02em}
+.header-logo .subtitle{color:rgba(255,255,255,0.6);font-size:0.75rem;font-family:'Noto Sans Hebrew',sans-serif;font-weight:300}
+.header-nav{display:flex;gap:8px}
+.nav-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:8px 16px;border-radius:20px;cursor:pointer;font-family:'Noto Sans Hebrew',sans-serif;font-size:0.85rem;transition:all 0.2s}
+.nav-btn:hover,.nav-btn.active{background:var(--gold);border-color:var(--gold);color:var(--blue-deep)}
+
+.main-content{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
+
+/* ===== CARDS ===== */
+.card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:1.5rem;transition:box-shadow 0.2s}
+.card:hover{box-shadow:var(--shadow-hover)}
+.card-gold{border-top:3px solid var(--gold)}
+
+/* ===== SECTIONS ===== */
+.section-title{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem}
+.section-title .star{color:var(--gold);font-size:1.2rem}
+.section-title h2{font-size:1.3rem;font-weight:700;color:var(--blue-deep)}
+
+/* ===== QUICK CHECK ===== */
+.quick-check{background:linear-gradient(135deg,var(--blue-deep),#1F4A7C);border-radius:var(--radius);padding:2rem;color:white;margin-bottom:2rem;position:relative;overflow:hidden}
+.quick-check::before{content:'תהילים';position:absolute;left:-20px;top:50%;transform:translateY(-50%);font-family:'Frank Ruhl Libre',serif;font-size:8rem;font-weight:900;color:rgba(255,255,255,0.04);pointer-events:none;line-height:1}
+.quick-check h2{font-size:1.4rem;margin-bottom:0.4rem;color:var(--gold-light)}
+.quick-check p{color:rgba(255,255,255,0.7);font-size:0.9rem;margin-bottom:1.5rem}
+.input-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.input-group{display:flex;flex-direction:column;gap:6px}
+.input-group label{font-size:0.8rem;color:rgba(255,255,255,0.7);font-weight:500}
+.input-group select,.input-group input{padding:10px 14px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:white;font-family:'Noto Sans Hebrew',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;min-width:140px}
+.input-group select option{color:var(--ink);background:white}
+.input-group input::placeholder{color:rgba(255,255,255,0.4)}
+.input-group input:focus,.input-group select:focus{border-color:var(--gold)}
+.btn{padding:10px 20px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Noto Sans Hebrew',sans-serif;font-size:0.9rem;font-weight:600;transition:all 0.2s}
+.btn-gold{background:var(--gold);color:var(--blue-deep)}
+.btn-gold:hover{background:var(--gold-light);transform:translateY(-1px)}
+.btn-blue{background:var(--blue-deep);color:white}
+.btn-blue:hover{background:var(--blue-mid)}
+.btn-outline{background:transparent;border:1px solid currentColor;color:var(--ink-muted)}
+.btn-outline:hover{background:var(--parchment-dark)}
+.btn-danger{background:transparent;border:none;color:#cc3333;font-size:0.8rem;padding:6px 10px}
+.btn-danger:hover{background:#fff0f0}
+.btn-sm{padding:6px 12px;font-size:0.8rem}
+
+/* ===== RESULT BOX ===== */
+.result-box{background:rgba(255,255,255,0.12);border:1px solid rgba(201,168,76,0.5);border-radius:var(--radius);padding:1.5rem;margin-top:1.2rem;display:none}
+.result-box.show{display:block;animation:fadeIn 0.4s ease}
+.result-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem}
+.result-stat{text-align:center}
+.result-stat .label{font-size:0.75rem;color:rgba(255,255,255,0.6);margin-bottom:4px;display:block}
+.result-stat .value{font-family:'Frank Ruhl Libre',serif;font-size:1.8rem;font-weight:700;color:var(--gold-light);line-height:1}
+.result-stat .sub{font-size:0.8rem;color:rgba(255,255,255,0.8);margin-top:3px}
+.result-title{font-family:'Frank Ruhl Libre',serif;font-size:1.1rem;color:var(--gold-light);margin-bottom:1rem;border-bottom:1px solid rgba(201,168,76,0.3);padding-bottom:0.6rem}
+
+/* ===== PERSONAL LIST ===== */
+.projects-grid{display:grid;gap:1rem}
+.project-card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:all 0.2s}
+.project-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.project-card-header{background:var(--blue-deep);padding:1rem 1.2rem;display:flex;align-items:center;justify-content:space-between}
+.project-name{font-family:'Frank Ruhl Libre',serif;font-size:1.1rem;color:white;font-weight:500}
+.project-date-badge{background:rgba(255,255,255,0.15);border-radius:20px;padding:4px 12px;font-size:0.75rem;color:rgba(255,255,255,0.8)}
+.project-card-body{padding:1.2rem}
+.project-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem}
+.pstat{text-align:center;padding:0.8rem;background:var(--parchment);border-radius:var(--radius-sm)}
+.pstat .pl{font-size:0.72rem;color:var(--ink-muted);margin-bottom:3px}
+.pstat .pv{font-family:'Frank Ruhl Libre',serif;font-size:1.5rem;font-weight:700;color:var(--blue-deep);line-height:1}
+.pstat .ps{font-size:0.72rem;color:var(--ink-muted)}
+.next-change{display:flex;align-items:center;gap:8px;padding:8px 12px;background:linear-gradient(135deg,#FFF8E8,#FFF3D4);border-radius:var(--radius-sm);border:1px solid rgba(201,168,76,0.3);font-size:0.82rem;color:var(--gold-dark);margin-bottom:1rem}
+.next-change .clock{font-size:1rem}
+.project-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ===== ADD FORM ===== */
+.add-form-card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:1.5rem;margin-bottom:2rem;border:2px dashed var(--parchment-darker);display:none}
+.add-form-card.show{display:block;animation:fadeIn 0.3s ease}
+.form-title{font-family:'Frank Ruhl Libre',serif;font-size:1.2rem;color:var(--blue-deep);margin-bottom:1.2rem;display:flex;align-items:center;gap:8px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-field label{font-size:0.82rem;font-weight:600;color:var(--ink-light)}
+.form-field input,.form-field select{padding:10px 14px;border:1px solid #DDD;border-radius:var(--radius-sm);font-family:'Noto Sans Hebrew',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;background:white;color:var(--ink)}
+.form-field input:focus,.form-field select:focus{border-color:var(--blue-mid)}
+.form-full{grid-column:1/-1}
+.form-actions{display:flex;gap:10px;justify-content:flex-end}
+
+/* ===== VIEWER ===== */
+.viewer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto}
+.viewer-overlay.show{display:flex}
+.viewer-panel{background:var(--parchment);border-radius:var(--radius);width:100%;max-width:720px;max-height:90vh;overflow-y:auto;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.viewer-header{background:var(--blue-deep);padding:1.5rem 2rem;position:sticky;top:0;z-index:10}
+.viewer-header-top{display:flex;justify-content:space-between;align-items:flex-start}
+.viewer-title{font-family:'Frank Ruhl Libre',serif;font-size:1.3rem;color:white;font-weight:500}
+.viewer-meta{color:rgba(255,255,255,0.7);font-size:0.85rem;margin-top:4px}
+.viewer-badge{display:inline-block;background:var(--gold);color:var(--blue-deep);padding:4px 14px;border-radius:20px;font-size:0.8rem;font-weight:700;font-family:'Frank Ruhl Libre',serif;margin-top:8px}
+.close-btn{background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.close-btn:hover{background:rgba(255,255,255,0.25)}
+.viewer-controls{padding:1rem 2rem;background:white;border-bottom:1px solid var(--parchment-darker);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.viewer-controls label{font-size:0.8rem;color:var(--ink-muted);font-weight:600}
+.viewer-controls select{padding:6px 12px;border:1px solid #DDD;border-radius:var(--radius-sm);font-family:'Noto Sans Hebrew',sans-serif;font-size:0.85rem;color:var(--ink)}
+.viewer-body{padding:2rem}
+.psalm-section{margin-bottom:2rem}
+.psalm-chapter-title{font-family:'Frank Ruhl Libre',serif;font-size:1.1rem;color:var(--blue-deep);margin-bottom:1rem;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--parchment-darker);padding-bottom:0.5rem}
+.chapter-num{width:32px;height:32px;background:var(--blue-deep);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:700;flex-shrink:0}
+.verse{margin-bottom:0.7rem;line-height:1.9;font-size:1rem;color:var(--ink)}
+.verse-num{font-size:0.75rem;color:var(--gold-dark);font-weight:700;margin-left:6px;font-family:'Frank Ruhl Libre',serif}
+.commentary-block{background:white;border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;border-right:3px solid var(--gold)}
+.commentary-source{font-size:0.75rem;font-weight:700;color:var(--gold-dark);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em}
+.commentary-text{font-size:0.88rem;line-height:1.7;color:var(--ink-light)}
+.loading-state{text-align:center;padding:3rem;color:var(--ink-muted)}
+.loading-spin{width:40px;height:40px;border:3px solid var(--parchment-darker);border-top-color:var(--blue-mid);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem}
+.error-state{text-align:center;padding:2rem;color:var(--red-accent);background:#fff0f0;border-radius:var(--radius-sm);margin:1rem 0}
+
+/* ===== EMPTY STATE ===== */
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--ink-muted)}
+.empty-icon{font-size:3.5rem;margin-bottom:1rem;opacity:0.3;font-family:'Frank Ruhl Libre',serif}
+.empty-state h3{font-family:'Frank Ruhl Libre',serif;font-size:1.3rem;color:var(--ink-light);margin-bottom:0.5rem}
+.empty-state p{font-size:0.9rem;line-height:1.6}
+
+/* ===== PRINT ===== */
+.print-btn{background:transparent;border:1px solid var(--gold);color:var(--gold-dark);padding:8px 16px;border-radius:20px;cursor:pointer;font-family:'Noto Sans Hebrew',sans-serif;font-size:0.82rem;transition:all 0.2s}
+.print-btn:hover{background:var(--gold);color:var(--blue-deep)}
+
+/* ===== MISC ===== */
+.divider{border:none;border-top:1px solid var(--parchment-darker);margin:2rem 0}
+.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600}
+.tag-hebrew{background:var(--parchment-dark);color:var(--gold-dark)}
+.tag-gregorian{background:var(--blue-light);color:var(--blue-deep)}
+.pre-switch{background:#FFF3E0;border:1px solid #FFB74D;color:#E65100;padding:4px 10px;border-radius:12px;font-size:0.75rem;display:inline-flex;align-items:center;gap:4px}
+.badge-leap{background:linear-gradient(135deg,#E8F5E9,#C8E6C9);color:var(--green-muted);padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;border:1px solid #A5D6A7}
+.badge-regular{background:var(--parchment-dark);color:var(--ink-muted);padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600}
+.hebrew-date-fields{display:flex;gap:8px;flex-wrap:wrap}
+.hebrew-date-fields select{flex:1;min-width:80px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+.form-grid{grid-template-columns:1fr}
+.project-stats{grid-template-columns:1fr 1fr}
+.input-row{flex-direction:column}
+.header{padding:1rem}
+.header-logo h1{font-size:1.1rem}
+.viewer-body{padding:1rem}
+}
+
+@media print{
+body{background:white}
+.header,.quick-check,.add-form-card,.project-card-header .project-actions,.viewer-overlay,.nav-btn,.print-btn{display:none!important}
+.project-card{box-shadow:none;break-inside:avoid;border:1px solid #DDD}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="header">
+  <div class="header-logo">
+    <div class="logo-icon">ת</div>
+    <div>
+      <h1>תהילים אישיים</h1>
+      <div class="subtitle">לימוד יומי לפי גיל ומועד</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <button class="nav-btn active" onclick="showTab('home')">דף הבית</button>
+    <button class="nav-btn" onclick="showTab('list')">הפרקים שלי</button>
+    <button class="print-btn" onclick="printAll()">🖨 הדפס הכל</button>
+  </nav>
+</header>
+
+<main class="main-content" id="main-content">
+
+<!-- ===== HOME TAB ===== -->
+<div id="tab-home">
+
+  <!-- Quick Check -->
+  <div class="quick-check">
+    <h2>בדוק את הפרק שלך</h2>
+    <p>הזן תאריך לידה וגלה איזה חלק בתהילים אתה לומד החודש</p>
+    <div class="input-row">
+      <div class="input-group">
+        <label>סוג תאריך</label>
+        <select id="qc-type" onchange="updateQuickCheckDateField()">
+          <option value="gregorian">לועזי</option>
+          <option value="hebrew">עברי</option>
+        </select>
+      </div>
+      <div id="qc-greg-fields" class="input-group">
+        <label>תאריך לידה</label>
+        <input type="date" id="qc-date" placeholder="DD/MM/YYYY">
+      </div>
+      <div id="qc-heb-fields" style="display:none" class="input-group">
+        <label>תאריך עברי</label>
+        <div class="hebrew-date-fields">
+          <select id="qc-heb-day" style="flex:0;min-width:60px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);padding:10px 8px;border-radius:8px;font-family:inherit"></select>
+          <select id="qc-heb-month" style="flex:1;min-width:110px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);padding:10px 8px;border-radius:8px;font-family:inherit"></select>
+          <select id="qc-heb-year" style="flex:0;min-width:80px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);padding:10px 8px;border-radius:8px;font-family:inherit"></select>
+        </div>
+      </div>
+      <div class="input-group" style="justify-content:flex-end">
+        <label>&nbsp;</label>
+        <button class="btn btn-gold" onclick="quickCheck()">בדוק ←</button>
+      </div>
+    </div>
+    <div id="qc-result" class="result-box"></div>
+  </div>
+
+  <!-- Today's Summary -->
+  <div class="section-title">
+    <span class="star">✦</span>
+    <h2>סיכום היום</h2>
+  </div>
+  <div id="today-summary" class="card card-gold" style="margin-bottom:2rem">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem">
+      <div style="text-align:center">
+        <div style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:4px">תאריך עברי היום</div>
+        <div id="today-heb-date" style="font-family:'Frank Ruhl Libre',serif;font-size:1.1rem;color:var(--blue-deep);font-weight:700">טוען...</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:4px">חודש עברי</div>
+        <div id="today-heb-month" style="font-family:'Frank Ruhl Libre',serif;font-size:1.1rem;color:var(--blue-deep);font-weight:700">טוען...</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:4px">סוג שנה</div>
+        <div id="today-year-type" style="font-size:0.9rem">טוען...</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:0.78rem;color:var(--ink-muted);margin-bottom:4px">ראש חודש הבא</div>
+        <div id="today-next-rosh" style="font-family:'Frank Ruhl Libre',serif;font-size:1rem;color:var(--blue-deep)">טוען...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Projects Preview -->
+  <div class="section-title">
+    <span class="star">✦</span>
+    <h2>הפרקים האישיים שלי</h2>
+    <button class="btn btn-blue btn-sm" style="margin-right:auto" onclick="showTab('list')">לכל הפרקים ←</button>
+  </div>
+  <div id="home-projects-preview"></div>
+</div>
+
+<!-- ===== LIST TAB ===== -->
+<div id="tab-list" style="display:none">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px">
+    <div class="section-title" style="margin-bottom:0">
+      <span class="star">✦</span>
+      <h2>הפרקים האישיים שלי</h2>
+    </div>
+    <button class="btn btn-gold" onclick="toggleAddForm()">+ הוסף פרק אישי</button>
+  </div>
+
+  <!-- Add Form -->
+  <div id="add-form-card" class="add-form-card">
+    <div class="form-title">✦ פרק אישי חדש</div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>שם הפרויקט / האדם</label>
+        <input type="text" id="form-name" placeholder='לדוגמה: "תהילים לרפואת אמא"'>
+      </div>
+      <div class="form-field">
+        <label>סוג תאריך</label>
+        <select id="form-type" onchange="updateFormDateField()">
+          <option value="gregorian">לועזי</option>
+          <option value="hebrew">עברי</option>
+        </select>
+      </div>
+      <div class="form-field" id="form-greg-wrap">
+        <label>תאריך לידה (לועזי)</label>
+        <input type="date" id="form-date-greg">
+      </div>
+      <div class="form-field" id="form-heb-wrap" style="display:none">
+        <label>תאריך לידה (עברי)</label>
+        <div class="hebrew-date-fields">
+          <select id="form-heb-day" style="min-width:60px"></select>
+          <select id="form-heb-month" style="min-width:110px"></select>
+          <select id="form-heb-year" style="min-width:80px"></select>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="toggleAddForm()">ביטול</button>
+      <button class="btn btn-gold" onclick="addProject()">צור פרק אישי ←</button>
+    </div>
+  </div>
+
+  <div id="projects-list"></div>
+</div>
+
+</main>
+</div>
+
+<!-- Viewer Overlay -->
+<div id="viewer-overlay" class="viewer-overlay" onclick="closeViewer(event)">
+  <div class="viewer-panel" onclick="event.stopPropagation()">
+    <div class="viewer-header">
+      <div class="viewer-header-top">
+        <div>
+          <div class="viewer-title" id="viewer-title">-</div>
+          <div class="viewer-meta" id="viewer-meta">-</div>
+          <div class="viewer-badge" id="viewer-badge">-</div>
+        </div>
+        <button class="close-btn" onclick="closeViewer()">✕</button>
+      </div>
+    </div>
+    <div class="viewer-controls">
+      <label>פירושים:</label>
+      <select id="commentary-select" onchange="loadViewerContent()">
+        <option value="none">ללא פירוש</option>
+        <option value="Rashi" selected>רש"י</option>
+        <option value="Metzudat_David">מצודת דוד</option>
+        <option value="both">רש"י + מצודות</option>
+        <option value="all">כל הפירושים</option>
+      </select>
+      <button class="btn btn-sm btn-outline" onclick="printViewer()">🖨 הדפס</button>
+    </div>
+    <div class="viewer-body" id="viewer-body">
+      <div class="loading-state"><div class="loading-spin"></div><p>טוען פרקי תהילים...</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let projects = [];
+let todayInfo = null;
+let currentViewerProject = null;
+let hebcalCache = {};
+let sefariaCache = {};
+
+// ===== HEBREW DATA =====
+const HEB_MONTHS = ['תשרי','חשון','כסלו','טבת','שבט','אדר','אדר א','אדר ב','ניסן','אייר','סיון','תמוז','אב','אלול'];
+const HEB_MONTHS_API = ['Tishrei','Cheshvan','Kislev','Tevet','Shvat','Adar','Adar I','Adar II','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
+const HEB_MONTHS_HE = {'Tishrei':'תשרי','Cheshvan':'חשון','Kislev':'כסלו','Tevet':'טבת','Shvat':'שבט','Adar':'אדר','Adar I':'אדר א\'','Adar II':'אדר ב\'','Nisan':'ניסן','Iyar':'אייר','Sivan':'סיון','Tamuz':'תמוז','Av':'אב','Elul':'אלול'};
+const PSALM_RANGES = [];
+
+// Build Psalm ranges: 150 chapters into monthly groups
+// Standard split: we divide by month number within the year
+function getPsalmChaptersForPart(part, totalParts){
+  // Divide 150 psalms into totalParts equal-ish parts
+  const base = Math.floor(150 / totalParts);
+  const remainder = 150 % totalParts;
+  const parts = [];
+  let start = 1;
+  for(let i = 0; i < totalParts; i++){
+    const size = i < remainder ? base + 1 : base;
+    parts.push({start, end: start + size - 1});
+    start += size;
+  }
+  return parts[part - 1] || {start:1, end:10};
+}
+
+// ===== HEBCAL UTILITIES =====
+async function fetchHebcal(params){
+  const key = JSON.stringify(params);
+  if(hebcalCache[key]) return hebcalCache[key];
+  const url = 'https://www.hebcal.com/converter?' + new URLSearchParams(params);
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Hebcal error');
+    const data = await res.json();
+    hebcalCache[key] = data;
+    return data;
+  }catch(e){
+    console.warn('Hebcal fetch failed',e);
+    return null;
+  }
+}
+
+async function gregToHebrew(dateStr){
+  const [y,m,d] = dateStr.split('-').map(Number);
+  return fetchHebcal({v:'1',cfg:'json',gy:y,gm:m,gd:d,g2h:1});
+}
+
+async function hebrewToGreg(hy,hm,hd){
+  return fetchHebcal({v:'1',cfg:'json',hy,hm,hd,h2g:1});
+}
+
+async function getTodayHebrew(){
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth()+1, d = now.getDate();
+  return gregToHebrew(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+}
+
+async function isLeapYear(hebrewYear){
+  // Hebrew leap years: (7*year + 1) mod 19 < 7
+  return ((7 * hebrewYear + 1) % 19) < 7;
+}
+
+async function getNextRoshChodesh(today){
+  // Fetch upcoming Jewish holidays to find next Rosh Chodesh
+  const now = new Date();
+  const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=off&min=off&mod=off&mf=off&ss=off&mv=off&s=off&i=off&geo=none&c=off&o=off&rosh_chodesh=on&start=${now.toISOString().split('T')[0]}&end=${new Date(now.getTime()+40*86400000).toISOString().split('T')[0]}`;
+  try{
+    const res = await fetch(url);
+    const data = await res.json();
+    const items = data.items||[];
+    const rc = items.find(i=>i.category==='roshchodesh');
+    return rc ? {date:rc.date, title:rc.title} : null;
+  }catch(e){
+    return null;
+  }
+}
+
+// ===== CORE CALCULATION =====
+async function calculatePsalmData(birthdateStr, dateType){
+  // 1. Get Gregorian birthdate
+  let gregBirth;
+  if(dateType === 'hebrew'){
+    const parts = birthdateStr.split('-'); // hy-hm-hd
+    const conv = await hebrewToGreg(parseInt(parts[0]), parts[1], parseInt(parts[2]));
+    if(!conv || !conv.gy) return null;
+    gregBirth = new Date(conv.gy, conv.gm-1, conv.gd);
+  } else {
+    gregBirth = new Date(birthdateStr);
+  }
+  if(isNaN(gregBirth)) return null;
+
+  // 2. Get today's Hebrew date info
+  const todayData = await getTodayHebrew();
+  if(!todayData) return null;
+  const hebrewYear = todayData.hy;
+  const hebrewMonth = todayData.hm;
+  const hebrewDay = todayData.hd;
+  const hebrewMonthName = todayData.hebrew;
+
+  // 3. Calculate age
+  const now = new Date();
+  let age = now.getFullYear() - gregBirth.getFullYear();
+  const mDiff = now.getMonth() - gregBirth.getMonth();
+  if(mDiff < 0 || (mDiff === 0 && now.getDate() < gregBirth.getDate())) age--;
+  if(age < 0) age = 0;
+
+  // 4. Psalm chapter = age + 1
+  const psalmChapter = age + 1;
+
+  // 5. Is current year a leap year?
+  const leap = await isLeapYear(hebrewYear);
+  const totalParts = leap ? 13 : 12;
+
+  // 6. Determine current month number within year (Tishrei=1)
+  const monthOrder = ['Tishrei','Cheshvan','Kislev','Tevet','Shvat','Adar I','Adar II','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
+  const regularMonthOrder = ['Tishrei','Cheshvan','Kislev','Tevet','Shvat','Adar','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
+  
+  let monthNum;
+  const monthName = todayData.hm; // month name from API
+  
+  if(leap){
+    monthNum = monthOrder.indexOf(monthName) + 1;
+    if(monthNum <= 0) monthNum = regularMonthOrder.indexOf(monthName) + 1;
+  } else {
+    monthNum = regularMonthOrder.indexOf(monthName) + 1;
+    if(monthNum <= 0) monthNum = 1;
+  }
+  if(monthNum <= 0) monthNum = 1;
+
+  // 7. Pre-switch: if within 2 days of Rosh Chodesh, advance to next month's portion
+  let effectiveMonth = monthNum;
+  const daysInMonthApprox = 30;
+  const daysLeft = daysInMonthApprox - hebrewDay;
+  const preSwitch = daysLeft <= 1; // last 2 days
+  if(preSwitch) effectiveMonth = (monthNum % totalParts) + 1;
+
+  // 8. Current part
+  const currentPart = Math.min(effectiveMonth, totalParts);
+  const psalmRange = getPsalmChaptersForPart(currentPart, totalParts);
+
+  // 9. Next Rosh Chodesh
+  const nextRC = await getNextRoshChodesh();
+
+  return {
+    age, psalmChapter, totalParts, currentPart,
+    leap, hebrewYear, hebrewMonthName: HEB_MONTHS_HE[monthName] || monthName,
+    preSwitch, psalmRange, nextRoshChodesh: nextRC,
+    hebrewDay, gregBirth
+  };
+}
+
+// ===== TODAY INFO =====
+async function loadTodayInfo(){
+  const data = await getTodayHebrew();
+  if(!data) return;
+  todayInfo = data;
+  
+  document.getElementById('today-heb-date').textContent = data.hebrew || `${data.hd} ${data.hm} ${data.hy}`;
+  document.getElementById('today-heb-month').textContent = HEB_MONTHS_HE[data.hm] || data.hm;
+  
+  const leap = await isLeapYear(data.hy);
+  const typeEl = document.getElementById('today-year-type');
+  if(leap){
+    typeEl.innerHTML = '<span class="badge-leap">שנה מעוברת (13 חלקים)</span>';
+  } else {
+    typeEl.innerHTML = '<span class="badge-regular">שנה רגילה (12 חלקים)</span>';
+  }
+  
+  const rc = await getNextRoshChodesh();
+  if(rc){
+    const rcDate = new Date(rc.date);
+    const diff = Math.ceil((rcDate - new Date()) / 86400000);
+    document.getElementById('today-next-rosh').textContent = `${rc.title} (בעוד ${diff} ימים)`;
+  }
+}
+
+// ===== QUICK CHECK =====
+function updateQuickCheckDateField(){
+  const type = document.getElementById('qc-type').value;
+  document.getElementById('qc-greg-fields').style.display = type === 'gregorian' ? '' : 'none';
+  document.getElementById('qc-heb-fields').style.display = type === 'hebrew' ? '' : 'none';
+}
+
+async function quickCheck(){
+  const type = document.getElementById('qc-type').value;
+  let dateStr;
+  
+  if(type === 'gregorian'){
+    dateStr = document.getElementById('qc-date').value;
+    if(!dateStr){alert('אנא הזן תאריך'); return;}
+  } else {
+    const d = document.getElementById('qc-heb-day').value;
+    const m = document.getElementById('qc-heb-month').value;
+    const y = document.getElementById('qc-heb-year').value;
+    if(!d||!m||!y){alert('אנא בחר תאריך עברי'); return;}
+    dateStr = `${y}-${m}-${d}`;
+  }
+  
+  const resultEl = document.getElementById('qc-result');
+  resultEl.className = 'result-box show';
+  resultEl.innerHTML = '<div class="loading-state" style="padding:1rem;color:rgba(255,255,255,0.8)"><div class="loading-spin" style="border-color:rgba(255,255,255,0.2);border-top-color:var(--gold)"></div><p>מחשב...</p></div>';
+  
+  const calc = await calculatePsalmData(dateStr, type);
+  if(!calc){
+    resultEl.innerHTML = '<div style="color:rgba(255,200,200,1)">⚠ שגיאה בחישוב. אנא בדוק את התאריך ונסה שוב.</div>';
+    return;
+  }
+  
+  const preLabel = calc.preSwitch ? '<span class="pre-switch">⏩ מעבר קרוב</span> ' : '';
+  const rcText = calc.nextRoshChodesh ? `${calc.nextRoshChodesh.title}` : 'לא ידוע';
+  
+  resultEl.innerHTML = `
+    <div class="result-title">✦ תוצאות לימוד תהילים</div>
+    <div class="result-row">
+      <div class="result-stat">
+        <span class="label">גיל</span>
+        <div class="value">${calc.age}</div>
+        <div class="sub">שנים</div>
+      </div>
+      <div class="result-stat">
+        <span class="label">פרק תהילים</span>
+        <div class="value">${calc.psalmChapter}</div>
+        <div class="sub">השנה</div>
+      </div>
+      <div class="result-stat">
+        <span class="label">חלק ${preLabel}</span>
+        <div class="value">${calc.currentPart}</div>
+        <div class="sub">מתוך ${calc.totalParts}</div>
+      </div>
+      <div class="result-stat">
+        <span class="label">פסוקים</span>
+        <div class="value" style="font-size:1.2rem">${calc.psalmRange.start}–${calc.psalmRange.end}</div>
+        <div class="sub">מפרק ${calc.psalmChapter}</div>
+      </div>
+    </div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.15);display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div style="font-size:0.82rem;color:rgba(255,255,255,0.7)">
+        חודש עברי: <strong style="color:var(--gold-light)">${calc.hebrewMonthName}</strong> ${calc.hebrewYear} | 
+        ${calc.leap ? '⭐ שנה מעוברת' : 'שנה רגילה'} | 
+        ראש חודש הבא: <strong style="color:var(--gold-light)">${rcText}</strong>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="openQuickViewer(${calc.psalmChapter}, ${calc.psalmRange.start}, ${calc.psalmRange.end}, ${calc.currentPart}, ${calc.totalParts})">
+        פתח לימוד ←
+      </button>
+    </div>
+  `;
+}
+
+// ===== STORAGE =====
+function saveProjects(){
+  localStorage.setItem('tehillim_projects', JSON.stringify(projects));
+}
+function loadProjects(){
+  try{
+    projects = JSON.parse(localStorage.getItem('tehillim_projects') || '[]');
+  }catch(e){ projects = []; }
+}
+
+// ===== PROJECT MANAGEMENT =====
+function toggleAddForm(){
+  const form = document.getElementById('add-form-card');
+  form.classList.toggle('show');
+  if(form.classList.contains('show')) document.getElementById('form-name').focus();
+}
+
+function updateFormDateField(){
+  const type = document.getElementById('form-type').value;
+  document.getElementById('form-greg-wrap').style.display = type === 'gregorian' ? '' : 'none';
+  document.getElementById('form-heb-wrap').style.display = type === 'hebrew' ? '' : 'none';
+}
+
+async function addProject(){
+  const name = document.getElementById('form-name').value.trim();
+  if(!name){ alert('אנא הזן שם'); return; }
+  
+  const type = document.getElementById('form-type').value;
+  let dateStr, displayDate;
+  
+  if(type === 'gregorian'){
+    dateStr = document.getElementById('form-date-greg').value;
+    if(!dateStr){ alert('אנא בחר תאריך'); return; }
+    const [y,m,d] = dateStr.split('-');
+    displayDate = `${d}/${m}/${y}`;
+  } else {
+    const d = document.getElementById('form-heb-day').value;
+    const m = document.getElementById('form-heb-month').value;
+    const y = document.getElementById('form-heb-year').value;
+    if(!d||!m||!y){ alert('אנא בחר תאריך עברי'); return; }
+    dateStr = `${y}-${m}-${d}`;
+    displayDate = `${d} ${HEB_MONTHS_HE[m]||m} ${y}`;
+  }
+  
+  const project = {
+    id: Date.now().toString(),
+    name, dateStr, dateType: type, displayDate,
+    createdAt: new Date().toISOString()
+  };
+  
+  projects.unshift(project);
+  saveProjects();
+  
+  document.getElementById('form-name').value = '';
+  document.getElementById('form-date-greg').value = '';
+  toggleAddForm();
+  
+  renderProjectsList();
+  renderHomePreview();
+}
+
+function deleteProject(id){
+  if(!confirm('האם למחוק פרק אישי זה?')) return;
+  projects = projects.filter(p => p.id !== id);
+  saveProjects();
+  renderProjectsList();
+  renderHomePreview();
+}
+
+// ===== RENDERING =====
+async function renderProjectCard(project, container){
+  const card = document.createElement('div');
+  card.className = 'project-card';
+  card.id = `card-${project.id}`;
+  card.innerHTML = `
+    <div class="project-card-header">
+      <div class="project-name">✦ ${project.name}</div>
+      <div class="project-date-badge">
+        <span class="tag ${project.dateType==='hebrew'?'tag-hebrew':'tag-gregorian'}">${project.dateType==='hebrew'?'עברי':'לועזי'}</span>
+        ${project.displayDate}
+      </div>
+    </div>
+    <div class="project-card-body">
+      <div class="project-stats" id="stats-${project.id}">
+        <div class="pstat"><div class="pl">טוען...</div><div class="pv">-</div></div>
+      </div>
+      <div class="next-change" id="next-${project.id}">
+        <span class="clock">⏰</span> טוען תאריך החלפה...
+      </div>
+      <div class="project-actions">
+        <button class="btn btn-blue btn-sm" onclick="openProjectViewer('${project.id}')">📖 פתח לימוד</button>
+        <button class="btn btn-outline btn-sm" onclick="printProject('${project.id}')">🖨 הדפס</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProject('${project.id}')">🗑 מחק</button>
+      </div>
+    </div>
+  `;
+  container.appendChild(card);
+  
+  // Async load calculation
+  calculatePsalmData(project.dateStr, project.dateType).then(calc => {
+    if(!calc) return;
+    const statsEl = document.getElementById(`stats-${project.id}`);
+    const nextEl = document.getElementById(`next-${project.id}`);
+    if(!statsEl) return;
+    
+    project._calc = calc; // cache
+    
+    const leapBadge = calc.leap ? '<span class="badge-leap">מעוברת</span>' : '<span class="badge-regular">רגילה</span>';
+    const preLabel = calc.preSwitch ? ' <span class="pre-switch" style="font-size:0.65rem">⏩</span>' : '';
+    
+    statsEl.innerHTML = `
+      <div class="pstat">
+        <div class="pl">גיל</div>
+        <div class="pv">${calc.age}</div>
+        <div class="ps">שנים</div>
+      </div>
+      <div class="pstat">
+        <div class="pl">פרק תהילים</div>
+        <div class="pv">${calc.psalmChapter}</div>
+        <div class="ps">השנה</div>
+      </div>
+      <div class="pstat">
+        <div class="pl">חלק${preLabel}</div>
+        <div class="pv">${calc.currentPart}/${calc.totalParts}</div>
+        <div class="ps">${calc.hebrewMonthName} | ${leapBadge}</div>
+      </div>
+    `;
+    
+    const rcText = calc.nextRoshChodesh ? calc.nextRoshChodesh.title : 'ראש החודש הבא';
+    nextEl.innerHTML = `<span class="clock">⏰</span> מעבר לחלק ${(calc.currentPart%calc.totalParts)+1} ב: <strong>${rcText}</strong>`;
+  });
+}
+
+async function renderProjectsList(){
+  const container = document.getElementById('projects-list');
+  container.innerHTML = '';
+  
+  if(projects.length === 0){
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">תהילים</div>
+        <h3>אין פרקים אישיים עדיין</h3>
+        <p>לחץ על "הוסף פרק אישי" כדי ליצור את הפרק הראשון שלך</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const grid = document.createElement('div');
+  grid.className = 'projects-grid';
+  
+  for(const project of projects){
+    await renderProjectCard(project, grid);
+  }
+  container.appendChild(grid);
+}
+
+async function renderHomePreview(){
+  const container = document.getElementById('home-projects-preview');
+  container.innerHTML = '';
+  
+  if(projects.length === 0){
+    container.innerHTML = `
+      <div class="card" style="text-align:center;padding:2rem;color:var(--ink-muted)">
+        <p style="margin-bottom:1rem">עדיין לא יצרת פרקים אישיים</p>
+        <button class="btn btn-gold" onclick="showTab('list')">צור פרק אישי ראשון ←</button>
+      </div>
+    `;
+    return;
+  }
+  
+  const grid = document.createElement('div');
+  grid.className = 'projects-grid';
+  const preview = projects.slice(0, 3);
+  for(const p of preview) await renderProjectCard(p, grid);
+  container.appendChild(grid);
+  
+  if(projects.length > 3){
+    const more = document.createElement('div');
+    more.style.textAlign = 'center';
+    more.style.marginTop = '1rem';
+    more.innerHTML = `<button class="btn btn-outline" onclick="showTab('list')">ועוד ${projects.length-3} פרקים...</button>`;
+    container.appendChild(more);
+  }
+}
+
+// ===== VIEWER =====
+let viewerState = {chapter:1, partStart:1, partEnd:10, part:1, total:12};
+
+async function openProjectViewer(id){
+  const project = projects.find(p=>p.id===id);
+  if(!project) return;
+  currentViewerProject = project;
+  
+  document.getElementById('viewer-title').textContent = project.name;
+  document.getElementById('viewer-meta').textContent = `תאריך לידה: ${project.displayDate}`;
+  document.getElementById('viewer-badge').textContent = 'טוען...';
+  
+  document.getElementById('viewer-overlay').classList.add('show');
+  document.getElementById('viewer-body').innerHTML = '<div class="loading-state"><div class="loading-spin"></div><p>מחשב ומטעין...</p></div>';
+  
+  const calc = project._calc || await calculatePsalmData(project.dateStr, project.dateType);
+  if(!calc){
+    document.getElementById('viewer-body').innerHTML = '<div class="error-state">⚠ שגיאה בטעינת הנתונים</div>';
+    return;
+  }
+  
+  project._calc = calc;
+  viewerState = {chapter: calc.psalmChapter, partStart: calc.psalmRange.start, partEnd: calc.psalmRange.end, part: calc.currentPart, total: calc.totalParts};
+  
+  document.getElementById('viewer-badge').textContent = `פרק ${calc.psalmChapter} | חלק ${calc.currentPart} מתוך ${calc.totalParts} | ${calc.hebrewMonthName} ${calc.hebrewYear}`;
+  document.getElementById('viewer-meta').textContent = `תאריך לידה: ${project.displayDate} | גיל: ${calc.age} | פסוקים ${calc.psalmRange.start}–${calc.psalmRange.end}`;
+  
+  await loadViewerContent();
+}
+
+async function openQuickViewer(chapter, start, end, part, total){
+  currentViewerProject = null;
+  viewerState = {chapter, partStart:start, partEnd:end, part, total};
+  document.getElementById('viewer-title').textContent = `פרק ${chapter} בתהילים`;
+  document.getElementById('viewer-meta').textContent = `פסוקים ${start}–${end}`;
+  document.getElementById('viewer-badge').textContent = `חלק ${part} מתוך ${total}`;
+  document.getElementById('viewer-overlay').classList.add('show');
+  await loadViewerContent();
+}
+
+async function loadViewerContent(){
+  const body = document.getElementById('viewer-body');
+  body.innerHTML = '<div class="loading-state"><div class="loading-spin"></div><p>טוען מספריא...</p></div>';
+  
+  const commentary = document.getElementById('commentary-select').value;
+  const chapter = viewerState.chapter;
+  const startVerse = viewerState.partStart;
+  const endVerse = viewerState.partEnd;
+  
+  // Fetch psalm text from Sefaria
+  const psalmData = await fetchSefaria(`Psalms.${chapter}`);
+  
+  let html = `<div class="psalm-section">`;
+  html += `<div class="psalm-chapter-title"><div class="chapter-num">${chapter}</div> פרק ${chapter} - פסוקים ${startVerse}–${endVerse}</div>`;
+  
+  if(psalmData && psalmData.he){
+    const verses = psalmData.he;
+    const total = verses.length;
+    const actualEnd = Math.min(endVerse, total);
+    
+    for(let i = startVerse-1; i < actualEnd; i++){
+      if(verses[i]){
+        html += `<p class="verse"><span class="verse-num">${i+1}</span>${stripHtml(verses[i])}</p>`;
+      }
+    }
+  } else {
+    html += `<div class="error-state">לא נמצא טקסט עבור פרק ${chapter}. אנא בדוק חיבור לאינטרנט.</div>`;
+  }
+  html += `</div>`;
+  
+  // Fetch commentary
+  if(commentary !== 'none'){
+    html += `<hr style="border:none;border-top:1px solid var(--parchment-darker);margin:1.5rem 0">`;
+    html += `<h3 style="font-family:'Frank Ruhl Libre',serif;color:var(--blue-deep);margin-bottom:1rem;font-size:1rem">פירושים</h3>`;
+    
+    const sources = commentary === 'both' ? ['Rashi','Metzudat_David'] :
+                    commentary === 'all' ? ['Rashi','Metzudat_David','Metzudat_Zion','Ibn_Ezra'] :
+                    [commentary];
+    
+    for(const src of sources){
+      const comData = await fetchSefaria(`${src} on Psalms.${chapter}`);
+      if(comData && comData.he){
+        html += `<div class="commentary-block">`;
+        html += `<div class="commentary-source">${getCommentaryName(src)}</div>`;
+        const comVerses = comData.he;
+        for(let i = startVerse-1; i < Math.min(endVerse, comVerses.length); i++){
+          if(comVerses[i]){
+            const text = Array.isArray(comVerses[i]) ? comVerses[i].join(' ') : comVerses[i];
+            if(text && stripHtml(text).trim()){
+              html += `<p class="commentary-text" style="margin-bottom:0.5rem"><span class="verse-num">${i+1}</span>${stripHtml(text)}</p>`;
+            }
+          }
+        }
+        html += `</div>`;
+      }
+    }
+  }
+  
+  body.innerHTML = html;
+}
+
+function getCommentaryName(src){
+  const names = {'Rashi':'רש"י','Metzudat_David':'מצודת דוד','Metzudat_Zion':'מצודת ציון','Ibn_Ezra':'אבן עזרא'};
+  return names[src] || src;
+}
+
+async function fetchSefaria(ref){
+  const key = ref;
+  if(sefariaCache[key]) return sefariaCache[key];
+  const encoded = encodeURIComponent(ref);
+  const url = `https://www.sefaria.org/api/texts/${encoded}?context=0&commentary=0&language=he`;
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Sefaria error');
+    const data = await res.json();
+    sefariaCache[key] = data;
+    return data;
+  }catch(e){
+    console.warn('Sefaria fetch failed',e);
+    return null;
+  }
+}
+
+function stripHtml(str){
+  if(!str) return '';
+  return str.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+}
+
+function closeViewer(e){
+  if(e && e.target !== document.getElementById('viewer-overlay')) return;
+  document.getElementById('viewer-overlay').classList.remove('show');
+  currentViewerProject = null;
+}
+
+// ===== PRINT =====
+function printAll(){
+  window.print();
+}
+
+function printProject(id){
+  const project = projects.find(p=>p.id===id);
+  if(!project) return;
+  const calc = project._calc;
+  let win = window.open('','_blank');
+  win.document.write(`<html lang="he" dir="rtl"><head><meta charset="UTF-8"><title>תהילים - ${project.name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700&family=Noto+Sans+Hebrew:wght@400;600&display=swap" rel="stylesheet">
+  <style>body{font-family:'Noto Sans Hebrew',sans-serif;direction:rtl;padding:2cm;color:#1A1208}h1,h2{font-family:'Frank Ruhl Libre',serif}table{width:100%;border-collapse:collapse}td{padding:8px;border:1px solid #CCC}th{background:#1B3A5C;color:white;padding:8px}</style>
+  </head><body>
+  <h1>תהילים אישיים - ${project.name}</h1>
+  <table><tr><th>שדה</th><th>ערך</th></tr>
+  <tr><td>שם</td><td>${project.name}</td></tr>
+  <tr><td>תאריך לידה</td><td>${project.displayDate}</td></tr>
+  ${calc?`<tr><td>גיל</td><td>${calc.age}</td></tr>
+  <tr><td>פרק תהילים</td><td>${calc.psalmChapter}</td></tr>
+  <tr><td>חלק נוכחי</td><td>${calc.currentPart} מתוך ${calc.totalParts}</td></tr>
+  <tr><td>פסוקים</td><td>${calc.psalmRange.start}–${calc.psalmRange.end}</td></tr>
+  <tr><td>חודש עברי</td><td>${calc.hebrewMonthName} ${calc.hebrewYear}</td></tr>
+  <tr><td>החלפה הבאה</td><td>${calc.nextRoshChodesh?calc.nextRoshChodesh.title:'ראש חודש הבא'}</td></tr>`:''}
+  </table></body></html>`);
+  win.document.close();
+  win.print();
+}
+
+function printViewer(){
+  window.print();
+}
+
+// ===== TABS =====
+function showTab(tab){
+  document.getElementById('tab-home').style.display = tab==='home'?'':'none';
+  document.getElementById('tab-list').style.display = tab==='list'?'':'none';
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    b.classList.toggle('active', (i===0&&tab==='home')||(i===1&&tab==='list'));
+  });
+  if(tab==='list') renderProjectsList();
+}
+
+// ===== HEBREW DATE SELECTORS =====
+function initHebrewSelectors(){
+  const days = Array.from({length:30},(_,i)=>i+1);
+  const months = HEB_MONTHS_API.filter(m => m !== 'Adar I' && m !== 'Adar II' || true);
+  const years = [];
+  const curY = new Date().getFullYear();
+  // Hebrew year approx: Gregorian + 3760
+  const curHY = curY + 3760;
+  for(let y = curHY - 120; y <= curHY; y++) years.push(y);
+  
+  const selectors = [
+    ['qc-heb-day','qc-heb-month','qc-heb-year'],
+    ['form-heb-day','form-heb-month','form-heb-year']
+  ];
+  
+  selectors.forEach(([dayId,monId,yearId])=>{
+    const dayEl = document.getElementById(dayId);
+    const monEl = document.getElementById(monId);
+    const yearEl = document.getElementById(yearId);
+    if(!dayEl) return;
+    days.forEach(d => { const o=document.createElement('option');o.value=d;o.textContent=d;dayEl.appendChild(o); });
+    HEB_MONTHS_API.forEach(m => { const o=document.createElement('option');o.value=m;o.textContent=HEB_MONTHS_HE[m]||m;monEl.appendChild(o); });
+    years.reverse().forEach(y => { const o=document.createElement('option');o.value=y;o.textContent=y;yearEl.appendChild(o); });
+    years.reverse(); // restore
+  });
+}
+
+// ===== INIT =====
+async function init(){
+  initHebrewSelectors();
+  loadProjects();
+  await loadTodayInfo();
+  renderHomePreview();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
