@@ -25,47 +25,84 @@ button:hover{background:#2A5A8C}
 .info-item{background:#f8f5ed;border-radius:7px;padding:.55rem .8rem}
 .info-item .lbl{font-size:.72rem;color:#888;margin-bottom:2px}
 .info-item .val{font-size:.92rem;color:#1B3A5C;font-weight:600}
-.current-highlight{background:linear-gradient(135deg,#1B3A5C,#2A5A8C);color:white;border-radius:8px;padding:.8rem 1rem;margin-bottom:.9rem;display:flex;gap:1.5rem;flex-wrap:wrap}
+.current-highlight{background:linear-gradient(135deg,#1B3A5C,#2A5A8C);color:white;border-radius:8px;padding:.8rem 1rem;margin-bottom:.9rem;display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start}
 .current-highlight .ch-item .lbl{font-size:.72rem;color:rgba(255,255,255,.7);margin-bottom:2px}
 .current-highlight .ch-item .val{font-size:1.2rem;font-weight:700;color:#F0D98A}
 .current-highlight .ch-item .sub{font-size:.78rem;color:rgba(255,255,255,.8)}
-.query-highlight{background:linear-gradient(135deg,#5C3A1B,#8C5A2A);color:white;border-radius:8px;padding:.8rem 1rem;margin-bottom:.9rem;display:flex;gap:1.5rem;flex-wrap:wrap}
-.query-highlight .ch-item .lbl{font-size:.72rem;color:rgba(255,255,255,.7);margin-bottom:2px}
-.query-highlight .ch-item .val{font-size:1.2rem;font-weight:700;color:#F0D98A}
-.query-highlight .ch-item .sub{font-size:.78rem;color:rgba(255,255,255,.8)}
+.btn-view{background:#C9A84C;color:#1B3A5C;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:.82rem;font-weight:700;font-family:inherit;margin-top:.4rem}
+.btn-view:hover{background:#F0D98A}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
 th{background:#1B3A5C;color:white;padding:6px 8px;text-align:right}
 td{padding:6px 8px;border-bottom:1px solid #eee;text-align:right}
 tr.current-row{background:#FFF8E8;font-weight:700}
 tr.current-row td{border-color:#C9A84C}
-tr.query-row{background:#FFF3E8;font-weight:700}
-tr.query-row td{border-color:#C97A4C}
 .arrow{color:#C9A84C;font-weight:900}
-.arrow-query{color:#C97A4C;font-weight:900}
 .loading{text-align:center;padding:2rem;color:#888;font-style:italic}
 .error-msg{background:#fff0f0;border:1px solid #ffcccc;color:#cc0000;border-radius:7px;padding:.8rem;margin-bottom:.5rem}
-.preset-dates{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.3rem}
-.preset{background:#e8f0f8;border:1px solid #b0c8e0;color:#1B3A5C;padding:4px 10px;border-radius:12px;cursor:pointer;font-size:.78rem}
-.preset:hover{background:#1B3A5C;color:white}
 .divider{color:#C9A84C;font-size:.8rem;font-weight:600;padding:.3rem 0;border-bottom:1px solid #eee;margin-bottom:.5rem}
+
+/* ===== Viewer ===== */
+#viewer-section{background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:1rem;overflow:hidden;display:none}
+.viewer-header{background:#2A3A1B;color:white;padding:.8rem 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.viewer-header .vtitle{font-size:1rem;font-weight:700;color:#F0D98A}
+.viewer-header .vbadge{font-size:.78rem;color:rgba(255,255,255,.8)}
+.viewer-body{padding:1rem}
+.pasuk-block{border-right:3px solid #C9A84C;padding:.6rem .8rem;margin-bottom:1rem;background:#fafaf5;border-radius:0 6px 6px 0}
+.pasuk-num{font-size:.72rem;color:#C9A84C;font-weight:700;margin-bottom:.3rem}
+.pasuk-text{font-size:1.05rem;line-height:1.8;color:#1a1208;margin-bottom:.5rem}
+.commentary-block{margin-top:.4rem}
+.commentary-item{margin-bottom:.4rem;padding:.4rem .6rem;border-radius:5px}
+.commentary-item.rashi{background:#f0f4ff}
+.commentary-item.metzudot{background:#f0fff4}
+.commentary-item.radak{background:#fff8f0;display:none}
+.commentary-item.ibnezra{background:#fdf0ff;display:none}
+.commentary-label{font-size:.7rem;font-weight:700;color:#555;margin-bottom:2px}
+.commentary-label.rashi{color:#2244aa}
+.commentary-label.metzudot{color:#227744}
+.commentary-label.radak{color:#aa6622}
+.commentary-label.ibnezra{color:#882299}
+.commentary-text{font-size:.88rem;line-height:1.7;color:#333}
+.toggle-bar{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.toggle-btn{padding:5px 12px;border:1px solid #ccc;border-radius:12px;cursor:pointer;font-size:.78rem;background:white;font-family:inherit}
+.toggle-btn.active{background:#1B3A5C;color:white;border-color:#1B3A5C}
+.viewer-loading{text-align:center;padding:2rem;color:#888;font-style:italic}
+.share-bar{display:flex;gap:.5rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap}
+.share-link{font-size:.75rem;color:#888;word-break:break-all;direction:ltr;text-align:left}
+.copy-btn{padding:4px 10px;font-size:.75rem;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#ddd}
 </style>
 </head>
 <body>
 <h1>&#x2726; מחשבון תהילים אישיים &#x2726;</h1>
+
+<!-- Viewer Section (מוצג כשיש hash בURL או לחיצה) -->
+<div id="viewer-section">
+  <div class="viewer-header">
+    <div class="vtitle" id="viewer-title">טוהן תהילים</div>
+    <div class="vbadge" id="viewer-badge"></div>
+  </div>
+  <div class="viewer-body">
+    <div class="share-bar">
+      <span style="font-size:.78rem;color:#555">&#x1F517; לינק ישיר:</span>
+      <span class="share-link" id="share-link-text"></span>
+      <button class="copy-btn" onclick="copyShareLink()">&#x1F4CB; העתק</button>
+    </div>
+    <div class="toggle-bar">
+      <span style="font-size:.78rem;color:#555;align-self:center">פירושים:</span>
+      <button class="toggle-btn active" id="tog-rashi" onclick="toggleComm('rashi')">רש״י</button>
+      <button class="toggle-btn active" id="tog-metzudot" onclick="toggleComm('metzudot')">מצודות</button>
+      <button class="toggle-btn" id="tog-radak" onclick="toggleComm('radak')">רד״ק</button>
+      <button class="toggle-btn" id="tog-ibnezra" onclick="toggleComm('ibnezra')">אבן עזרא</button>
+    </div>
+    <div id="viewer-content"><div class="viewer-loading">&#x23F3; טוען טקסט מספריא...</div></div>
+  </div>
+</div>
+
+<!-- Calculator Section -->
 <div class="controls">
   <div>
     <label>תאריך לידה לועזי</label>
     <input type="date" id="dateInput" value="1995-04-26">
-  </div>
-  <div>
-    <div class="preset-dates">
-      <span class="preset" onclick="setDate('1995-04-26')">26/04/1995</span>
-      <span class="preset" onclick="setDate('1990-03-15')">15/03/1990</span>
-      <span class="preset" onclick="setDate('1985-09-01')">01/09/1985</span>
-      <span class="preset" onclick="setDate('2000-01-01')">01/01/2000</span>
-      <span class="preset" onclick="setDate('1975-12-31')">31/12/1975</span>
-      <span class="preset" onclick="setDate('2010-07-15')">15/07/2010</span>
-    </div>
   </div>
   <div style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
     <div>
@@ -78,7 +115,11 @@ tr.query-row td{border-color:#C97A4C}
   </div>
 </div>
 <div id="results" class="results-area"></div>
+
 <script>
+// ============================================================
+// PSALM DATA
+// ============================================================
 var PSALM_DATA=[
   {p:1,v:6},{p:2,v:12},{p:3,v:8},{p:4,v:9},{p:5,v:13},
   {p:6,v:11},{p:7,v:17},{p:8,v:10},{p:9,v:21},{p:10,v:18},
@@ -112,14 +153,15 @@ var PSALM_DATA=[
   {p:146,v:10},{p:147,v:20},{p:148,v:14},{p:149,v:9},{p:150,v:6}
 ];
 
-// ===== גימטריה מלאה =====
+// ============================================================
+// GEMATRIA
+// ============================================================
 function gem(n){
   if(n<=0) return String(n);
   var ones=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
   var tens=['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
   var hundreds=['','ק','ר','ש','ת'];
-  var result='';
-  var rem=n;
+  var result='',rem=n;
   var h=Math.floor(rem/100);
   if(h>=5){result+='\u05ea';rem-=400;h=Math.floor(rem/100);}
   if(h>0){result+=hundreds[h];rem-=h*100;}
@@ -133,120 +175,76 @@ function gem(n){
   if(result.length===1) return result+'\u05f3';
   return result.slice(0,-1)+'\u05f4'+result.slice(-1);
 }
-
-// ===== שנה עברית לאותיות (ללא אלפים) =====
 function hYearStr(hy){return gem(hy%1000);}
 
-// ===== שמות חודשים — כולל Sh'vat =====
+// ============================================================
+// HEBREW MONTHS
+// ============================================================
 var HM={
-  'Tishrei':'\u05ea\u05e9\u05e8\u05d9',
-  'Cheshvan':'\u05d7\u05e9\u05d5\u05df',
-  'Kislev':'\u05db\u05e1\u05dc\u05d5',
-  'Tevet':'\u05d8\u05d1\u05ea',
-  'Shvat':'\u05e9\u05d1\u05d8',
-  "Sh'vat":'\u05e9\u05d1\u05d8',
-  'Adar':'\u05d0\u05d3\u05e8',
-  'Adar I':'\u05d0\u05d3\u05e8 \u05d0\u05f3',
-  'Adar II':'\u05d0\u05d3\u05e8 \u05d1\u05f3',
-  'Nisan':'\u05e0\u05d9\u05e1\u05df',
-  'Iyar':'\u05d0\u05d9\u05d9\u05e8',
-  'Sivan':'\u05e1\u05d9\u05d5\u05df',
-  'Tamuz':'\u05ea\u05de\u05d5\u05d6',
-  'Av':'\u05d0\u05d1',
-  'Elul':'\u05d0\u05dc\u05d5\u05dc'
+  'Tishrei':'\u05ea\u05e9\u05e8\u05d9','Cheshvan':'\u05d7\u05e9\u05d5\u05df',
+  'Kislev':'\u05db\u05e1\u05dc\u05d5','Tevet':'\u05d8\u05d1\u05ea',
+  'Shvat':'\u05e9\u05d1\u05d8',"Sh'vat":'\u05e9\u05d1\u05d8',
+  'Adar':'\u05d0\u05d3\u05e8','Adar I':'\u05d0\u05d3\u05e8 \u05d0\u05f3',
+  'Adar II':'\u05d0\u05d3\u05e8 \u05d1\u05f3','Nisan':'\u05e0\u05d9\u05e1\u05df',
+  'Iyar':'\u05d0\u05d9\u05d9\u05e8','Sivan':'\u05e1\u05d9\u05d5\u05df',
+  'Tamuz':'\u05ea\u05de\u05d5\u05d6','Av':'\u05d0\u05d1','Elul':'\u05d0\u05dc\u05d5\u05dc'
 };
-// רשימות חודשים — Sh'vat בשתי הצורות
 var MR=['Tishrei','Cheshvan','Kislev','Tevet',"Sh'vat",'Adar','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
 var ML=['Tishrei','Cheshvan','Kislev','Tevet',"Sh'vat",'Adar I','Adar II','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
 function hmn(api){return HM[api]||api;}
 function isLeap(hy){return((7*hy+1)%19)<7;}
 
-// ===== כלל א: נרמול חודש לידה לשנה נתונה =====
-function normalizeBirthMonth(birthHM, forYear){
-  var leap=isLeap(forYear);
-  // תמיד נרמל Shvat -> Sh'vat
+function normalizeBirthMonth(birthHM,forYear){
   if(birthHM==='Shvat') birthHM="Sh'vat";
-  if(!leap){
-    // שנה רגילה: אדר א / אדר ב -> אדר
-    if(birthHM==='Adar I'||birthHM==='Adar II') return 'Adar';
-    return birthHM;
-  } else {
-    // שנה מעוברת: אדר -> אדר ב
-    if(birthHM==='Adar') return 'Adar II';
-    return birthHM;
-  }
+  var leap=isLeap(forYear);
+  if(!leap){if(birthHM==='Adar I'||birthHM==='Adar II') return 'Adar'; return birthHM;}
+  else{if(birthHM==='Adar') return 'Adar II'; return birthHM;}
 }
 
-// ===== כלל ב+ג: בניית חודשי לימוד בספירה ממשית =====
-// תקופה: מהחודש שאחרי חודש הלידה ב-lastBY
-//         עד וכולל חודש הלידה ב-nextBY
-// חריג: אם יום הולדת הוא א' בחודש — חודש הלידה ב-nextBY לא נכלל
-function buildStudyMonths(birthHM_api, birthHD, lastBirthHY){
+// ============================================================
+// BUILD STUDY MONTHS (ספירה ממשית)
+// ============================================================
+function buildStudyMonths(birthHM_api,birthHD,lastBirthHY){
   var nextBirthHY=lastBirthHY+1;
   var birthdayIsRoshChodesh=(birthHD===1);
-
-  // חודש הלידה בכל שנה
-  var bmLast=normalizeBirthMonth(birthHM_api, lastBirthHY);
-  var bmNext=normalizeBirthMonth(birthHM_api, nextBirthHY);
-
-  // התחל מהחודש שאחרי חודש הלידה ב-lastBY
+  var bmLast=normalizeBirthMonth(birthHM_api,lastBirthHY);
+  var bmNext=normalizeBirthMonth(birthHM_api,nextBirthHY);
   var curY=lastBirthHY;
   var curList=isLeap(curY)?ML:MR;
   var startIdx=curList.indexOf(bmLast);
   if(startIdx===-1) startIdx=0;
   var curIdx=startIdx+1;
   if(curIdx>=curList.length){curY++;curList=isLeap(curY)?ML:MR;curIdx=0;}
-
   var months=[];
-  // מקסימום 13 איטרציות
-  for(var i=0;i<13;i++){
+  for(var i=0;i<14;i++){
     if(curIdx>=curList.length){curY++;curList=isLeap(curY)?ML:MR;curIdx=0;}
     var hm=curList[curIdx];
-
-    if(curY===nextBirthHY && hm===bmNext){
-      // הגענו לחודש הלידה ב-nextBY
-      if(!birthdayIsRoshChodesh){
-        // כולל את חודש הלידה
-        months.push({hy:curY,hm:hm,hmn:hmn(hm)});
-      }
+    if(curY===nextBirthHY&&hm===bmNext){
+      if(!birthdayIsRoshChodesh) months.push({hy:curY,hm:hm,hmn:hmn(hm)});
       break;
     }
-    // אם עברנו את nextBirthHY — עצור
     if(curY>nextBirthHY) break;
-
     months.push({hy:curY,hm:hm,hmn:hmn(hm)});
     curIdx++;
   }
   return months;
 }
 
-// ===== חלוקת פסוקים =====
+// ============================================================
+// DISTRIBUTE VERSES
+// ============================================================
 function distributeVerses(V,M){
   var mult=1;
   while(V*mult<M) mult++;
-  var totalV=V*mult;
-  var base=Math.floor(totalV/M);
-  var remainder=totalV%M;
-  var result=[];
-  var cur=0;
+  var totalV=V*mult,base=Math.floor(totalV/M),remainder=totalV%M;
+  var result=[],cur=0;
   for(var i=0;i<M;i++){
-    var count=(i<remainder)?(base+1):base;
-    var segs=[];
-    var left=count;
-    var pos=cur;
-    while(left>0){
-      var space=V-pos;
-      var take=Math.min(left,space);
-      segs.push([pos+1,pos+take]);
-      pos=(pos+take)%V;
-      left-=take;
-    }
-    result.push(segs);
-    cur=(cur+count)%V;
+    var count=(i<remainder)?(base+1):base,segs=[],left=count,pos=cur;
+    while(left>0){var space=V-pos,take=Math.min(left,space);segs.push([pos+1,pos+take]);pos=(pos+take)%V;left-=take;}
+    result.push(segs);cur=(cur+count)%V;
   }
   return result;
 }
-
 function formatSegs(segs){
   var disp=[],num=[];
   for(var i=0;i<segs.length;i++){
@@ -254,38 +252,193 @@ function formatSegs(segs){
     disp.push(s[0]===s[1]?gem(s[0]):gem(s[0])+'\u2013'+gem(s[1]));
     num.push(s[0]===s[1]?String(s[0]):s[0]+'-'+s[1]);
   }
-  return {display:disp.join(', '),numeric:num.join(', ')};
+  return{display:disp.join(', '),numeric:num.join(', ')};
 }
 
-// ===== Hebcal API =====
+// ============================================================
+// HEBCAL API
+// ============================================================
 var hcCache={};
 async function gregToHeb(dateObj){
   var k='g'+dateObj.toISOString().split('T')[0];
   if(hcCache[k]) return hcCache[k];
   var y=dateObj.getFullYear(),m=dateObj.getMonth()+1,d=dateObj.getDate();
-  var r=await fetch('https://www.hebcal.com/converter?v=1&cfg=json&gy='+y+'&gm='+m+'&gd='+d+'&g2h=1');
-  var j=await r.json(); hcCache[k]=j; return j;
+  var j=await(await fetch('https://www.hebcal.com/converter?v=1&cfg=json&gy='+y+'&gm='+m+'&gd='+d+'&g2h=1')).json();
+  hcCache[k]=j; return j;
 }
 async function hebToGreg(hy,hm,hd){
   var k='h'+hy+'-'+hm+'-'+hd;
   if(hcCache[k]) return hcCache[k];
-  var r=await fetch('https://www.hebcal.com/converter?v=1&cfg=json&hy='+hy+'&hm='+encodeURIComponent(hm)+'&hd='+hd+'&h2g=1');
-  var j=await r.json();
+  var j=await(await fetch('https://www.hebcal.com/converter?v=1&cfg=json&hy='+hy+'&hm='+encodeURIComponent(hm)+'&hd='+hd+'&h2g=1')).json();
   if(j.error) return null;
   hcCache[k]=j; return j;
 }
-
 async function findMonthIdx(studyMonths,refDate){
   var idx=0;
   for(var i=0;i<studyMonths.length;i++){
-    var rcHG=await hebToGreg(studyMonths[i].hy,studyMonths[i].hm,1);
-    var rcG=rcHG&&rcHG.gy?new Date(rcHG.gy,rcHG.gm-1,rcHG.gd):null;
-    if(rcG&&rcG<=refDate) idx=i;
-    else break;
+    var g=await hebToGreg(studyMonths[i].hy,studyMonths[i].hm,1);
+    var d=g&&g.gy?new Date(g.gy,g.gm-1,g.gd):null;
+    if(d&&d<=refDate) idx=i; else break;
   }
   return idx;
 }
 
+// ============================================================
+// SEFARIA API — fetch chapter with commentaries
+// ============================================================
+var sefCache={};
+// Map commentary names from Sefaria to our keys
+var COMM_MAP={
+  'Rashi':'rashi','Radak':'radak',
+  'Metzudat David':'metzudot','Metzudat Zion':'metzudot',
+  'Ibn Ezra':'ibnezra'
+};
+var COMM_LABELS={rashi:'רש״י',metzudot:'מצודות',radak:'רד״ק',ibnezra:'אבן עזרא'};
+
+async function fetchPsalmData(chapter,vFrom,vTo){
+  // Build ref e.g. "Psalms.32.3-4" or "Psalms.32.3" 
+  var ref='Psalms.'+chapter+'.'+(vFrom===vTo?vFrom:vFrom+'-'+vTo);
+  if(sefCache[ref]) return sefCache[ref];
+  // Fetch text
+  var textUrl='https://www.sefaria.org/api/v3/texts/'+encodeURIComponent('Psalms '+chapter+':'+vFrom+(vFrom===vTo?'':'-'+vTo))+'?lang=he&version=hebrew';
+  // Fetch links/commentary
+  var linkUrl='https://www.sefaria.org/api/links/Psalms.'+chapter+'.'+vFrom+(vFrom===vTo?'':'-'+vTo)+'?with_text=1&lang=he';
+  try{
+    var [textResp,linkResp]=await Promise.all([fetch(textUrl),fetch(linkUrl)]);
+    var textData=await textResp.json();
+    var linkData=await linkResp.json();
+    var result={verses:[],commentary:{}};
+    // Parse verses
+    var heText=[];
+    if(textData.versions&&textData.versions.length>0){
+      var v=textData.versions[0];
+      heText=Array.isArray(v.text)?v.text:[v.text];
+    }
+    for(var i=0;i<heText.length;i++){
+      result.verses.push({num:vFrom+i,text:heText[i]||''});
+      result.commentary[vFrom+i]={rashi:[],metzudot:[],radak:[],ibnezra:[]};
+    }
+    // Parse commentary from links
+    if(Array.isArray(linkData)){
+      for(var li=0;li<linkData.length;li++){
+        var lnk=linkData[li];
+        var cat=lnk.collectiveTitle&&lnk.collectiveTitle.en;
+        var key=COMM_MAP[cat];
+        if(!key) continue;
+        var heComm=lnk.he||'';
+        if(!heComm) continue;
+        // Figure out which verse this commentary is on
+        // anchorRef looks like "Psalms 32:3"
+        var aref=lnk.anchorRef||'';
+        var vm=aref.match(/:(\d+)/);
+        var vnum=vm?parseInt(vm[1]):vFrom;
+        if(result.commentary[vnum]&&result.commentary[vnum][key]!==undefined){
+          result.commentary[vnum][key].push(heComm);
+        }
+      }
+    }
+    sefCache[ref]=result;
+    return result;
+  }catch(e){
+    console.error('Sefaria fetch error',e);
+    return null;
+  }
+}
+
+// ============================================================
+// VIEWER
+// ============================================================
+var activeComms={rashi:true,metzudot:true,radak:false,ibnezra:false};
+
+function toggleComm(key){
+  activeComms[key]=!activeComms[key];
+  var btn=document.getElementById('tog-'+key);
+  if(activeComms[key]) btn.classList.add('active'); else btn.classList.remove('active');
+  document.querySelectorAll('.commentary-item.'+key).forEach(function(el){
+    el.style.display=activeComms[key]?'block':'none';
+  });
+}
+
+function stripHtml(s){return s?s.replace(/<[^>]+>/g,''):''}
+
+async function showViewer(chapter,partNum,totalParts,vFrom,vTo,monthName,psalmLabel){
+  var vs=document.getElementById('viewer-section');
+  vs.style.display='block';
+  // scroll to viewer
+  vs.scrollIntoView({behavior:'smooth'});
+  // update title & badge
+  document.getElementById('viewer-title').textContent=
+    '\u05ea\u05d4\u05dc\u05d9\u05dd \u05e4\u05e8\u05e7 '+gem(chapter)+
+    ' \u2014 \u05e4\u05e1\u05d5\u05e7\u05d9\u05dd '+psalmLabel;
+  document.getElementById('viewer-badge').textContent=
+    '\u05d7\u05dc\u05e7 '+partNum+'/'+totalParts+' \u2014 '+monthName;
+  // share link
+  var hash='#'+chapter+'/'+(partNum)+'-'+(totalParts)+'/'+vFrom+'-'+vTo;
+  var shareUrl=window.location.href.split('#')[0]+hash;
+  document.getElementById('share-link-text').textContent=shareUrl;
+  window.location.hash=hash;
+  // load content
+  var content=document.getElementById('viewer-content');
+  content.innerHTML='<div class="viewer-loading">&#x23F3; טוען טקסט מספריא...</div>';
+  var data=await fetchPsalmData(chapter,vFrom,vTo);
+  if(!data){
+    content.innerHTML='<div class="error-msg">לא ניתן לטעון את הטקסט מספריא. אנא נסה שנית.</div>';
+    return;
+  }
+  var html='';
+  for(var i=0;i<data.verses.length;i++){
+    var v=data.verses[i];
+    var comm=data.commentary[v.num]||{rashi:[],metzudot:[],radak:[],ibnezra:[]};
+    html+='<div class="pasuk-block">';
+    html+='<div class="pasuk-num">פסוק '+gem(v.num)+'</div>';
+    html+='<div class="pasuk-text">'+stripHtml(v.text)+'</div>';
+    html+='<div class="commentary-block">';
+    ['rashi','metzudot','radak','ibnezra'].forEach(function(key){
+      var texts=comm[key]||[];
+      var display=activeComms[key]?'block':'none';
+      if(texts.length>0){
+        html+='<div class="commentary-item '+key+'" style="display:'+display+'">';
+        html+='<div class="commentary-label '+key+'">'+COMM_LABELS[key]+'</div>';
+        texts.forEach(function(t){
+          html+='<div class="commentary-text">'+stripHtml(t)+'</div>';
+        });
+        html+='</div>';
+      }
+    });
+    html+='</div></div>';
+  }
+  if(!html) html='<div class="error-msg">לא נמצאו פסוקים.</div>';
+  content.innerHTML=html;
+}
+
+function copyShareLink(){
+  var txt=document.getElementById('share-link-text').textContent;
+  navigator.clipboard.writeText(txt).then(function(){
+    var btn=document.querySelector('.copy-btn');
+    btn.textContent='\u2713 הועתק!';
+    setTimeout(function(){btn.textContent='\uD83D\uDCCB \u05D4\u05E2\u05EA\u05E7';},2000);
+  });
+}
+
+// Parse hash on load: #chapter/part-total/vFrom-vTo
+async function loadFromHash(){
+  var hash=window.location.hash.replace('#','');
+  if(!hash) return;
+  var parts=hash.split('/');
+  if(parts.length<3) return;
+  var chapter=parseInt(parts[0]);
+  var pt=parts[1].split('-');
+  var partNum=parseInt(pt[0]),totalParts=parseInt(pt[1])||'?';
+  var vp=parts[2].split('-');
+  var vFrom=parseInt(vp[0]),vTo=parseInt(vp[1]||vp[0]);
+  if(isNaN(chapter)||isNaN(vFrom)) return;
+  var psalmLabel=vFrom===vTo?gem(vFrom):gem(vFrom)+'\u2013'+gem(vTo);
+  await showViewer(chapter,partNum,totalParts,vFrom,vTo,'','');
+}
+
+// ============================================================
+// CALCULATOR
+// ============================================================
 async function calculate(){
   var inp=document.getElementById('dateInput').value;
   if(!inp){alert('הזן תאריך לידה');return;}
@@ -297,7 +450,6 @@ async function addToList(){
   await calcAndShow(inp,true);
 }
 function clearAll(){document.getElementById('results').innerHTML='';}
-function setDate(d){document.getElementById('dateInput').value=d;}
 
 async function calcAndShow(dateStr,append){
   var area=document.getElementById('results');
@@ -306,7 +458,6 @@ async function calcAndShow(dateStr,append){
   placeholder.innerHTML='<div class="card-header"><div class="title">&#x23F3; מחשב...</div></div><div class="card-body"><div class="loading">שולח שאילתות ל-Hebcal...</div></div>';
   if(append) area.appendChild(placeholder);
   else{area.innerHTML='';area.appendChild(placeholder);}
-
   try{
     var today=new Date(); today.setHours(0,0,0,0);
     var queryDateStr=document.getElementById('queryDateInput').value;
@@ -314,22 +465,18 @@ async function calcAndShow(dateStr,append){
     queryDate.setHours(0,0,0,0);
     var isCustomQuery=!!queryDateStr;
 
-    // תאריך לידה עברי
     var bd=new Date(dateStr); bd.setHours(0,0,0,0);
     var hb=await gregToHeb(bd);
     if(!hb||hb.error) throw new Error('לא ניתן להמיר תאריך לידה');
-    var birthHD=hb.hd, birthHM=hb.hm, birthHY_orig=hb.hy;
-    // נרמל Shvat
+    var birthHD=hb.hd,birthHM=hb.hm,birthHY_orig=hb.hy;
     if(birthHM==='Shvat') birthHM="Sh'vat";
     var birthHebStr=gem(birthHD)+' '+hmn(birthHM)+' '+hYearStr(birthHY_orig);
 
-    // גיל לפי תאריך השאילתה
     var age=queryDate.getFullYear()-bd.getFullYear();
     var mdf=queryDate.getMonth()-bd.getMonth(),ddf=queryDate.getDate()-bd.getDate();
     if(mdf<0||(mdf===0&&ddf<0)) age--;
     if(age<0) age=0;
 
-    // יום הולדת אחרון ביחס לתאריך השאילתה
     var refH=await gregToHeb(queryDate);
     var refHY=refH.hy;
     var bmt=normalizeBirthMonth(birthHM,refHY);
@@ -338,7 +485,6 @@ async function calcAndShow(dateStr,append){
     var lastBY=bdThisGreg&&bdThisGreg<=queryDate?refHY:refHY-1;
     var nextBY=lastBY+1;
 
-    // תאריכי יו"ב להצגה
     var bml=normalizeBirthMonth(birthHM,lastBY);
     var lbHG=await hebToGreg(lastBY,bml,birthHD);
     var lbGreg=lbHG&&lbHG.gy?new Date(lbHG.gy,lbHG.gm-1,lbHG.gd):null;
@@ -353,49 +499,42 @@ async function calcAndShow(dateStr,append){
 
     var psalmAge=Math.min(age,149);
     var pd=PSALM_DATA[psalmAge];
-
-    // בנה חודשי לימוד — ספירה ממשית
     var studyMonths=buildStudyMonths(birthHM,birthHD,lastBY);
     var numM=studyMonths.length;
     var ranges=distributeVerses(pd.v,numM);
-
     var todayIdx=await findMonthIdx(studyMonths,today);
     var queryIdx=isCustomQuery?await findMonthIdx(studyMonths,queryDate):todayIdx;
+    var activeIdx=isCustomQuery?queryIdx:todayIdx;
 
+    var activeFmt=formatSegs(ranges[activeIdx]);
     var todayFmt=formatSegs(ranges[todayIdx]);
-    var queryFmt=formatSegs(ranges[queryIdx]);
+
+    // Extract numeric vFrom/vTo from active range (first segment)
+    var activeSegs=ranges[activeIdx];
+    var vFrom=activeSegs[0][0],vTo=activeSegs[activeSegs.length-1][1];
+    var activeMonth=studyMonths[activeIdx];
 
     var tableRows='';
     for(var ti=0;ti<studyMonths.length;ti++){
-      var sm2=studyMonths[ti];
-      var fmt=formatSegs(ranges[ti]);
+      var sm2=studyMonths[ti],fmt=formatSegs(ranges[ti]);
       var rcHG2=await hebToGreg(sm2.hy,sm2.hm,1);
       var rcG2=rcHG2&&rcHG2.gy?new Date(rcHG2.gy,rcHG2.gm-1,rcHG2.gd):null;
       var rcGStr=rcG2?rcG2.toLocaleDateString('he-IL'):'--';
-      var isTodayRow=(ti===todayIdx);
-      var isQueryRow=isCustomQuery&&(ti===queryIdx)&&(queryIdx!==todayIdx);
-      var rowClass=isQueryRow?'query-row':(isTodayRow?'current-row':'');
-      var arrowCell='<td></td>';
-      if(isQueryRow) arrowCell='<td class="arrow-query">\u2190 שאילתה</td>';
-      else if(isTodayRow) arrowCell='<td class="arrow">\u2190 היום</td>';
-      tableRows+='<tr'+(rowClass?' class="'+rowClass+'"':'')+'>'+
+      var isActive=(ti===activeIdx);
+      var segs2=ranges[ti];
+      var vf2=segs2[0][0],vt2=segs2[segs2.length-1][1];
+      var viewBtn='<button class="btn-view" onclick="showViewer('+pd.p+','+(ti+1)+','+numM+','+vf2+','+vt2+',\''+sm2.hmn+' '+hYearStr(sm2.hy)+'\',\''+fmt.display+'\')">&#x1F4D6; קרא</button>';
+      tableRows+='<tr'+(isActive?' class="current-row"':'')+'>'+
         '<td>'+(ti+1)+'</td>'+
         '<td>'+sm2.hmn+' '+hYearStr(sm2.hy)+'</td>'+
         '<td style="direction:ltr">'+rcGStr+'</td>'+
         '<td>'+fmt.display+' <small style="color:#888">('+fmt.numeric+')</small></td>'+
-        arrowCell+'</tr>';
+        '<td>'+viewBtn+'</td>'+
+        '</tr>';
     }
 
-    var queryBlock='';
-    if(isCustomQuery&&queryIdx!==todayIdx){
-      queryBlock='<div class="query-highlight">'+
-        '<div class="ch-item"><div class="lbl">&#x1F4C5; שאילתה: '+queryDate.toLocaleDateString('he-IL')+'</div>'+
-        '<div class="val">'+(queryIdx+1)+'/'+numM+'</div>'+
-        '<div class="sub">'+(studyMonths[queryIdx]?studyMonths[queryIdx].hmn:'')+'</div></div>'+
-        '<div class="ch-item"><div class="lbl">פסוקים בתאריך השאילתה</div>'+
-        '<div class="val">'+queryFmt.display+'</div>'+
-        '<div class="sub">('+queryFmt.numeric+')</div></div></div>';
-    }
+    var queryLabel=isCustomQuery?
+      (' | שאילתה: '+queryDate.toLocaleDateString('he-IL')):'';
 
     var html=
       '<div class="card-header">'+
@@ -404,7 +543,7 @@ async function calcAndShow(dateStr,append){
       '</div>'+
       '<div class="card-body">'+
         '<div class="info-grid">'+
-          '<div class="info-item"><div class="lbl">תאריך לידה עברי (קבוע)</div><div class="val">'+birthHebStr+'</div></div>'+
+          '<div class="info-item"><div class="lbl">תאריך לידה עברי</div><div class="val">'+birthHebStr+'</div></div>'+
           '<div class="info-item"><div class="lbl">גיל</div><div class="val">'+age+' שנים</div></div>'+
           '<div class="info-item"><div class="lbl">יום הולדת אחרון (עברי)</div><div class="val">'+lbHStr+'</div></div>'+
           '<div class="info-item"><div class="lbl">יום הולדת אחרון (לועזי)</div><div class="val" style="direction:ltr">'+lbGStr+'</div></div>'+
@@ -414,26 +553,31 @@ async function calcAndShow(dateStr,append){
         '<div class="current-highlight">'+
           '<div class="ch-item"><div class="lbl">פרק תהילים</div><div class="val">'+pd.p+'</div><div class="sub">'+pd.v+' פסוקים</div></div>'+
           '<div class="ch-item"><div class="lbl">חלוקה</div><div class="val">'+numM+' חודשים</div><div class="sub">'+(numM===13?'שנה מעוברת':'שנה רגילה')+'</div></div>'+
-          '<div class="ch-item"><div class="lbl">חלק נוכחי (היום)</div><div class="val">'+(todayIdx+1)+'/'+numM+'</div><div class="sub">'+(studyMonths[todayIdx]?studyMonths[todayIdx].hmn:'')+'</div></div>'+
-          '<div class="ch-item"><div class="lbl">פסוקים עכשיו</div><div class="val">'+todayFmt.display+'</div><div class="sub">('+todayFmt.numeric+')</div></div>'+
+          '<div class="ch-item"><div class="lbl">חלק נוכחי'+(isCustomQuery?' (שאילתה)':' (היום)')+'</div><div class="val">'+(activeIdx+1)+'/'+numM+'</div><div class="sub">'+(activeMonth?activeMonth.hmn:'')+'</div></div>'+
+          '<div class="ch-item"><div class="lbl">פסוקים</div><div class="val">'+activeFmt.display+'</div><div class="sub">('+activeFmt.numeric+')</div>'+
+            '<button class="btn-view" onclick="showViewer('+pd.p+','+(activeIdx+1)+','+numM+','+vFrom+','+vTo+',\''+(activeMonth?activeMonth.hmn+' '+hYearStr(activeMonth.hy):'')+'\',\''+activeFmt.display+'\')">&#x1F4D6; קרא עכשיו</button>'+
+          '</div>'+
+          (isCustomQuery?'<div class="ch-item"><div class="lbl">היום</div><div class="val">'+(todayIdx+1)+'/'+numM+'</div><div class="sub">'+todayFmt.display+'</div></div>':'')+
         '</div>'+
-        queryBlock+
         '<div class="divider">&#x1F4C5; תקופת לימוד: ראש חודש '+
           (studyMonths.length?studyMonths[0].hmn+' '+hYearStr(studyMonths[0].hy):'')+
           ' &mdash;&mdash;&mdash; '+
           (studyMonths.length?studyMonths[studyMonths.length-1].hmn+' '+hYearStr(studyMonths[studyMonths.length-1].hy):'')+
         '</div>'+
-        '<table><tr><th>חלק</th><th>חודש עברי</th><th>ראש חודש (לועזי)</th><th>פסוקים</th><th></th></tr>'+
+        '<table><tr><th>חלק</th><th>חודש עברי</th><th>ראש חודש (לועזי)</th><th>פסוקים</th><th>צפייה</th></tr>'+
         tableRows+'</table></div>';
 
     placeholder.innerHTML=html;
-  } catch(e){
+  }catch(e){
     placeholder.innerHTML='<div class="card-header"><div class="title">שגיאה</div></div><div class="card-body"><div class="error-msg">'+e.message+'</div></div>';
     console.error(e);
   }
 }
 
-window.onload=function(){calculate();};
+window.onload=async function(){
+  await loadFromHash();
+  await calculate();
+};
 </script>
 </body>
 </html>
