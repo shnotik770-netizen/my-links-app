@@ -10,14 +10,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f1e8;color:#1a1208;di
 h1{font-size:1.4rem;color:#1B3A5C;margin-bottom:1rem;text-align:center;border-bottom:2px solid #C9A84C;padding-bottom:.5rem}
 .controls{background:white;border-radius:10px;padding:1rem;margin-bottom:1rem;display:flex;gap:.7rem;align-items:flex-end;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 label{font-size:.83rem;color:#555;display:block;margin-bottom:3px}
-input[type=date],input[type=text]{padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:.9rem;min-width:150px;direction:ltr}
+input[type=date]{padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:.9rem;min-width:150px;direction:ltr}
 button{padding:9px 18px;background:#1B3A5C;color:white;border:none;border-radius:6px;cursor:pointer;font-size:.9rem;font-family:inherit}
 button:hover{background:#2A5A8C}
-.btn-add{background:#C9A84C;color:#1B3A5C;font-weight:700}
-.btn-add:hover{background:#F0D98A}
+.btn-calc{background:#C9A84C;color:#1B3A5C;font-weight:700}
+.btn-calc:hover{background:#F0D98A}
 .results-area{display:grid;gap:1rem}
 .result-card{background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.card-header{background:#1B3A5C;color:white;padding:.8rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.card-header{background:#1B3A5C;color:white;padding:.8rem 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
 .card-header .title{font-size:1rem;font-weight:600}
 .card-header .badge{background:#C9A84C;color:#1B3A5C;padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:700}
 .card-body{padding:1rem}
@@ -29,18 +29,28 @@ button:hover{background:#2A5A8C}
 .current-highlight .ch-item .lbl{font-size:.72rem;color:rgba(255,255,255,.7);margin-bottom:2px}
 .current-highlight .ch-item .val{font-size:1.2rem;font-weight:700;color:#F0D98A}
 .current-highlight .ch-item .sub{font-size:.78rem;color:rgba(255,255,255,.8)}
+.query-highlight{background:linear-gradient(135deg,#5C3A1B,#8C5A2A);color:white;border-radius:8px;padding:.8rem 1rem;margin-bottom:.9rem;display:flex;gap:1.5rem;flex-wrap:wrap}
+.query-highlight .ch-item .lbl{font-size:.72rem;color:rgba(255,255,255,.7);margin-bottom:2px}
+.query-highlight .ch-item .val{font-size:1.2rem;font-weight:700;color:#F0D98A}
+.query-highlight .ch-item .sub{font-size:.78rem;color:rgba(255,255,255,.8)}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
 th{background:#1B3A5C;color:white;padding:6px 8px;text-align:right}
 td{padding:6px 8px;border-bottom:1px solid #eee;text-align:right}
 tr.current-row{background:#FFF8E8;font-weight:700}
 tr.current-row td{border-color:#C9A84C}
+tr.query-row{background:#FFF3E8;font-weight:700}
+tr.query-row td{border-color:#C97A4C}
 .arrow{color:#C9A84C;font-weight:900}
+.arrow-query{color:#C97A4C;font-weight:900}
 .loading{text-align:center;padding:2rem;color:#888;font-style:italic}
 .error-msg{background:#fff0f0;border:1px solid #ffcccc;color:#cc0000;border-radius:7px;padding:.8rem;margin-bottom:.5rem}
 .preset-dates{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.3rem}
 .preset{background:#e8f0f8;border:1px solid #b0c8e0;color:#1B3A5C;padding:4px 10px;border-radius:12px;cursor:pointer;font-size:.78rem}
 .preset:hover{background:#1B3A5C;color:white}
 .divider{color:#C9A84C;font-size:.8rem;font-weight:600;padding:.3rem 0;border-bottom:1px solid #eee;margin-bottom:.5rem}
+.query-section{background:#fdf6ed;border:1px solid #e8d5b0;border-radius:8px;padding:.7rem 1rem;margin-bottom:.9rem;display:flex;align-items:flex-end;gap:.7rem;flex-wrap:wrap}
+.query-section label{font-size:.82rem;color:#7a5a2a;font-weight:600}
+.sep{width:100%;height:1px;background:#eee;margin:.5rem 0}
 </style>
 </head>
 <body>
@@ -48,12 +58,12 @@ tr.current-row td{border-color:#C9A84C}
 
 <div class="controls">
   <div>
-    <label>תאריך לידה לועזי (YYYY-MM-DD)</label>
+    <label>תאריך לידה לועזי</label>
     <input type="date" id="dateInput" value="1995-04-26">
   </div>
   <div>
     <div class="preset-dates">
-      <span class="preset" onclick="setDate('1995-04-26')">26/04/1995 (כו ניסן)</span>
+      <span class="preset" onclick="setDate('1995-04-26')">26/04/1995</span>
       <span class="preset" onclick="setDate('1990-03-15')">15/03/1990</span>
       <span class="preset" onclick="setDate('1985-09-01')">01/09/1985</span>
       <span class="preset" onclick="setDate('2000-01-01')">01/01/2000</span>
@@ -61,8 +71,12 @@ tr.current-row td{border-color:#C9A84C}
       <span class="preset" onclick="setDate('2010-07-15')">15/07/2010</span>
     </div>
   </div>
-  <div style="display:flex;gap:.5rem">
-    <button class="btn-add" onclick="calculate()">חשב ←</button>
+  <div style="display:flex;gap:.5rem;align-items:flex-end">
+    <div>
+      <label>תאריך שאילתה (ריק = היום)</label>
+      <input type="date" id="queryDateInput" placeholder="ריק = היום">
+    </div>
+    <button class="btn-calc" onclick="calculate()">חשב ←</button>
     <button onclick="addToList()">+ הוסף לרשימה</button>
     <button onclick="clearAll()" style="background:#888">נקה</button>
   </div>
@@ -71,9 +85,8 @@ tr.current-row td{border-color:#C9A84C}
 <div id="results" class="results-area"></div>
 
 <script>
-// ===== טבלת תהילים לפי גיל (גיל → {פרק, מספר פסוקים}) =====
-// מבוסס אך ורק על הטבלה הרשמית
-var PSALM_DATA = [
+// ===== טבלת תהילים לפי גיל =====
+var PSALM_DATA=[
   {p:1,v:6},{p:2,v:12},{p:3,v:8},{p:4,v:9},{p:5,v:13},
   {p:6,v:11},{p:7,v:17},{p:8,v:10},{p:9,v:21},{p:10,v:18},
   {p:11,v:7},{p:12,v:9},{p:13,v:6},{p:14,v:7},{p:15,v:5},
@@ -111,11 +124,13 @@ var GEMATRIA={1:'א׳',2:'ב׳',3:'ג׳',4:'ד׳',5:'ה׳',6:'ו׳',7:'ז׳',8:'
   11:'י״א',12:'י״ב',13:'י״ג',14:'י״ד',15:'ט״ו',16:'ט״ז',17:'י״ז',18:'י״ח',19:'י״ט',20:'כ׳',
   21:'כ״א',22:'כ״ב',23:'כ״ג',24:'כ״ד',25:'כ״ה',26:'כ״ו',27:'כ״ז',28:'כ״ח',29:'כ״ט',30:'ל׳',
   31:'ל״א',32:'ל״ב',33:'ל״ג',34:'ל״ד',35:'ל״ה',36:'ל״ו',37:'ל״ז',38:'ל״ח',39:'ל״ט',40:'מ׳',
-  50:'נ׳',60:'ס׳',70:'ע׳',80:'פ׳',90:'צ׳',100:'ק׳',110:'ק״י',120:'ק״כ',130:'ק״ל',140:'ק״מ',
-  150:'ק״נ',160:'ק״ס',170:'ק״ע',176:'קע״ו'};
+  41:'מ״א',42:'מ״ב',43:'מ״ג',44:'מ״ד',45:'מ״ה',46:'מ״ו',47:'מ״ז',48:'מ״ח',49:'מ״ט',50:'נ׳',
+  51:'נ״א',52:'נ״ב',53:'נ״ג',60:'ס׳',70:'ע׳',72:'ע״ב',80:'פ׳',90:'צ׳',100:'ק׳',
+  110:'ק״י',120:'ק״כ',130:'ק״ל',140:'ק״מ',150:'ק״נ',160:'ק״ס',170:'ק״ע',176:'קע״ו'};
 function gem(n){
   if(GEMATRIA[n]) return GEMATRIA[n];
-  // build from parts for numbers not in table
+  // בנה ממספרים פשוטים
+  if(n<=400) return String(n);
   return String(n);
 }
 
@@ -125,47 +140,51 @@ var HM={'Tishrei':'תשרי','Cheshvan':'חשון','Kislev':'כסלו','Tevet':'
   'Sivan':'סיון','Tamuz':'תמוז','Av':'אב','Elul':'אלול'};
 var MR=['Tishrei','Cheshvan','Kislev','Tevet','Shvat','Adar','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
 var ML=['Tishrei','Cheshvan','Kislev','Tevet','Shvat','Adar I','Adar II','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
-
 function hmn(api){return HM[api]||api;}
-
-// ===== שנה מעוברת =====
 function isLeap(hy){return((7*hy+1)%19)<7;}
 
-// ===== חלוקת פסוקים לחודשים (האלגוריתם המתוקן) =====
-/**
- * V = מספר פסוקים, M = מספר חודשים
- * מחזיר מערך של M איברים, כל אחד [פסוק_התחלה, פסוק_סיום]
- */
-function distributeVerses(V, M) {
-  var result = [];
-  if (V === M) {
-    // מקרה א: שוויון מדויק
-    for (var i = 1; i <= M; i++) {
-      result.push([i, i]);
-    }
-  } else if (V < M) {
-    // מקרה ב: פחות פסוקים מחודשים — סבב מחזורי
-    for (var i = 0; i < M; i++) {
-      var v = (i % V) + 1;
-      result.push([v, v]);
-    }
+// ===== נרמול חודש לידה לשנה נתונה =====
+function normalizeBirthMonth(birthHM, forYear){
+  var leap=isLeap(forYear);
+  if(!leap){
+    if(birthHM==='Adar I'||birthHM==='Adar II') return 'Adar';
+    return birthHM;
   } else {
-    // מקרה ג: יותר פסוקים מחודשים — ceil(V/M) לכל חודש
-    var n = Math.ceil(V / M);
-    var cur = 1;
-    for (var i = 0; i < M; i++) {
-      var remainingMonths = M - i;
-      var remainingVerses = V - cur + 1;
-      if (remainingVerses <= remainingMonths) {
-        // פסוק אחד לחודש עד הסוף
-        result.push([cur, cur]);
-        cur++;
-      } else {
-        var end = Math.min(cur + n - 1, V);
-        result.push([cur, end]);
-        cur = end + 1;
-      }
+    if(birthHM==='Adar') return 'Adar II';
+    return birthHM;
+  }
+}
+
+// ===== האלגוריתם המתוקן לחלוקת פסוקים =====
+// V = מספר פסוקים בפרק, M = מספר חודשים
+// מחזיר מערך של M איברים, כל אחד [פסוק_התחלה, פסוק_סיום] (מחזורי)
+function distributeVerses(V, M){
+  // שלב 1: הגדל את המאגר עד שסך הפסוקים >= M
+  var mult=1;
+  while(V*mult < M) mult++;
+  var totalV=V*mult;
+
+  // שלב 2: base ו-remainder
+  var base=Math.floor(totalV/M);
+  var remainder=totalV%M;
+  // remainder חודשים ראשונים מקבלים (base+1), השאר מקבלים base
+
+  // שלב 3: בנה את הרשימה עם מיקום מחזורי (modulo V)
+  var result=[];
+  var cur=0; // אינדקס פסוק מחזורי (0-based, modulo V)
+  for(var i=0;i<M;i++){
+    var count=(i<remainder)?(base+1):base;
+    var startV=(cur%V)+1;
+    var endV=((cur+count-1)%V)+1;
+    // בדוק אם חוצה גבול המחזור
+    if(startV<=endV){
+      result.push([startV,endV]);
+    } else {
+      // חוצה את גבול הפרק — מפצל ל-2 (נציג כ"עד סוף + מתחילת הפרק")
+      // למציאת הסדר הנכון: מציינים start-V ולאחר מכן 1-endV
+      result.push([startV, V, 1, endV]);
     }
+    cur=(cur+count)%V;
   }
   return result;
 }
@@ -184,116 +203,84 @@ async function hebToGreg(hy,hm,hd){
   if(hcCache[k]) return hcCache[k];
   var r=await fetch('https://www.hebcal.com/converter?v=1&cfg=json&hy='+hy+'&hm='+encodeURIComponent(hm)+'&hd='+hd+'&h2g=1');
   var j=await r.json();
-  // handle error gracefully
   if(j.error) return null;
   hcCache[k]=j; return j;
 }
 
-// ===== נרמול חודש לידה לשנה נתונה =====
-/**
- * מחזיר את שם ה-API של חודש הלידה בשנה העברית הנתונה.
- * מטפל בממירה בין אדר / אדר א׳ / אדר ב׳ בשנות עיבור/רגילות.
- * birthHM = שם חודש הלידה המקורי מ-Hebcal
- * forYear = שנה עברית לה רוצים להתאים
- */
-function normalizeBirthMonth(birthHM, forYear) {
-  var leap = isLeap(forYear);
-  // ממירה בין שנה רגילה לשנה מעוברת
-  if (!leap) {
-    // שנה רגילה: אדר א׳ / אדר ב׳ → אדר
-    if (birthHM === 'Adar I' || birthHM === 'Adar II') return 'Adar';
-    return birthHM;
-  } else {
-    // שנה מעוברת: אדר → אדר ב׳ (המוסכמה הרווחת)
-    if (birthHM === 'Adar') return 'Adar II';
-    return birthHM;
-  }
-}
-
 // ===== בניית חודשי לימוד =====
-/**
- * מחזיר רשימה של 12 או 13 חודשים לפי השנה העברית שבה נפל יום ההולדת האחרון.
- * birthHM_api = שם חודש הלידה (כפי שמחזיר Hebcal)
- * lastBirthHY = שנה עברית של יום ההולדת האחרון
- */
-function buildStudyMonths(birthHM_api, lastBirthHY) {
-  var nextBirthHY = lastBirthHY + 1;
+function buildStudyMonths(birthHM_api, lastBirthHY){
+  var nextBirthHY=lastBirthHY+1;
+  var lastLeap=isLeap(lastBirthHY);
+  var lastList=lastLeap?ML:MR;
+  var birthMonthForLastYear=normalizeBirthMonth(birthHM_api,lastBirthHY);
+  var birthIdx=lastList.indexOf(birthMonthForLastYear);
+  if(birthIdx===-1) birthIdx=0;
 
-  // בנה רשימת חודשים: מחודש שאחרי חודש הלידה ועד (לא כולל) חודש הלידה בשנה הבאה
-  // תמיד מתחיל מ-ראש חודש שאחרי חודש הלידה, מסתיים לפני ראש חודש הלידה הבא
+  var months=[];
+  var curY=lastBirthHY;
+  var curList=lastList;
+  var curIdx=birthIdx+1;
 
-  // שנה של יום ההולדת האחרון — אם מתחיל מ-Tishrei עלינו להיות בשנה הנכונה
-  var months = [];
-
-  // נמצא את הרשימה של lastBirthHY וחודש הלידה הנכון לשנה זו
-  var lastLeap = isLeap(lastBirthHY);
-  var lastList = lastLeap ? ML : MR;
-  var birthMonthForLastYear = normalizeBirthMonth(birthHM_api, lastBirthHY);
-
-  // נחפש את אינדקס חודש הלידה ברשימת חודשי השנה
-  var birthIdx = lastList.indexOf(birthMonthForLastYear);
-  if (birthIdx === -1) {
-    // fallback
-    birthIdx = lastList.indexOf('Nisan');
-    if (birthIdx === -1) birthIdx = 0;
+  if(curIdx>=curList.length){
+    curY=lastBirthHY+1;
+    curList=isLeap(curY)?ML:MR;
+    curIdx=0;
   }
 
-  // נתחיל מהחודש שבא אחרי חודש הלידה
-  var curY = lastBirthHY;
-  var curList = lastList;
-  var curIdx = birthIdx + 1;
+  var birthMonthForNextYear=normalizeBirthMonth(birthHM_api,nextBirthHY);
 
-  if (curIdx >= curList.length) {
-    // עברנו לשנה הבאה
-    curY = lastBirthHY + 1;
-    curList = isLeap(curY) ? ML : MR;
-    curIdx = 0;
-  }
-
-  // נוסיף חודשים עד שנגיע לחודש הלידה בשנה הבאה (lastBirthHY + 1)
-  var birthMonthForNextYear = normalizeBirthMonth(birthHM_api, nextBirthHY);
-
-  // נצבור לכל היותר 13 חודשים (מקסימום שנה מעוברת)
-  for (var i = 0; i < 14; i++) {
-    if (curIdx >= curList.length) {
-      curY++;
-      curList = isLeap(curY) ? ML : MR;
-      curIdx = 0;
-    }
-
-    var hm = curList[curIdx];
-
-    // האם הגענו לחודש הלידה בשנה הבאה? זה כבר לא בטווח הלימוד
-    if (curY === nextBirthHY && hm === birthMonthForNextYear) break;
-    // גם אם עברנו את השנה הבאה — נפסיק
-    if (curY > nextBirthHY) break;
-
-    months.push({ hy: curY, hm: hm, hmn: hmn(hm) });
+  for(var i=0;i<14;i++){
+    if(curIdx>=curList.length){curY++;curList=isLeap(curY)?ML:MR;curIdx=0;}
+    var hm=curList[curIdx];
+    if(curY===nextBirthHY&&hm===birthMonthForNextYear) break;
+    if(curY>nextBirthHY) break;
+    months.push({hy:curY,hm:hm,hmn:hmn(hm)});
     curIdx++;
   }
-
-  // ולידציה: חייב להיות 12 או 13
-  if (months.length < 12 || months.length > 13) {
-    // שגיאה — נחזיר 12 חודשים כברירת מחדל
-    console.warn('buildStudyMonths returned', months.length, 'months — expected 12 or 13');
-  }
-
   return months;
 }
 
-// ===== מחשבון ראשי =====
+// ===== פורמט תצוגה של טווח פסוקים =====
+function formatRange(r){
+  if(r.length===2){
+    // רגיל
+    return {
+      display: r[0]===r[1] ? gem(r[0]) : gem(r[0])+'–'+gem(r[1]),
+      numeric: r[0]===r[1] ? String(r[0]) : r[0]+'–'+r[1]
+    };
+  } else {
+    // חוצה גבול: [startV, V, 1, endV]
+    return {
+      display: gem(r[0])+'–'+gem(r[1])+', '+gem(r[2])+'–'+gem(r[3]),
+      numeric: r[0]+'–'+r[1]+', '+r[2]+'–'+r[3]
+    };
+  }
+}
+
+// ===== מציאת אינדקס חודש לפי תאריך =====
+async function findMonthIdx(studyMonths, refDate){
+  var idx=0;
+  for(var i=0;i<studyMonths.length;i++){
+    var sm=studyMonths[i];
+    var rcHG=await hebToGreg(sm.hy,sm.hm,1);
+    var rcG=rcHG&&rcHG.gy?new Date(rcHG.gy,rcHG.gm-1,rcHG.gd):null;
+    if(rcG&&rcG<=refDate) idx=i;
+    else break;
+  }
+  return idx;
+}
+
+// ===== ממשק =====
 async function calculate(){
   var inp=document.getElementById('dateInput').value;
-  if(!inp){alert('הזן תאריך');return;}
+  if(!inp){alert('הזן תאריך לידה');return;}
   await calcAndShow(inp);
 }
-
 async function addToList(){
   var inp=document.getElementById('dateInput').value;
-  if(!inp){alert('הזן תאריך');return;}
+  if(!inp){alert('הזן תאריך לידה');return;}
   await calcAndShow(inp,true);
 }
-
 function clearAll(){document.getElementById('results').innerHTML='';}
 function setDate(d){document.getElementById('dateInput').value=d;}
 
@@ -306,77 +293,70 @@ async function calcAndShow(dateStr,append){
   else{area.innerHTML='';area.appendChild(placeholder);}
 
   try{
+    // תאריך הייחוס — "היום" לחישובים
     var today=new Date(); today.setHours(0,0,0,0);
+
+    // תאריך שאילתה (לצורך הצגת "עכשיו") — יכול להיות שונה מהיום
+    var queryDateStr=document.getElementById('queryDateInput').value;
+    var queryDate=queryDateStr?new Date(queryDateStr):new Date();
+    queryDate.setHours(0,0,0,0);
+    var isCustomQuery=!!queryDateStr;
 
     // 1. המר תאריך לידה לעברי
     var bd=new Date(dateStr); bd.setHours(0,0,0,0);
     var hb=await gregToHeb(bd);
-    if(!hb||hb.error) throw new Error('לא ניתן להמיר תאריך לידה: '+dateStr);
+    if(!hb||hb.error) throw new Error('לא ניתן להמיר תאריך לידה');
     var birthHD=hb.hd, birthHM=hb.hm, birthHY_orig=hb.hy;
     var birthHebStr=gem(birthHD)+' '+hmn(birthHM)+' '+birthHY_orig;
 
-    // 2. גיל לועזי (לצורך הצגה בלבד)
-    var age=today.getFullYear()-bd.getFullYear();
-    var md=today.getMonth()-bd.getMonth(), dd2=today.getDate()-bd.getDate();
+    // 2. גיל לועזי (לפי תאריך השאילתה, לא בהכרח היום)
+    var refForAge=queryDate;
+    var age=refForAge.getFullYear()-bd.getFullYear();
+    var md=refForAge.getMonth()-bd.getMonth(), dd2=refForAge.getDate()-bd.getDate();
     if(md<0||(md===0&&dd2<0)) age--;
     if(age<0) age=0;
 
-    // 3. מצא את יום ההולדת האחרון (עברי)
-    //    — השנה העברית הנוכחית
-    var todayH=await gregToHeb(today);
-    var todayHY=todayH.hy;
+    // 3. מצא יום הולדת אחרון ביחס לתאריך השאילתה
+    var refH=await gregToHeb(queryDate);
+    var refHY=refH.hy;
+    var birthMonthThisYear=normalizeBirthMonth(birthHM,refHY);
+    var bdThisY=await hebToGreg(refHY,birthMonthThisYear,birthHD);
+    var bdThisGreg=bdThisY&&bdThisY.gy?new Date(bdThisY.gy,bdThisY.gm-1,bdThisY.gd):null;
+    var lastBY=bdThisGreg&&bdThisGreg<=queryDate?refHY:refHY-1;
+    var nextBY=lastBY+1;
 
-    // נסה להמיר יום הולדת לשנה העברית הנוכחית
-    var birthMonthThisYear = normalizeBirthMonth(birthHM, todayHY);
-    var bdThisY = await hebToGreg(todayHY, birthMonthThisYear, birthHD);
-    var bdThisGreg = (bdThisY && bdThisY.gy) ? new Date(bdThisY.gy, bdThisY.gm-1, bdThisY.gd) : null;
-
-    // יום ההולדת האחרון: אם יום ההולדת בשנה הנוכחית כבר עבר (או היום) — זה האחרון
-    var lastBY, nextBY;
-    if(bdThisGreg && bdThisGreg<=today){
-      lastBY=todayHY;
-      nextBY=todayHY+1;
-    } else {
-      lastBY=todayHY-1;
-      nextBY=todayHY;
-    }
-
-    // 4. המר יום הולדת אחרון לגרגוריאני לצורך הצגה
-    var birthMonthLastYear = normalizeBirthMonth(birthHM, lastBY);
-    var lbHG=await hebToGreg(lastBY, birthMonthLastYear, birthHD);
+    // 4. תאריכי יום הולדת (לצורך הצגה)
+    var bml=normalizeBirthMonth(birthHM,lastBY);
+    var lbHG=await hebToGreg(lastBY,bml,birthHD);
     var lbGreg=lbHG&&lbHG.gy?new Date(lbHG.gy,lbHG.gm-1,lbHG.gd):null;
     var lbGStr=lbGreg?lbGreg.toLocaleDateString('he-IL'):'—';
-    var lbHStr=gem(birthHD)+' '+hmn(birthMonthLastYear)+' '+lastBY;
+    var lbHStr=gem(birthHD)+' '+hmn(bml)+' '+lastBY;
 
-    // 5. המר יום הולדת הבא לגרגוריאני לצורך הצגה
-    var birthMonthNextYear = normalizeBirthMonth(birthHM, nextBY);
-    var nbHG=await hebToGreg(nextBY, birthMonthNextYear, birthHD);
+    var bmn2=normalizeBirthMonth(birthHM,nextBY);
+    var nbHG=await hebToGreg(nextBY,bmn2,birthHD);
     var nbGreg=nbHG&&nbHG.gy?new Date(nbHG.gy,nbHG.gm-1,nbHG.gd):null;
     var nbGStr=nbGreg?nbGreg.toLocaleDateString('he-IL'):'—';
-    var nbHStr=gem(birthHD)+' '+hmn(birthMonthNextYear)+' '+nextBY;
+    var nbHStr=gem(birthHD)+' '+hmn(bmn2)+' '+nextBY;
 
-    // 6. פרק תהילים לפי גיל
+    // 5. פרק תהילים לפי גיל
     var psalmAge=Math.min(age,149);
     var pd=PSALM_DATA[psalmAge];
 
-    // 7. בנה חודשי לימוד (12 או 13)
-    var studyMonths=buildStudyMonths(birthHM, lastBY);
+    // 6. בנה חודשי לימוד
+    var studyMonths=buildStudyMonths(birthHM,lastBY);
     var numM=studyMonths.length;
 
-    // 8. חלק את הפסוקים
-    var ranges=distributeVerses(pd.v, numM);
+    // 7. חלק פסוקים
+    var ranges=distributeVerses(pd.v,numM);
 
-    // 9. מצא את החלק הנוכחי
-    var curIdx=0;
-    for(var i=0;i<studyMonths.length;i++){
-      var sm=studyMonths[i];
-      var rcHG=await hebToGreg(sm.hy,sm.hm,1);
-      var rcG=rcHG&&rcHG.gy?new Date(rcHG.gy,rcHG.gm-1,rcHG.gd):null;
-      if(rcG&&rcG<=today) curIdx=i;
-      else break;
-    }
+    // 8. מצא חלק נוכחי לפי "היום" (תמיד)
+    var todayIdx=await findMonthIdx(studyMonths,today);
 
-    var vR=ranges[curIdx]||[1,pd.v];
+    // 9. מצא חלק לפי תאריך השאילתה (יכול להיות שונה)
+    var queryIdx=isCustomQuery?await findMonthIdx(studyMonths,queryDate):todayIdx;
+
+    var todayR=ranges[todayIdx]||[1,pd.v];
+    var queryR=ranges[queryIdx]||[1,pd.v];
 
     // 10. בנה שורות טבלה
     var tableRows='';
@@ -386,20 +366,32 @@ async function calcAndShow(dateStr,append){
       var rcHG2=await hebToGreg(sm2.hy,sm2.hm,1);
       var rcG2=rcHG2&&rcHG2.gy?new Date(rcHG2.gy,rcHG2.gm-1,rcHG2.gd):null;
       var rcGStr=rcG2?rcG2.toLocaleDateString('he-IL'):'—';
-      var isCur=(ti===curIdx);
-      var vStr=gem(vR2[0])+(vR2[0]===vR2[1]?'':'–'+gem(vR2[1]));
-      var vNumStr=vR2[0]+(vR2[0]===vR2[1]?'':'–'+vR2[1]);
-      tableRows+='<tr'+(isCur?' class="current-row"':'')+'>'\
+      var isTodayRow=(ti===todayIdx);
+      var isQueryRow=isCustomQuery&&(ti===queryIdx);
+      var fmt=formatRange(vR2);
+      var rowClass=isQueryRow?'query-row':(isTodayRow?'current-row':'');
+      var arrowCell='<td></td>';
+      if(isQueryRow) arrowCell='<td class="arrow-query">← שאילתה</td>';
+      else if(isTodayRow) arrowCell='<td class="arrow">← היום</td>';
+      tableRows+='<tr'+(rowClass?' class="'+rowClass+'"':'')+'>'\
         +'<td>'+(ti+1)+'</td>'\
         +'<td>'+sm2.hmn+' '+sm2.hy+'</td>'\
         +'<td style="direction:ltr">'+rcGStr+'</td>'\
-        +'<td>'+vStr+' <small style="color:#888">('+vNumStr+')</small></td>'\
-        +(isCur?'<td class="arrow">← עכשיו</td>':'<td></td>')\
+        +'<td>'+fmt.display+' <small style="color:#888">('+fmt.numeric+')</small></td>'\
+        +arrowCell\
         +'</tr>';
     }
 
-    var curVStr=gem(vR[0])+(vR[0]===vR[1]?'':'–'+gem(vR[1]));
-    var studyM=studyMonths;
+    var todayFmt=formatRange(todayR);
+    var queryFmt=formatRange(queryR);
+    var queryBlock='';
+    if(isCustomQuery&&queryIdx!==todayIdx){
+      queryBlock=`
+        <div class="query-highlight">
+          <div class="ch-item"><div class="lbl">📅 שאילתה: ${queryDate.toLocaleDateString('he-IL')}</div><div class="val">${queryIdx+1}/${numM}</div><div class="sub">${studyMonths[queryIdx]?studyMonths[queryIdx].hmn:''}</div></div>
+          <div class="ch-item"><div class="lbl">פסוקים בתאריך השאילתה</div><div class="val">${queryFmt.display}</div><div class="sub">(${queryFmt.numeric})</div></div>
+        </div>`;
+    }
 
     var html=`
       <div class="card-header">
@@ -419,11 +411,13 @@ async function calcAndShow(dateStr,append){
         <div class="current-highlight">
           <div class="ch-item"><div class="lbl">פרק תהילים</div><div class="val">${pd.p}</div><div class="sub">${pd.v} פסוקים</div></div>
           <div class="ch-item"><div class="lbl">חלוקה</div><div class="val">${numM} חודשים</div><div class="sub">${numM===13?'שנה מעוברת':'שנה רגילה'}</div></div>
-          <div class="ch-item"><div class="lbl">חלק נוכחי</div><div class="val">${curIdx+1}/${numM}</div><div class="sub">${studyM[curIdx]?studyM[curIdx].hmn:''}</div></div>
-          <div class="ch-item"><div class="lbl">פסוקים עכשיו</div><div class="val">${curVStr}</div><div class="sub">פס׳ ${vR[0]}${vR[0]===vR[1]?'':'–'+vR[1]}</div></div>
+          <div class="ch-item"><div class="lbl">חלק נוכחי (היום)</div><div class="val">${todayIdx+1}/${numM}</div><div class="sub">${studyMonths[todayIdx]?studyMonths[todayIdx].hmn:''}</div></div>
+          <div class="ch-item"><div class="lbl">פסוקים עכשיו</div><div class="val">${todayFmt.display}</div><div class="sub">(${todayFmt.numeric})</div></div>
         </div>
 
-        <div class="divider">📅 תקופת לימוד: ראש חודש ${studyM.length?studyM[0].hmn+' '+studyM[0].hy:''} ← ← ← ראש חודש ${studyM.length?studyM[studyM.length-1].hmn+' '+studyM[studyM.length-1].hy:''}</div>
+        ${queryBlock}
+
+        <div class="divider">📅 תקופת לימוד: ראש חודש ${studyMonths.length?studyMonths[0].hmn+' '+studyMonths[0].hy:''} — — — ראש חודש ${studyMonths.length?studyMonths[studyMonths.length-1].hmn+' '+studyMonths[studyMonths.length-1].hy:''}</div>
 
         <table>
           <tr><th>חלק</th><th>חודש עברי</th><th>ראש חודש (לועזי)</th><th>פסוקים</th><th></th></tr>
@@ -438,7 +432,6 @@ async function calcAndShow(dateStr,append){
   }
 }
 
-// הרץ אוטומטית בטעינה
 window.onload=()=>calculate();
 </script>
 </body>
