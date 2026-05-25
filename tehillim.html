@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>תהילים אישיים</title>
+<style>
+:root{
+  --blue:#1B3A5C;--gold:#C9A84C;--gold-light:#F0D98A;
+  --bg:#ffffff;--bg2:#f8f8f5;--border:#e0ddd5;
+  --text:#1a1208;--text2:#555;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Ezra SIL',David,Arial,sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh}
+/* NAV */
+nav{background:var(--blue);color:white;padding:.6rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+nav .logo{font-size:1.1rem;font-weight:700;color:var(--gold-light)}
+nav .nav-links{display:flex;gap:.5rem}
+nav .nav-links button{background:none;border:1px solid rgba(255,255,255,.3);color:white;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:.82rem;font-family:inherit}
+nav .nav-links button.active,nav .nav-links button:hover{background:var(--gold);color:var(--blue);border-color:var(--gold)}
+/* SECTIONS */
+.section{display:none;padding:1rem;max-width:860px;margin:0 auto}
+.section.active{display:block}
+/* SEARCH */
+.search-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem}
+.search-box h2{font-size:1rem;color:var(--blue);margin-bottom:.8rem}
+.date-inputs{display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.7rem}
+.date-inputs .field{display:flex;flex-direction:column;gap:3px}
+.date-inputs label{font-size:.75rem;color:var(--text2)}
+.date-inputs input,.date-inputs select{padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:.9rem;font-family:inherit;background:white}
+.date-inputs input[type=number]{width:80px}
+.date-inputs select{min-width:100px}
+.date-tabs{display:flex;gap:.4rem;margin-bottom:.8rem}
+.date-tab{padding:5px 14px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:.8rem;background:white;font-family:inherit}
+.date-tab.active{background:var(--blue);color:white;border-color:var(--blue)}
+.date-row{display:none}.date-row.active{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end}
+.btn-primary{padding:9px 20px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-size:.9rem;font-family:inherit;font-weight:600}
+.btn-primary:hover{background:#2A5A8C}
+.btn-gold{padding:9px 20px;background:var(--gold);color:var(--blue);border:none;border-radius:6px;cursor:pointer;font-size:.9rem;font-family:inherit;font-weight:700}
+.btn-gold:hover{background:var(--gold-light)}
+/* RESULT BOX */
+.result-box{background:var(--bg2);border:2px solid var(--gold);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem}
+.result-box .main-msg{font-size:1.3rem;font-weight:700;color:var(--blue);margin-bottom:.5rem;line-height:1.6}
+.result-box .sub-msg{font-size:.9rem;color:var(--text2);margin-bottom:.8rem}
+.alert-box{background:#FFF8E0;border:1px solid var(--gold);border-radius:7px;padding:.6rem 1rem;font-size:.88rem;color:#7a5a00;margin-bottom:.8rem}
+.action-btns{display:flex;gap:.6rem;flex-wrap:wrap}
+.btn-outline{padding:7px 16px;border:1px solid var(--blue);color:var(--blue);background:white;border-radius:6px;cursor:pointer;font-size:.85rem;font-family:inherit}
+.btn-outline:hover{background:var(--blue);color:white}
+/* TABLE */
+.study-table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.8rem}
+.study-table th{background:var(--blue);color:white;padding:6px 10px;text-align:right}
+.study-table td{padding:6px 10px;border-bottom:1px solid var(--border)}
+.study-table tr.cur{background:#FFF8E8;font-weight:700}
+.study-table tr.cur td{border-color:var(--gold)}
+.study-table .read-btn{padding:3px 9px;background:var(--gold);color:var(--blue);border:none;border-radius:4px;cursor:pointer;font-size:.75rem;font-family:inherit;font-weight:700}
+/* PERSONAL */
+.personal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;gap:.5rem}
+.personal-header h2{font-size:1rem;color:var(--blue)}
+.chapter-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;margin-bottom:.7rem;position:relative}
+.chapter-card .ch-name{font-size:1rem;font-weight:700;color:var(--blue);margin-bottom:.3rem}
+.chapter-card .ch-meta{font-size:.78rem;color:var(--text2);margin-bottom:.6rem;line-height:1.6}
+.chapter-card .ch-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+.chapter-card .ch-actions button{padding:4px 11px;font-size:.75rem;border-radius:4px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:white}
+.chapter-card .ch-actions button:hover{background:var(--blue);color:white;border-color:var(--blue)}
+.chapter-card .drag-handle{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);cursor:grab;color:#ccc;font-size:1.2rem;user-select:none}
+.chapter-card.dragging{opacity:.5;border:2px dashed var(--gold)}
+.chapter-card.drag-over{border-top:3px solid var(--gold)}
+.add-form{background:#f0f4ff;border:1px solid #b0c0e0;border-radius:var(--radius);padding:1rem;margin-bottom:1rem}
+.add-form h3{font-size:.9rem;color:var(--blue);margin-bottom:.7rem}
+.add-form .form-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.5rem}
+.add-form input,.add-form select{padding:6px 9px;border:1px solid #ccc;border-radius:5px;font-size:.85rem;font-family:inherit}
+.add-form input[type=text]{min-width:130px}
+.add-form .form-label{font-size:.75rem;color:var(--text2);display:block;margin-bottom:2px}
+/* VIEWER */
+.viewer-wrap{margin-top:.8rem}
+.pasuk-block{border-right:3px solid var(--gold);padding:.6rem .8rem;margin-bottom:.9rem;background:#fafaf8;border-radius:0 6px 6px 0}
+.pasuk-num{font-size:.7rem;color:var(--gold);font-weight:700;margin-bottom:.2rem}
+.pasuk-text{font-size:1.05rem;line-height:1.9;color:var(--text);margin-bottom:.4rem}
+.comm-item{margin-bottom:.3rem;padding:.35rem .6rem;border-radius:4px}
+.comm-item.rashi{background:#f0f4ff}.comm-item.metzudot{background:#f0fff4}
+.comm-item.radak{background:#fff8f0}.comm-item.ibnezra{background:#fdf0ff}
+.comm-label{font-size:.68rem;font-weight:700;margin-bottom:2px}
+.comm-label.rashi{color:#2244aa}.comm-label.metzudot{color:#227744}
+.comm-label.radak{color:#aa6622}.comm-label.ibnezra{color:#882299}
+.comm-text{font-size:.85rem;line-height:1.7;color:#333}
+.toggle-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem;align-items:center}
+.tog-btn{padding:4px 11px;border:1px solid var(--border);border-radius:12px;cursor:pointer;font-size:.75rem;background:white;font-family:inherit}
+.tog-btn.on{background:var(--blue);color:white;border-color:var(--blue)}
+.viewer-loading{padding:1.5rem;text-align:center;color:var(--text2);font-style:italic}
+/* SHARE */
+.share-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.6rem;flex-wrap:wrap}
+.share-link{font-size:.72rem;color:#888;direction:ltr;word-break:break-all;text-align:left;flex:1}
+.copy-btn{padding:3px 9px;font-size:.72rem;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-family:inherit}
+/* COLLAPSIBLE */
+.collapse-wrap{margin-top:.6rem}
+.collapse-btn{width:100%;text-align:right;padding:7px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.85rem;color:var(--blue);font-family:inherit;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.collapse-btn:hover{background:#eee}
+.collapse-content{display:none;padding-top:.5rem}
+.collapse-content.open{display:block}
+/* MISC */
+.loading{padding:1.5rem;text-align:center;color:var(--text2);font-style:italic}
+.err{background:#fff0f0;border:1px solid #fcc;border-radius:6px;padding:.7rem;color:#c00;margin:.5rem 0}
+hr{border:none;border-top:1px solid var(--border);margin:.8rem 0}
+.small{font-size:.78rem;color:var(--text2)}
+.tag{display:inline-block;background:var(--gold);color:var(--blue);border-radius:10px;padding:1px 8px;font-size:.72rem;font-weight:700;margin-right:4px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">&#x2726; תהילים אישיים</div>
+  <div class="nav-links">
+    <button id="nav-search" class="active" onclick="showSection('search')">&#x1F50D; חיפוש</button>
+    <button id="nav-personal" onclick="showSection('personal')">&#x1F464; הפרקים שלי</button>
+    <button onclick="window.open('print.html','_blank')">&#x1F5A8; הדפסה</button>
+  </div>
+</nav>
+
+<!-- SEARCH SECTION -->
+<div id="sec-search" class="section active">
+  <div class="search-box">
+    <h2>הזן תאריך לידה</h2>
+    <div class="date-tabs">
+      <button class="date-tab active" onclick="switchDateType('greg')">לועזי</button>
+      <button class="date-tab" onclick="switchDateType('heb')">עברי</button>
+    </div>
+    <div id="row-greg" class="date-row active">
+      <div class="field"><label>תאריך</label><input type="date" id="greg-date" value="1995-04-26"></div>
+    </div>
+    <div id="row-heb" class="date-row">
+      <div class="field"><label>יום</label><input type="number" id="heb-day" min="1" max="30" value="26" style="width:65px"></div>
+      <div class="field"><label>חודש</label>
+        <select id="heb-month">
+          <option value="Tishrei">תשרי</option><option value="Cheshvan">חשון</option>
+          <option value="Kislev">כסלו</option><option value="Tevet">טבת</option>
+          <option value="Sh'vat">שבט</option><option value="Adar">אדר</option>
+          <option value="Adar I">אדר א׳</option><option value="Adar II">אדר ב׳</option>
+          <option value="Nisan" selected>ניסן</option><option value="Iyar">אייר</option>
+          <option value="Sivan">סיון</option><option value="Tamuz">תמוז</option>
+          <option value="Av">אב</option><option value="Elul">אלול</option>
+        </select>
+      </div>
+      <div class="field"><label>שנה</label><input type="number" id="heb-year" value="5755" min="5000" max="6000" style="width:80px"></div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.7rem;align-items:center">
+      <button class="btn-primary" onclick="doSearch()">&#x2190; חשב</button>
+      <div class="small" id="search-status"></div>
+    </div>
+  </div>
+  <div id="search-result"></div>
+</div>
+
+<!-- PERSONAL SECTION -->
+<div id="sec-personal" class="section">
+  <div class="personal-header">
+    <h2>&#x1F464; הפרקים שלי</h2>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      <button class="btn-gold" onclick="toggleAddForm()">+ הוסף פרק</button>
+      <button class="btn-outline" onclick="addRabbi()">&#x2726; הוסף הרבי</button>
+    </div>
+  </div>
+
+  <div class="add-form" id="add-form" style="display:none">
+    <h3>הוספת פרק חדש</h3>
+    <div class="form-row">
+      <div><span class="form-label">שם</span><input type="text" id="af-name" placeholder="שם האדם"></div>
+      <div>
+        <span class="form-label">סוג תאריך</span>
+        <select id="af-dtype" onchange="toggleAddDateType()">
+          <option value="greg">לועזי</option><option value="heb">עברי</option>
+        </select>
+      </div>
+    </div>
+    <div id="af-greg-row" class="form-row">
+      <div><span class="form-label">תאריך לועזי</span><input type="date" id="af-greg" value="1990-01-01"></div>
+    </div>
+    <div id="af-heb-row" class="form-row" style="display:none">
+      <div><span class="form-label">יום</span><input type="number" id="af-hd" min="1" max="30" value="1" style="width:65px"></div>
+      <div><span class="form-label">חודש</span>
+        <select id="af-hm">
+          <option value="Tishrei">תשרי</option><option value="Cheshvan">חשון</option>
+          <option value="Kislev">כסלו</option><option value="Tevet">טבת</option>
+          <option value="Sh'vat">שבט</option><option value="Adar">אדר</option>
+          <option value="Adar I">אדר א׳</option><option value="Adar II">אדר ב׳</option>
+          <option value="Nisan">ניסן</option><option value="Iyar">אייר</option>
+          <option value="Sivan">סיון</option><option value="Tamuz">תמוז</option>
+          <option value="Av">אב</option><option value="Elul">אלול</option>
+        </select>
+      </div>
+      <div><span class="form-label">שנה</span><input type="number" id="af-hy" value="5750" min="5000" max="6000" style="width:80px"></div>
+    </div>
+    <div class="form-row">
+      <div style="display:flex;align-items:center;gap:.4rem">
+        <input type="checkbox" id="af-alert" style="width:16px;height:16px">
+        <label for="af-alert" style="font-size:.82rem">התראה ראש חודש (עתידי)</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.3rem">
+      <button class="btn-primary" onclick="saveChapter()">שמור</button>
+      <button class="btn-outline" onclick="toggleAddForm()">ביטול</button>
+    </div>
+  </div>
+
+  <div id="chapters-list"></div>
+  <div id="personal-loading" class="loading" style="display:none">&#x23F3; טוען...</div>
+</div>
+
+<!-- VIEWER MODAL -->
+<div id="viewer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;overflow-y:auto;padding:1rem">
+  <div style="background:white;max-width:760px;margin:0 auto;border-radius:var(--radius);overflow:hidden">
+    <div style="background:var(--blue);color:white;padding:.8rem 1rem;display:flex;justify-content:space-between;align-items:center">
+      <div id="vwr-title" style="font-weight:700;color:var(--gold-light);font-size:.95rem"></div>
+      <button onclick="closeViewer()" style="background:none;border:none;color:white;font-size:1.3rem;cursor:pointer">&#x2715;</button>
+    </div>
+    <div style="padding:1rem">
+      <div class="share-row">
+        <span style="font-size:.75rem;color:var(--text2)">&#x1F517;</span>
+        <span class="share-link" id="vwr-link"></span>
+        <button class="copy-btn" onclick="copyVwrLink()">&#x1F4CB; העתק</button>
+      </div>
+      <div class="toggle-bar">
+        <span class="small">פירושים:</span>
+        <button class="tog-btn on" id="tog-rashi" onclick="toggleComm('rashi')">רש״י</button>
+        <button class="tog-btn on" id="tog-metzudot" onclick="toggleComm('metzudot')">מצודות</button>
+        <button class="tog-btn" id="tog-radak" onclick="toggleComm('radak')">רד״ק</button>
+        <button class="tog-btn" id="tog-ibnezra" onclick="toggleComm('ibnezra')">אבן עזרא</button>
+      </div>
+      <div id="vwr-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PSALM / HEBREW DATA
+// ============================================================
+var PSALM_DATA=[
+  {p:1,v:6},{p:2,v:12},{p:3,v:8},{p:4,v:9},{p:5,v:13},
+  {p:6,v:11},{p:7,v:17},{p:8,v:10},{p:9,v:21},{p:10,v:18},
+  {p:11,v:7},{p:12,v:9},{p:13,v:6},{p:14,v:7},{p:15,v:5},
+  {p:16,v:11},{p:17,v:15},{p:18,v:51},{p:19,v:15},{p:20,v:10},
+  {p:21,v:14},{p:22,v:32},{p:23,v:6},{p:24,v:10},{p:25,v:22},
+  {p:26,v:12},{p:27,v:14},{p:28,v:9},{p:29,v:11},{p:30,v:13},
+  {p:31,v:25},{p:32,v:11},{p:33,v:22},{p:34,v:23},{p:35,v:28},
+  {p:36,v:13},{p:37,v:40},{p:38,v:23},{p:39,v:14},{p:40,v:18},
+  {p:41,v:14},{p:42,v:12},{p:43,v:5},{p:44,v:27},{p:45,v:18},
+  {p:46,v:12},{p:47,v:10},{p:48,v:15},{p:49,v:21},{p:50,v:23},
+  {p:51,v:21},{p:52,v:9},{p:53,v:7},{p:54,v:9},{p:55,v:24},
+  {p:56,v:14},{p:57,v:12},{p:58,v:12},{p:59,v:18},{p:60,v:14},
+  {p:61,v:9},{p:62,v:13},{p:63,v:12},{p:64,v:11},{p:65,v:14},
+  {p:66,v:20},{p:67,v:8},{p:68,v:36},{p:69,v:37},{p:70,v:6},
+  {p:71,v:24},{p:72,v:20},{p:73,v:28},{p:74,v:23},{p:75,v:11},
+  {p:76,v:13},{p:77,v:21},{p:78,v:72},{p:79,v:13},{p:80,v:20},
+  {p:81,v:17},{p:82,v:8},{p:83,v:19},{p:84,v:13},{p:85,v:14},
+  {p:86,v:17},{p:87,v:7},{p:88,v:19},{p:89,v:53},{p:90,v:17},
+  {p:91,v:16},{p:92,v:16},{p:93,v:5},{p:94,v:23},{p:95,v:11},
+  {p:96,v:13},{p:97,v:12},{p:98,v:9},{p:99,v:9},{p:100,v:5},
+  {p:101,v:8},{p:102,v:29},{p:103,v:22},{p:104,v:35},{p:105,v:45},
+  {p:106,v:48},{p:107,v:43},{p:108,v:14},{p:109,v:31},{p:110,v:7},
+  {p:111,v:10},{p:112,v:10},{p:113,v:9},{p:114,v:8},{p:115,v:18},
+  {p:116,v:19},{p:117,v:2},{p:118,v:29},{p:119,v:176},{p:120,v:7},
+  {p:121,v:8},{p:122,v:9},{p:123,v:4},{p:124,v:8},{p:125,v:5},
+  {p:126,v:6},{p:127,v:5},{p:128,v:6},{p:129,v:8},{p:130,v:8},
+  {p:131,v:3},{p:132,v:18},{p:133,v:3},{p:134,v:3},{p:135,v:21},
+  {p:136,v:26},{p:137,v:9},{p:138,v:8},{p:139,v:24},{p:140,v:14},
+  {p:141,v:10},{p:142,v:8},{p:143,v:12},{p:144,v:15},{p:145,v:21},
+  {p:146,v:10},{p:147,v:20},{p:148,v:14},{p:149,v:9},{p:150,v:6}
+];
+function gem(n){
+  if(n<=0)return String(n);
+  var o=['','א','ב','ג','ד','ה','ו','ז','ח','ט'],t=['','י','כ','ל','מ','נ','ס','ע','פ','צ'],h=['','ק','ר','ש','ת'];
+  var r='',rem=n,hh=Math.floor(rem/100);
+  if(hh>=5){r+='\u05ea';rem-=400;hh=Math.floor(rem/100);}
+  if(hh>0){r+=h[hh];rem-=hh*100;}
+  if(rem===15){r+='\u05d8\u05d5';rem=0;}
+  else if(rem===16){r+='\u05d8\u05d6';rem=0;}
+  else{var tt=Math.floor(rem/10);if(tt>0){r+=t[tt];rem-=tt*10;}if(rem>0)r+=o[rem];}
+  if(r.length===1)return r+'\u05f3';
+  return r.slice(0,-1)+'\u05f4'+r.slice(-1);
+}
+function hYearStr(hy){return gem(hy%1000);}
+var HM={
+  'Tishrei':'\u05ea\u05e9\u05e8\u05d9','Cheshvan':'\u05d7\u05e9\u05d5\u05df','Kislev':'\u05db\u05e1\u05dc\u05d5',
+  'Tevet':'\u05d8\u05d1\u05ea',"Sh'vat":'\u05e9\u05d1\u05d8','Shvat':'\u05e9\u05d1\u05d8',
+  'Adar':'\u05d0\u05d3\u05e8','Adar I':'\u05d0\u05d3\u05e8 \u05d0\u05f3','Adar II':'\u05d0\u05d3\u05e8 \u05d1\u05f3',
+  'Nisan':'\u05e0\u05d9\u05e1\u05df','Iyar':'\u05d0\u05d9\u05d9\u05e8','Sivan':'\u05e1\u05d9\u05d5\u05df',
+  'Tamuz':'\u05ea\u05de\u05d5\u05d6','Av':'\u05d0\u05d1','Elul':'\u05d0\u05dc\u05d5\u05dc'
+};
+var MR=['Tishrei','Cheshvan','Kislev','Tevet',"Sh'vat",'Adar','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
+var ML=['Tishrei','Cheshvan','Kislev','Tevet',"Sh'vat",'Adar I','Adar II','Nisan','Iyar','Sivan','Tamuz','Av','Elul'];
+function hmn(api){return HM[api]||api;}
+function isLeap(hy){return((7*hy+1)%19)<7;}
+function normBM(bm,hy){
+  if(bm==='Shvat')bm="Sh'vat";
+  if(!isLeap(hy)){if(bm==='Adar I'||bm==='Adar II')return'Adar';return bm;}
+  else{if(bm==='Adar')return'Adar II';return bm;}
+}
+function distributeVerses(V,M){
+  var mult=1;while(V*mult<M)mult++;
+  var tv=V*mult,base=Math.floor(tv/M),rem=tv%M,result=[],cur=0;
+  for(var i=0;i<M;i++){
+    var cnt=(i<rem)?(base+1):base,segs=[],left=cnt,pos=cur;
+    while(left>0){var sp=V-pos,tk=Math.min(left,sp);segs.push([pos+1,pos+tk]);pos=(pos+tk)%V;left-=tk;}
+    result.push(segs);cur=(cur+cnt)%V;
+  }
+  return result;
+}
+function fmtSegs(segs){
+  var d=[],n=[];
+  segs.forEach(function(s){d.push(s[0]===s[1]?gem(s[0]):gem(s[0])+'\u2013'+gem(s[1]));n.push(s[0]===s[1]?String(s[0]):s[0]+'-'+s[1]);});
+  return{d:d.join(', '),n:n.join(', ')};
+}
+
+// ============================================================
+// HEBCAL
+// ============================================================
+var hcC={};
+async function g2h(d){
+  var k='g'+d.toISOString().split('T')[0];if(hcC[k])return hcC[k];
+  var y=d.getFullYear(),m=d.getMonth()+1,dd=d.getDate();
+  var j=await(await fetch('https://www.hebcal.com/converter?v=1&cfg=json&gy='+y+'&gm='+m+'&gd='+dd+'&g2h=1')).json();
+  hcC[k]=j;return j;
+}
+async function h2g(hy,hm,hd){
+  var k='h'+hy+'-'+hm+'-'+hd;if(hcC[k])return hcC[k];
+  var j=await(await fetch('https://www.hebcal.com/converter?v=1&cfg=json&hy='+hy+'&hm='+encodeURIComponent(hm)+'&hd='+hd+'&h2g=1')).json();
+  if(j.error)return null;hcC[k]=j;return j;
+}
+async function hebDateFromInputs(day,month,year){
+  // convert hebrew to gregorian then back to get canonical
+  var g=await h2g(year,month,day);
+  if(!g)return null;
+  return{hd:day,hm:month,hy:year,gy:g.gy,gm:g.gm,gd:g.gd};
+}
+
+// ============================================================
+// CORE CALC
+// ============================================================
+function buildStudyMonths(bm,bd,lastBY){
+  var nextBY=lastBY+1,isRC=(bd===1);
+  var bmL=normBM(bm,lastBY),bmN=normBM(bm,nextBY);
+  var curY=lastBY,curList=isLeap(curY)?ML:MR;
+  var si=curList.indexOf(bmL);if(si===-1)si=0;
+  var ci=si+1;
+  if(ci>=curList.length){curY++;curList=isLeap(curY)?ML:MR;ci=0;}
+  var months=[];
+  for(var i=0;i<14;i++){
+    if(ci>=curList.length){curY++;curList=isLeap(curY)?ML:MR;ci=0;}
+    var hm=curList[ci];
+    if(curY===nextBY&&hm===bmN){if(!isRC)months.push({hy:curY,hm:hm,hmn:hmn(hm)});break;}
+    if(curY>nextBY)break;
+    months.push({hy:curY,hm:hm,hmn:hmn(hm)});ci++;
+  }
+  return months;
+}
+async function findIdx(months,ref){
+  var idx=0;
+  for(var i=0;i<months.length;i++){
+    var g=await h2g(months[i].hy,months[i].hm,1);
+    var d=g&&g.gy?new Date(g.gy,g.gm-1,g.gd):null;
+    if(d&&d<=ref)idx=i;else break;
+  }
+  return idx;
+}
+
+async function calcForBirth(birthHM,birthHD,birthHY,refDate){
+  if(!refDate)refDate=new Date();
+  refDate=new Date(refDate);refDate.setHours(0,0,0,0);
+  var refH=await g2h(refDate);
+  var refHY=refH.hy;
+  var bmt=normBM(birthHM,refHY);
+  var bdThis=await h2g(refHY,bmt,birthHD);
+  var bdG=bdThis&&bdThis.gy?new Date(bdThis.gy,bdThis.gm-1,bdThis.gd):null;
+  var lastBY=bdG&&bdG<=refDate?refHY:refHY-1;
+  var nextBY=lastBY+1;
+  var bml=normBM(birthHM,lastBY);
+  var bmn2=normBM(birthHM,nextBY);
+
+  // age
+  var bdGrig=await h2g(birthHY,birthHM,birthHD);
+  var bdOrig=bdGrig?new Date(bdGrig.gy,bdGrig.gm-1,bdGrig.gd):null;
+  var age=0;
+  if(bdOrig){age=refDate.getFullYear()-bdOrig.getFullYear();var md=refDate.getMonth()-bdOrig.getMonth(),dd=refDate.getDate()-bdOrig.getDate();if(md<0||(md===0&&dd<0))age--;}
+
+  var psalmAge=Math.min(age,149);
+  var pd=PSALM_DATA[psalmAge];
+  var months=buildStudyMonths(birthHM,birthHD,lastBY);
+  var numM=months.length;
+  var ranges=distributeVerses(pd.v,numM);
+  var idx=await findIdx(months,refDate);
+
+  // next birthday info
+  var nbHG=await h2g(nextBY,bmn2,birthHD);
+  var nbGreg=nbHG&&nbHG.gy?new Date(nbHG.gy,nbHG.gm-1,nbHG.gd):null;
+
+  // days to next rosh chodesh (month idx+1)
+  var nextMonthIdx=idx+1<months.length?idx+1:null;
+  var nextRCGreg=null;
+  if(nextMonthIdx!==null){
+    var nrg=await h2g(months[nextMonthIdx].hy,months[nextMonthIdx].hm,1);
+    nextRCGreg=nrg&&nrg.gy?new Date(nrg.gy,nrg.gm-1,nrg.gd):null;
+  }
+  var daysToRC=nextRCGreg?Math.round((nextRCGreg-refDate)/(1000*60*60*24)):null;
+
+  return{pd,months,ranges,idx,numM,age,lastBY,nextBY,bml,bmn2,birthHD,birthHM,nbGreg,daysToRC,nextMonthIdx};
+}
+
+function daysToNextBD(nbGreg,refDate){
+  if(!nbGreg)return null;
+  return Math.round((nbGreg-refDate)/(1000*60*60*24));
+}
+function formatCountdown(days){
+  if(days<=0)return 'היום!';
+  if(days<7)return 'בעוד '+days+' ימים';
+  if(days<30)return 'בעוד '+Math.round(days/7)+' שבועות';
+  return 'בעוד '+Math.round(days/30)+' חודשים';
+}
+
+// ============================================================
+// UI — SEARCH
+// ============================================================
+var currentDateType='greg';
+function switchDateType(t){
+  currentDateType=t;
+  document.querySelectorAll('.date-tab').forEach(function(b,i){b.classList.toggle('active',(t==='greg'&&i===0)||(t==='heb'&&i===1));});
+  document.getElementById('row-greg').classList.toggle('active',t==='greg');
+  document.getElementById('row-heb').classList.toggle('active',t==='heb');
+}
+
+async function doSearch(){
+  var status=document.getElementById('search-status');
+  status.textContent='מחשב...';
+  var bm,bd,by,bdGreg;
+  try{
+    if(currentDateType==='greg'){
+      var gd=document.getElementById('greg-date').value;
+      if(!gd){alert('הזן תאריך');return;}
+      var gObj=new Date(gd);gObj.setHours(12);
+      var hb=await g2h(gObj);
+      if(!hb||hb.error)throw new Error('לא ניתן להמיר');
+      bm=hb.hm;bd=hb.hd;by=hb.hy;bdGreg=gObj;
+    }else{
+      bd=parseInt(document.getElementById('heb-day').value);
+      bm=document.getElementById('heb-month').value;
+      by=parseInt(document.getElementById('heb-year').value);
+      var conv=await h2g(by,bm,bd);
+      if(!conv)throw new Error('תאריך עברי לא תקין');
+      bdGreg=new Date(conv.gy,conv.gm-1,conv.gd);
+    }
+    if(bm==='Shvat')bm="Sh'vat";
+    status.textContent='';
+    await renderSearchResult(bm,bd,by,bdGreg);
+  }catch(e){status.textContent='שגיאה: '+e.message;console.error(e);}
+}
+
+async function renderSearchResult(bm,bd,by,bdGreg){
+  var res=document.getElementById('search-result');
+  res.innerHTML='<div class="loading">&#x23F3; מחשב...</div>';
+  var today=new Date();today.setHours(0,0,0,0);
+  var c=await calcForBirth(bm,bd,by,today);
+  var curSegs=c.ranges[c.idx];
+  var fmt=fmtSegs(curSegs);
+  var curMonth=c.months[c.idx];
+  var vFrom=curSegs[0][0],vTo=curSegs[curSegs.length-1][1];
+
+  // ראש חודש נוכחי
+  var curRCg=await h2g(curMonth.hy,curMonth.hm,1);
+  var curRCDate=curRCg?new Date(curRCg.gy,curRCg.gm-1,curRCg.gd):null;
+  var daysSinceRC=curRCDate?Math.round((today-curRCDate)/(1000*60*60*24)):0;
+
+  var alertHtml='';
+  if(c.daysToRC!==null&&c.daysToRC>=0&&c.daysToRC<=3){
+    var nextM=c.months[c.nextMonthIdx];
+    var nfmt=fmtSegs(c.ranges[c.nextMonthIdx]);
+    alertHtml='<div class="alert-box">&#x26A0;&#xFE0F; ראש חודש <strong>'+nextM.hmn+' '+hYearStr(nextM.hy)+'</strong> מתחיל בעוד <strong>'+c.daysToRC+'</strong> ימים — הלימוד יהיה פרק <strong>'+c.pd.p+'</strong> פסוקים <strong>'+nfmt.d+'</strong></div>';
+  }
+
+  var nbDays=daysToNextBD(c.nbGreg,today);
+
+  var html='<div class="result-box">'+
+    '<div class="main-msg">הלימוד בראש חודש <strong>'+curMonth.hmn+' '+hYearStr(curMonth.hy)+'</strong>:<br>פרק <strong>'+gem(c.pd.p)+'</strong> — פסוקים <strong>'+fmt.d+'</strong></div>'+
+    '<div class="sub-msg">גיל: '+c.age+' | חלק '+( c.idx+1)+'/'+c.numM+' | '+(c.numM===13?'שנה מעוברת':'שנה רגילה')+(nbDays!==null?' | יום הולדת הבא: '+formatCountdown(nbDays):'')+' </div>'+
+    alertHtml+
+    '<div class="action-btns">'+
+      '<button class="btn-gold" onclick="openViewer('+c.pd.p+','+(c.idx+1)+','+c.numM+','+vFrom+','+vTo+',\''+curMonth.hmn+' '+hYearStr(curMonth.hy)+'\',\''+fmt.d+'\')">&#x1F4D6; קרא לימוד נוכחי</button>'+
+      '<button class="btn-outline" id="toggle-table-btn" onclick="toggleTable()">&#x1F4C5; טבלה מלאה</button>'+
+    '</div>'+
+    '<div class="collapse-content" id="full-table-wrap"></div>'+
+  '</div>';
+
+  res.innerHTML=html;
+
+  // store for table
+  window._lastCalc={c,bm,bd,by};
+}
+
+function toggleTable(){
+  var wrap=document.getElementById('full-table-wrap');
+  if(wrap.classList.contains('open')){wrap.classList.remove('open');document.getElementById('toggle-table-btn').textContent='\uD83D\uDCC5 טבלה מלאה';return;}
+  wrap.classList.add('open');
+  document.getElementById('toggle-table-btn').textContent='\uD83D\uDCC5 סגור טבלה';
+  if(wrap.dataset.built)return;
+  wrap.dataset.built='1';
+  buildTable(wrap,window._lastCalc.c);
+}
+
+async function buildTable(wrap,c){
+  var rows='';
+  for(var ti=0;ti<c.months.length;ti++){
+    var sm=c.months[ti],fmt=fmtSegs(c.ranges[ti]);
+    var g=await h2g(sm.hy,sm.hm,1);
+    var gstr=g&&g.gy?new Date(g.gy,g.gm-1,g.gd).toLocaleDateString('he-IL'):'--';
+    var segs=c.ranges[ti];var vf=segs[0][0],vt=segs[segs.length-1][1];
+    var isCur=(ti===c.idx);
+    rows+='<tr'+(isCur?' class="cur"':'')+'>'+
+      '<td>'+(ti+1)+'</td><td>'+sm.hmn+' '+hYearStr(sm.hy)+'</td>'+
+      '<td style="direction:ltr;text-align:left">'+gstr+'</td>'+
+      '<td>'+fmt.d+' <small style="color:#999">('+fmt.n+')</small></td>'+
+      '<td><button class="read-btn" onclick="openViewer('+c.pd.p+','+(ti+1)+','+c.numM+','+vf+','+vt+',\''+sm.hmn+' '+hYearStr(sm.hy)+'\',\''+fmt.d+'\')">קרא</button></td>'+
+      '</tr>';
+  }
+  wrap.innerHTML='<table class="study-table"><tr><th>חלק</th><th>חודש</th><th>ראש חודש</th><th>פסוקים</th><th></th></tr>'+rows+'</table>';
+}
+
+// ============================================================
+// UI — PERSONAL
+// ============================================================
+function getChapters(){try{return JSON.parse(localStorage.getItem('tehillim_chapters')||'[]');}catch(e){return[];}}
+function saveChapters(arr){localStorage.setItem('tehillim_chapters',JSON.stringify(arr));}
+
+function toggleAddForm(){var f=document.getElementById('add-form');f.style.display=f.style.display==='none'?'block':'none';}
+function toggleAddDateType(){
+  var v=document.getElementById('af-dtype').value;
+  document.getElementById('af-greg-row').style.display=v==='greg'?'flex':'none';
+  document.getElementById('af-heb-row').style.display=v==='heb'?'flex':'none';
+}
+
+async function saveChapter(){
+  var name=document.getElementById('af-name').value.trim();
+  if(!name){alert('הזן שם');return;}
+  var dtype=document.getElementById('af-dtype').value;
+  var bm,bd,by;
+  if(dtype==='greg'){
+    var gv=document.getElementById('af-greg').value;
+    if(!gv){alert('הזן תאריך');return;}
+    var hb=await g2h(new Date(gv));
+    if(!hb||hb.error){alert('שגיאה בהמרה');return;}
+    bm=hb.hm;bd=hb.hd;by=hb.hy;
+  }else{
+    bd=parseInt(document.getElementById('af-hd').value);
+    bm=document.getElementById('af-hm').value;
+    by=parseInt(document.getElementById('af-hy').value);
+  }
+  if(bm==='Shvat')bm="Sh'vat";
+  var alert_=document.getElementById('af-alert').checked;
+  var chs=getChapters();
+  chs.push({id:Date.now(),name,bm,bd,by,alert:alert_});
+  saveChapters(chs);
+  toggleAddForm();
+  document.getElementById('af-name').value='';
+  renderPersonal();
+}
+
+function addRabbi(){
+  var chs=getChapters();
+  if(chs.find(function(c){return c.name==='\u05d4\u05e8\u05d1\u05d9';})){alert('הרבי כבר קיים ברשימה');return;}
+  // 18/4/1902 -> hebrew
+  g2h(new Date('1902-04-18')).then(function(hb){
+    var bm=hb.hm,bd=hb.hd,by=hb.hy;
+    if(bm==='Shvat')bm="Sh'vat";
+    chs.push({id:Date.now(),name:'\u05d4\u05e8\u05d1\u05d9',bm,bd,by,alert:false});
+    saveChapters(chs);renderPersonal();
+  });
+}
+
+function deleteChapter(id){
+  if(!confirm('למחוק?'))return;
+  saveChapters(getChapters().filter(function(c){return c.id!==id;}));
+  renderPersonal();
+}
+
+async function renderPersonal(){
+  var list=document.getElementById('chapters-list');
+  var chs=getChapters();
+  if(chs.length===0){list.innerHTML='<div class="small" style="padding:1rem;text-align:center;color:#999">אין פרקים שמורים. לחץ על "הוסף פרק" כדי להתחיל.</div>';return;}
+  list.innerHTML='<div class="loading">&#x23F3; מחשב פרקים...</div>';
+  var today=new Date();today.setHours(0,0,0,0);
+  var html='';
+  for(var i=0;i<chs.length;i++){
+    var ch=chs[i];
+    var c=await calcForBirth(ch.bm,ch.bd,ch.by,today);
+    var fmt=fmtSegs(c.ranges[c.idx]);
+    var curM=c.months[c.idx];
+    var vFrom=c.ranges[c.idx][0][0],vTo=c.ranges[c.idx][c.ranges[c.idx].length-1][1];
+    var nbDays=daysToNextBD(c.nbGreg,today);
+    var id=ch.id;
+    html+='<div class="chapter-card" draggable="true" data-id="'+id+'" ondragstart="dragStart(event,'+id+')" ondragover="dragOver(event)" ondrop="dragDrop(event,'+id+')" ondragleave="dragLeave(event)">'+
+      '<span class="drag-handle">&#x2630;</span>'+
+      '<div class="ch-name">'+ch.name+(ch.alert?' <span class="tag">התראה</span>':'')+'</div>'+
+      '<div class="ch-meta">'+
+        'פרק '+gem(c.pd.p)+' (גיל '+c.age+') &nbsp;|&nbsp; '+
+        'ראש חודש <strong>'+curM.hmn+'</strong> — פסוקים '+fmt.d+'<br>'+
+        (nbDays!==null?'יום הולדת הבא: '+formatCountdown(nbDays):'')+'&nbsp;|&nbsp; '+c.numM+' חודשים'+
+      '</div>'+
+      '<div class="ch-actions">'+
+        '<button onclick="openViewer('+c.pd.p+','+(c.idx+1)+','+c.numM+','+vFrom+','+vTo+',\''+curM.hmn+' '+hYearStr(curM.hy)+'\',\''+fmt.d+'\')">&#x1F4D6; לימוד נוכחי</button>'+
+        '<button onclick="openPersonalTable('+id+')">&#x1F4C5; טבלה מלאה</button>'+
+        '<button onclick="copyChLink('+id+','+c.pd.p+','+(c.idx+1)+','+c.numM+','+vFrom+','+vTo+')">&#x1F517; העתק לינק</button>'+
+        '<button onclick="editChapter('+id+')" style="color:#666">&#x270F;&#xFE0F; ערוך</button>'+
+        '<button onclick="deleteChapter('+id+')" style="color:#c00">&#x2715; מחק</button>'+
+      '</div>'+
+      '<div class="collapse-content" id="ptable-'+id+'"></div>'+
+    '</div>';
+  }
+  list.innerHTML=html;
+  // store calc results for table
+  window._chCalc=window._chCalc||{};
+  for(var j=0;j<chs.length;j++){
+    var ch2=chs[j];
+    window._chCalc[ch2.id]=await calcForBirth(ch2.bm,ch2.bd,ch2.by,today);
+  }
+}
+
+async function openPersonalTable(id){
+  var wrap=document.getElementById('ptable-'+id);
+  if(wrap.classList.contains('open')){wrap.classList.remove('open');return;}
+  wrap.classList.add('open');
+  if(wrap.dataset.built)return;
+  wrap.dataset.built='1';
+  var c=window._chCalc[id];
+  if(!c)return;
+  buildTable(wrap,c);
+}
+
+function copyChLink(id,p,part,total,vf,vt){
+  var url=window.location.href.split('#')[0]+'#'+p+'/'+part+'-'+total+'/'+vf+'-'+vt;
+  navigator.clipboard.writeText(url).then(function(){alert('הלינק הועתק!');});
+}
+
+// Drag & Drop
+var dragSrcId=null;
+function dragStart(e,id){dragSrcId=id;e.currentTarget.classList.add('dragging');}
+function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function dragDrop(e,targetId){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(dragSrcId===targetId)return;
+  var chs=getChapters();
+  var si=chs.findIndex(function(c){return c.id===dragSrcId;});
+  var ti=chs.findIndex(function(c){return c.id===targetId;});
+  var item=chs.splice(si,1)[0];
+  chs.splice(ti,0,item);
+  saveChapters(chs);
+  renderPersonal();
+}
+
+// ============================================================
+// VIEWER
+// ============================================================
+var activeComms={rashi:true,metzudot:true,radak:false,ibnezra:false};
+var COMM_MAP={'Rashi':'rashi','Radak':'radak','Metzudat David':'metzudot','Metzudat Zion':'metzudot','Ibn Ezra':'ibnezra'};
+var COMM_LBL={rashi:'רש״י',metzudot:'מצודות',radak:'רד״ק',ibnezra:'אבן עזרא'};
+var sefC={};
+
+function toggleComm(key){
+  activeComms[key]=!activeComms[key];
+  document.getElementById('tog-'+key).classList.toggle('on',activeComms[key]);
+  document.querySelectorAll('.comm-item.'+key).forEach(function(el){el.style.display=activeComms[key]?'block':'none';});
+}
+
+function openViewer(p,part,total,vf,vt,monthLabel,versesLabel){
+  var hash='#'+p+'/'+part+'-'+total+'/'+vf+'-'+vt;
+  var url=window.location.href.split('#')[0]+hash;
+  document.getElementById('vwr-title').textContent='\u05ea\u05d4\u05dc\u05d9\u05dd \u05e4\u05e8\u05e7 '+gem(p)+' \u2014 \u05e4\u05e1\u05d5\u05e7\u05d9\u05dd '+versesLabel+' \u2014 '+monthLabel;
+  document.getElementById('vwr-link').textContent=url;
+  window._vwrUrl=url;
+  document.getElementById('viewer-overlay').style.display='block';
+  document.body.style.overflow='hidden';
+  loadViewerContent(p,vf,vt);
+}
+function closeViewer(){document.getElementById('viewer-overlay').style.display='none';document.body.style.overflow='';}
+function copyVwrLink(){navigator.clipboard.writeText(window._vwrUrl||'').then(function(){alert('\u05d4\u05dc\u05d9\u05e0\u05e7 \u05d4\u05d5\u05e2\u05ea\u05e7!');});}
+
+function stripH(s){return s?s.replace(/<[^>]+>/g,''):''}
+
+async function loadViewerContent(chapter,vf,vt){
+  var content=document.getElementById('vwr-content');
+  content.innerHTML='<div class="viewer-loading">&#x23F3; טוען מספריא...</div>';
+  var cacheKey=chapter+':'+vf+'-'+vt;
+  var data=sefC[cacheKey];
+  if(!data){
+    try{
+      var ref='Psalms '+chapter+':'+(vf===vt?vf:vf+'-'+vt);
+      var textUrl='https://www.sefaria.org/api/v3/texts/'+encodeURIComponent(ref)+'?lang=he';
+      var linkUrl='https://www.sefaria.org/api/links/Psalms.'+chapter+'.'+vf+(vf===vt?'':'-'+vt)+'?with_text=1&lang=he';
+      var [tr,lr]=await Promise.all([fetch(textUrl),fetch(linkUrl)]);
+      var td=await tr.json(),ld=await lr.json();
+      data={verses:[],comm:{}};
+      var heArr=[];
+      if(td.versions&&td.versions[0]){var v=td.versions[0].text;heArr=Array.isArray(v)?v:[v];}
+      for(var i=0;i<heArr.length;i++){var vnum=vf+i;data.verses.push({num:vnum,text:heArr[i]||''});data.comm[vnum]={rashi:[],metzudot:[],radak:[],ibnezra:[]};}
+      if(Array.isArray(ld)){ld.forEach(function(lnk){
+        var cat=lnk.collectiveTitle&&lnk.collectiveTitle.en,key=COMM_MAP[cat];
+        if(!key||!lnk.he)return;
+        var am=lnk.anchorRef&&lnk.anchorRef.match(/:(\d+)/),vn=am?parseInt(am[1]):vf;
+        if(data.comm[vn]&&data.comm[vn][key]!==undefined)data.comm[vn][key].push(lnk.he);
+      });}
+      sefC[cacheKey]=data;
+    }catch(e){content.innerHTML='<div class="err">שגיאה בטעינה מספריא</div>';return;}
+  }
+  var html='';
+  data.verses.forEach(function(v){
+    var comm=data.comm[v.num]||{rashi:[],metzudot:[],radak:[],ibnezra:[]};
+    html+='<div class="pasuk-block"><div class="pasuk-num">פסוק '+gem(v.num)+'</div><div class="pasuk-text">'+stripH(v.text)+'</div><div>';
+    ['rashi','metzudot','radak','ibnezra'].forEach(function(key){
+      var txts=comm[key]||[];if(!txts.length)return;
+      html+='<div class="comm-item '+key+'" style="display:'+(activeComms[key]?'block':'none')+'">'+
+        '<div class="comm-label '+key+'">'+COMM_LBL[key]+'</div>'+
+        txts.map(function(t){return'<div class="comm-text">'+stripH(t)+'</div>';}).join('')+
+        '</div>';
+    });
+    html+='</div></div>';
+  });
+  content.innerHTML=html||'<div class="err">לא נמצאו פסוקים</div>';
+}
+
+// ============================================================
+// SECTION NAV
+// ============================================================
+function showSection(s){
+  document.querySelectorAll('.section').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('sec-'+s).classList.add('active');
+  document.querySelectorAll('.nav-links button').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('nav-'+s).classList.add('active');
+  if(s==='personal')renderPersonal();
+}
+
+// Hash routing for direct links
+async function loadFromHash(){
+  var hash=window.location.hash.replace('#','');
+  if(!hash)return;
+  var parts=hash.split('/');
+  if(parts.length<3)return;
+  var ch=parseInt(parts[0]),pt=parts[1].split('-'),vp=parts[2].split('-');
+  var pn=parseInt(pt[0]),tot=parseInt(pt[1]||'0'),vf=parseInt(vp[0]),vt=parseInt(vp[1]||vp[0]);
+  if(isNaN(ch)||isNaN(vf))return;
+  openViewer(ch,pn,tot,vf,vt,'','פסוקים '+gem(vf)+(vf===vt?'':'\u2013'+gem(vt)));
+}
+
+window.onload=async function(){
+  await loadFromHash();
+  renderPersonal();
+};
+</script>
+</body>
+</html>
