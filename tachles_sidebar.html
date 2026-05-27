@@ -1194,20 +1194,30 @@ function copyFoodRecipe(id) {
 }
 
 /* ── IMAGE HELPERS ───────────────────────────────────────── */
-// Convert any Drive sharing URL → embed-friendly URL
-function driveEmbed(url) {
-  if (!url) return '';
-  // already a uc?id= link
-  if (url.includes('drive.google.com/uc')) return url;
-  // /file/d/FILE_ID/view  →  /uc?id=FILE_ID
-  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) return `https://drive.google.com/uc?id=${m[1]}`;
-  return url;
-}
-// Extract Drive fileId from any Drive URL (for deletion)
+// Extract Drive fileId from any Drive URL
 function driveFileId(url) {
+  if (!url) return null;
   const m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   return m ? m[1] : null;
+}
+
+// Convert any Drive URL → displayable thumbnail URL
+// Google blocked /uc?id= in 2023; thumbnail API still works for shared files
+function driveEmbed(url) {
+  if (!url) return '';
+  const id = driveFileId(url);
+  if (id) {
+    // sz=w1200 = max width 1200px, good quality
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+  }
+  return url; // non-Drive URL, use as-is
+}
+
+// Full-res open URL (for clicking through to Drive)
+function driveOpen(url) {
+  if (!url) return '#';
+  const id = driveFileId(url);
+  return id ? `https://drive.google.com/file/d/${id}/view` : url;
 }
 
 // State: [{url, fileId (if uploaded via this app)}]
@@ -1216,16 +1226,20 @@ let fmImgEntries = [];
 function renderFmImgList() {
   const el = document.getElementById('fmImgList');
   if (!fmImgEntries.length) { el.innerHTML = ''; return; }
-  el.innerHTML = fmImgEntries.map((entry, i) => `
+  el.innerHTML = fmImgEntries.map((entry, i) => {
+    const thumb = driveEmbed(entry.url).replace('sz=w1200','sz=w200');
+    const open  = driveOpen(entry.url);
+    return `
     <div class="img-tag" id="imgtag-${i}">
-      <img class="img-tag-thumb" src="${driveEmbed(entry.url)}"
-        onerror="this.style.opacity='.3'" style="cursor:zoom-in"
-        onclick="window.open('${esc(entry.url)}','_blank')"/>
+      <img class="img-tag-thumb" src="${esc(thumb)}"
+        onerror="this.style.opacity='.25'" style="cursor:zoom-in"
+        onclick="window.open('${esc(open)}','_blank')"/>
       <span class="img-tag-url" title="${esc(entry.url)}">${
-        entry.fileId ? '✅ ' : ''
-      }${esc(entry.url.length > 50 ? '...'+entry.url.slice(-40) : entry.url)}</span>
+        entry.uploadedByUs ? '✅ ' : ''
+      }${esc(entry.url.length > 52 ? '...' + entry.url.slice(-42) : entry.url)}</span>
       <button class="img-tag-del" onclick="removeFmImg(${i})" title="הסר תמונה">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function addImgUrl() {
@@ -1436,12 +1450,17 @@ function buildGallery(urls) {
     <div class="gallery">
       <div class="gallery-counter" id="galCounter">1 / ${urls.length}</div>
       <div class="gallery-track" id="galTrack">
-        ${urls.map((u,i)=>`
+        ${urls.map((u,i) => {
+          const thumb = driveEmbed(u);
+          const open  = driveOpen(u);
+          return `
           <div class="gallery-slide">
-            <img src="${driveEmbed(u)}" alt="תמונת מתכון ${i+1}"
-              onerror="this.parentNode.innerHTML='<div class=img-err><span>🖼️</span><span>לא ניתן לטעון תמונה</span><a href=&quot;${esc(u)}&quot; target=_blank style=&quot;color:var(--gold2);font-size:.78rem&quot;>פתח בדפדפן</a></div>'"
-              onclick="window.open('${esc(u)}','_blank')" style="cursor:zoom-in"/>
-          </div>`).join('')}
+            <img src="${esc(thumb)}" alt="תמונת מתכון ${i+1}"
+              style="cursor:zoom-in"
+              onclick="window.open('${esc(open)}','_blank')"
+              onerror="this.outerHTML='<div class=img-err><span style=font-size:2rem>🖼️</span><span>לא ניתן לטעון תמונה</span><a href=\\'${esc(open)}\\' target=_blank style=\\'color:#f0c860;font-size:.82rem;text-decoration:underline\\'>📂 פתח ב-Drive</a></div>'"/>
+          </div>`;
+        }).join('')}
       </div>
       ${urls.length > 1 ? `
         <button class="gallery-nav prev" onclick="galMove(-1)">‹</button>
@@ -1450,7 +1469,10 @@ function buildGallery(urls) {
     ${urls.length > 1 ? `
       <div class="gallery-dots">
         ${urls.map((_,i)=>`<div class="gallery-dot ${i===0?'on':''}" id="gd-${i}" onclick="galGoto(${i})"></div>`).join('')}
-      </div>` : ''}`;
+      </div>` : ''}
+    <div style="text-align:center;margin-top:6px;font-size:.71rem;color:var(--l-txt3)">
+      לחץ על תמונה לפתיחה מלאה ב-Google Drive
+    </div>`;
 }
 
 function galMove(dir) {
