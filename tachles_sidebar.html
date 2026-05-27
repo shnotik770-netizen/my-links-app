@@ -406,6 +406,73 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
 .empty-dk h3{font-family:'Frank Ruhl Libre',serif;font-size:1.12rem;color:var(--txt2);margin-bottom:5px}
 .empty-dk p{font-size:.82rem;line-height:1.6}
 
+/* ── COOK ROW — done state collapses ────────────────────── */
+/* When done: row shrinks to a slim single line */
+.cook-row.done{
+  opacity:1;          /* override previous 0.35 */
+  padding:4px 3px;    /* tighter vertical */
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+.cook-row.done .cr-name{
+  font-size:.72rem;
+  font-weight:400;
+  color:var(--txt3);
+  text-decoration:line-through;
+  max-width:200px;
+}
+.cook-row.done .cr-src{ display:none }
+.cook-row.done .c-circle{
+  width:20px;height:20px;
+  font-size:.68rem;
+  background:var(--sage);border-color:var(--sage);color:#fff;
+  transform:scale(.8);
+}
+/* hide expand btn when done */
+.cook-row.done .expand-btn{ display:none }
+/* collapse recipe panel when row becomes done */
+.cook-row.done + .recipe-panel{ display:none !important }
+
+/* ── GALLERY ─────────────────────────────────────────────── */
+.gallery{position:relative;background:#000;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.gallery-track{display:flex;transition:transform .32s cubic-bezier(.4,0,.2,1)}
+.gallery-slide{flex:0 0 100%;position:relative}
+.gallery-slide img{
+  width:100%;max-height:52vh;object-fit:contain;
+  background:#111;display:block;
+}
+.gallery-slide .img-err{
+  display:flex;align-items:center;justify-content:center;
+  height:200px;background:rgba(255,255,255,.04);
+  color:var(--txt3);font-size:.82rem;flex-direction:column;gap:8px;
+}
+.gallery-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(0,0,0,.55);color:#fff;border:none;
+  width:34px;height:34px;border-radius:50%;font-size:1rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:var(--tr);z-index:5;
+}
+.gallery-nav:hover{background:rgba(0,0,0,.8)}
+.gallery-nav.prev{right:8px}
+.gallery-nav.next{left:8px}
+.gallery-dots{display:flex;justify-content:center;gap:5px;padding:7px 0 4px}
+.gallery-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.25);
+  cursor:pointer;transition:var(--tr)}
+.gallery-dot.on{background:var(--gold);transform:scale(1.2)}
+.gallery-counter{position:absolute;top:8px;left:8px;
+  background:rgba(0,0,0,.55);color:#fff;font-size:.72rem;font-weight:700;
+  padding:3px 8px;border-radius:20px}
+
+/* img url tag in food modal */
+.img-tag{display:flex;align-items:center;gap:6px;padding:5px 9px;
+  background:var(--l-bg2);border-radius:7px;border:1px solid var(--l-brd)}
+.img-tag-thumb{width:32px;height:32px;border-radius:5px;object-fit:cover;flex-shrink:0;background:var(--l-brd)}
+.img-tag-url{flex:1;font-size:.7rem;color:var(--l-txt3);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;direction:ltr}
+.img-tag-del{background:none;border:none;cursor:pointer;color:var(--l-txt3);font-size:1rem;
+  padding:1px 3px;transition:var(--tr);line-height:1;flex-shrink:0}
+.img-tag-del:hover{color:var(--red)}
+
 @media(max-width:530px){
   .hdr-top{padding:9px 11px}.main{padding:13px 10px 80px}
   .cr-name{max-width:110px}.cr-src{max-width:55px}
@@ -569,6 +636,44 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
     <div class="fg"><label class="lbl">ממי המתכון?</label><input id="fmSrc" class="inp" placeholder="סבתא רוזי..."/></div>
     <div class="fg"><label class="lbl">מתכון</label><textarea id="fmRecipe" class="ta" placeholder="כתוב את המתכון..."></textarea></div>
     <div class="fg"><label class="lbl">הערות</label><input id="fmNotes" class="inp" placeholder="הערות..."/></div>
+
+    <!-- IMAGES — upload or paste URL -->
+    <div class="fg">
+      <label class="lbl">📸 תמונות מתכון</label>
+      <div id="fmImgList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+
+      <!-- Upload button -->
+      <input type="file" id="fmFileInput" accept="image/*" multiple style="display:none"
+        onchange="handleFileUpload(this)"/>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+        <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('fmFileInput').click()"
+          id="fmUploadBtn">
+          📤 העלה תמונה
+        </button>
+        <div id="fmUploadStatus" style="font-size:.75rem;color:var(--l-txt3);align-self:center;display:flex;align-items:center;gap:5px"></div>
+      </div>
+
+      <!-- Upload progress bar (hidden until uploading) -->
+      <div id="fmProgressWrap" style="display:none;margin-bottom:6px">
+        <div style="height:4px;background:var(--l-brd);border-radius:2px;overflow:hidden">
+          <div id="fmProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold3),var(--gold));border-radius:2px;transition:width .3s ease"></div>
+        </div>
+        <div id="fmProgressTxt" style="font-size:.7rem;color:var(--l-txt3);margin-top:3px;text-align:center"></div>
+      </div>
+
+      <!-- Manual URL input (fallback) -->
+      <details style="margin-top:2px">
+        <summary style="font-size:.72rem;color:var(--l-txt3);cursor:pointer;user-select:none;padding:3px 0">
+          🔗 הדבק לינק Google Drive במקום זאת
+        </summary>
+        <div style="display:flex;gap:5px;margin-top:6px">
+          <input id="fmImgInput" class="inp" style="flex:1;font-size:.77rem;direction:ltr"
+            placeholder="https://drive.google.com/file/d/..."/>
+          <button class="btn btn-ghost btn-sm" onclick="addImgUrl()" type="button">➕</button>
+        </div>
+      </details>
+    </div>
+
     <div style="display:flex;align-items:center;gap:8px;padding:9px;background:var(--l-bg2);border-radius:8px">
       <input type="checkbox" id="fmFav" style="width:15px;height:15px;cursor:pointer"/>
       <label for="fmFav" style="cursor:pointer;font-weight:700;font-size:.84rem;color:var(--l-txt)">⭐ מאכל אהוב</label>
@@ -580,17 +685,43 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
   </div>
 </div>
 
-<!-- Recipe view -->
+<!-- Recipe view (with gallery) -->
 <div class="backdrop" id="recipeModal">
-  <div class="modal">
+  <div class="modal" style="max-width:560px">
     <div class="mhdr"><div class="mtitle" id="rmName"></div><button class="mclose" onclick="closeM('recipeModal')">✕</button></div>
-    <div id="rmCat"></div>
-    <div id="rmSrc" style="font-size:.75rem;color:var(--l-txt3);margin-top:4px"></div>
-    <div class="recipe-box" id="rmRecipe"></div>
-    <div id="rmNotes" style="margin-top:7px;font-size:.77rem;color:var(--l-txt3)"></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+      <div id="rmCat"></div>
+      <div id="rmSrc" style="font-size:.74rem;color:var(--l-txt3)"></div>
+    </div>
+
+    <!-- TAB BAR: switches between recipe text and images -->
+    <div id="rmTabs" style="display:flex;gap:0;border-bottom:2px solid var(--l-brd);margin-bottom:12px">
+      <button id="rmTabRecipe" onclick="rmTab('recipe')"
+        style="padding:7px 16px;background:none;border:none;font-family:'Heebo',sans-serif;font-size:.82rem;font-weight:700;
+        cursor:pointer;border-bottom:2px solid var(--gold);margin-bottom:-2px;color:var(--l-txt);transition:var(--tr)">
+        📋 מתכון
+      </button>
+      <button id="rmTabImg" onclick="rmTab('img')"
+        style="padding:7px 16px;background:none;border:none;font-family:'Heebo',sans-serif;font-size:.82rem;font-weight:700;
+        cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--l-txt3);transition:var(--tr)">
+        📸 תמונות <span id="rmImgCount" style="opacity:.6"></span>
+      </button>
+    </div>
+
+    <!-- RECIPE PANEL -->
+    <div id="rmPanelRecipe">
+      <div class="recipe-box" id="rmRecipe"></div>
+      <div id="rmNotes" style="margin-top:7px;font-size:.77rem;color:var(--l-txt3)"></div>
+    </div>
+
+    <!-- IMAGES PANEL -->
+    <div id="rmPanelImg" style="display:none">
+      <div id="rmGallery"></div>
+    </div>
+
     <div id="rmHist" style="margin-top:10px"></div>
     <div class="mfoot">
-      <button class="btn btn-ghost btn-sm" onclick="copyRecipeCur()">📋 העתק</button>
+      <button class="btn btn-ghost btn-sm" onclick="copyRecipeCur()">📋 העתק מתכון</button>
       <button class="btn btn-ghost" onclick="closeM('recipeModal')">סגור</button>
       <button class="btn btn-gold" id="rmEditBtn">✏️ ערוך</button>
     </div>
@@ -1062,45 +1193,201 @@ function copyFoodRecipe(id) {
   navigator.clipboard.writeText(txt).then(()=>toast('הועתק!','ok')).catch(()=>toast('לא ניתן','err'));
 }
 
+/* ── IMAGE HELPERS ───────────────────────────────────────── */
+// Convert any Drive sharing URL → embed-friendly URL
+function driveEmbed(url) {
+  if (!url) return '';
+  // already a uc?id= link
+  if (url.includes('drive.google.com/uc')) return url;
+  // /file/d/FILE_ID/view  →  /uc?id=FILE_ID
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return `https://drive.google.com/uc?id=${m[1]}`;
+  return url;
+}
+// Extract Drive fileId from any Drive URL (for deletion)
+function driveFileId(url) {
+  const m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+// State: [{url, fileId (if uploaded via this app)}]
+let fmImgEntries = [];
+
+function renderFmImgList() {
+  const el = document.getElementById('fmImgList');
+  if (!fmImgEntries.length) { el.innerHTML = ''; return; }
+  el.innerHTML = fmImgEntries.map((entry, i) => `
+    <div class="img-tag" id="imgtag-${i}">
+      <img class="img-tag-thumb" src="${driveEmbed(entry.url)}"
+        onerror="this.style.opacity='.3'" style="cursor:zoom-in"
+        onclick="window.open('${esc(entry.url)}','_blank')"/>
+      <span class="img-tag-url" title="${esc(entry.url)}">${
+        entry.fileId ? '✅ ' : ''
+      }${esc(entry.url.length > 50 ? '...'+entry.url.slice(-40) : entry.url)}</span>
+      <button class="img-tag-del" onclick="removeFmImg(${i})" title="הסר תמונה">✕</button>
+    </div>`).join('');
+}
+
+function addImgUrl() {
+  const inp = document.getElementById('fmImgInput');
+  const url = inp.value.trim();
+  if (!url) { toast('נא להדביק לינק','err'); return; }
+  if (fmImgEntries.some(e => e.url === url)) { toast('לינק כבר קיים','err'); return; }
+  fmImgEntries.push({ url, fileId: driveFileId(url) });
+  inp.value = '';
+  renderFmImgList();
+}
+
+async function removeFmImg(i) {
+  const entry = fmImgEntries[i];
+  if (!entry) return;
+  // If uploaded by us, offer to delete from Drive
+  if (entry.fileId && entry.uploadedByUs) {
+    if (confirm('למחוק גם מ-Google Drive?')) {
+      try { await POST({ action: 'deleteImage', fileId: entry.fileId }); }
+      catch(e) { console.warn('Drive delete failed:', e.message); }
+    }
+  }
+  fmImgEntries.splice(i, 1);
+  renderFmImgList();
+}
+
+// ── FILE UPLOAD FLOW ─────────────────────────────────────
+async function handleFileUpload(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  // Validate all before uploading
+  const MAX_MB = 8;
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) { toast(`${f.name} אינו קובץ תמונה`, 'err'); input.value=''; return; }
+    if (f.size > MAX_MB * 1024 * 1024) { toast(`${f.name} גדול מ-${MAX_MB}MB`, 'err'); input.value=''; return; }
+  }
+
+  const foodName = document.getElementById('fmName').value.trim() || 'מתכון';
+  setUploadUI(true, 0, files.length);
+
+  let succeeded = 0;
+  for (let idx = 0; idx < files.length; idx++) {
+    const file = files[idx];
+    setUploadUI(true, idx, files.length, file.name);
+    try {
+      const base64 = await fileToBase64(file);
+      const result = await POST({
+        action:   'uploadImage',
+        filename:  file.name,
+        mimeType:  file.type,
+        base64,
+        foodName
+      });
+      // result = { fileId, viewUrl, embedUrl, name }
+      fmImgEntries.push({ url: result.viewUrl, fileId: result.fileId, uploadedByUs: true });
+      renderFmImgList();
+      succeeded++;
+    } catch(e) {
+      toast(`שגיאה ב-${file.name}: ${e.message}`, 'err');
+    }
+  }
+
+  setUploadUI(false, files.length, files.length);
+  input.value = ''; // reset so same file can be uploaded again if needed
+  if (succeeded > 0) toast(`${succeeded} תמונה/ות הועלו ✅`, 'ok');
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]); // strip data:...;base64,
+    reader.onerror = () => reject(new Error('שגיאת קריאת קובץ'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function setUploadUI(uploading, done, total, currentName = '') {
+  const wrap = document.getElementById('fmProgressWrap');
+  const bar  = document.getElementById('fmProgressBar');
+  const txt  = document.getElementById('fmProgressTxt');
+  const btn  = document.getElementById('fmUploadBtn');
+  const status = document.getElementById('fmUploadStatus');
+
+  if (uploading) {
+    wrap.style.display = '';
+    btn.disabled = true;
+    btn.textContent = '⏳ מעלה...';
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    bar.style.width = pct + '%';
+    txt.textContent = currentName ? `מעלה: ${currentName} (${done+1}/${total})` : '';
+    status.innerHTML = '';
+  } else {
+    wrap.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '📤 העלה תמונה';
+    bar.style.width = '0%';
+    txt.textContent = '';
+    status.innerHTML = done > 0
+      ? `<span style="color:var(--sage)">✅ ${done}/${total} הועלו</span>`
+      : '';
+    setTimeout(() => { status.innerHTML = ''; }, 3000);
+  }
+}
+
 /* ── FOOD MODAL ─────────────────────────────────────────── */
 function openFoodModal(id=null, defaultCat=null) {
-  document.getElementById('fmTitle').textContent=id?'ערוך מאכל':'הוסף מאכל';
-  document.getElementById('fmId').value=id||'';
-  const f=id?allFoods.find(x=>x.id===id):null;
-  document.getElementById('fmName').value   =f?.name||'';
-  document.getElementById('fmCat').value    =f?.category||(defaultCat??(activeCat!=='all'?activeCat:''));
-  document.getElementById('fmSrc').value    =f?.recipe_source||'';
-  document.getElementById('fmRecipe').value =f?.recipe||'';
-  document.getElementById('fmNotes').value  =f?.notes||'';
-  document.getElementById('fmFav').checked  =f?.favorite||false;
+  document.getElementById('fmTitle').textContent = id ? 'ערוך מאכל' : 'הוסף מאכל';
+  document.getElementById('fmId').value = id||'';
+  const f = id ? allFoods.find(x=>x.id===id) : null;
+  document.getElementById('fmName').value   = f?.name||'';
+  document.getElementById('fmCat').value    = f?.category||(defaultCat??(activeCat!=='all'?activeCat:''));
+  document.getElementById('fmSrc').value    = f?.recipe_source||'';
+  document.getElementById('fmRecipe').value = f?.recipe||'';
+  document.getElementById('fmNotes').value  = f?.notes||'';
+  document.getElementById('fmFav').checked  = f?.favorite||false;
+  document.getElementById('fmImgInput').value = '';
+  document.getElementById('fmFileInput').value = '';
+  setUploadUI(false, 0, 0);
+  // Parse existing image_urls into entries
+  fmImgEntries = f?.image_urls
+    ? f.image_urls.split(',').map(s=>s.trim()).filter(Boolean)
+        .map(url => ({ url, fileId: driveFileId(url), uploadedByUs: false }))
+    : [];
+  renderFmImgList();
   openM('foodModal');
 }
 async function saveFood() {
-  const name=document.getElementById('fmName').value.trim();
-  const cat =document.getElementById('fmCat').value;
-  if(!name){toast('נא להזין שם','err');return;}
-  if(!cat) {toast('נא לבחור קטגוריה','err');return;}
-  const data={name,category:cat,
-    recipe_source:document.getElementById('fmSrc').value.trim(),
-    recipe:document.getElementById('fmRecipe').value.trim(),
-    notes:document.getElementById('fmNotes').value.trim(),
-    favorite:document.getElementById('fmFav').checked};
+  const name = document.getElementById('fmName').value.trim();
+  const cat  = document.getElementById('fmCat').value;
+  if (!name) { toast('נא להזין שם','err'); return; }
+  if (!cat)  { toast('נא לבחור קטגוריה','err'); return; }
+
+  // Grab any URL typed in manual input but not yet added
+  const pendingUrl = document.getElementById('fmImgInput').value.trim();
+  if (pendingUrl && !fmImgEntries.some(e=>e.url===pendingUrl)) {
+    fmImgEntries.push({ url: pendingUrl, fileId: driveFileId(pendingUrl), uploadedByUs: false });
+  }
+
+  const data = {
+    name, category: cat,
+    recipe_source: document.getElementById('fmSrc').value.trim(),
+    recipe:        document.getElementById('fmRecipe').value.trim(),
+    notes:         document.getElementById('fmNotes').value.trim(),
+    favorite:      document.getElementById('fmFav').checked,
+    image_urls:    fmImgEntries.map(e=>e.url).join(',')
+  };
   try {
     syncOn();
-    const id=document.getElementById('fmId').value;
-    const saved=await POST(id?{action:'updateFood',id,data}:{action:'addFood',data});
-    toast(id?'עודכן ✅':'נוסף ✅','ok');
+    const id    = document.getElementById('fmId').value;
+    const saved = await POST(id ? {action:'updateFood',id,data} : {action:'addFood',data});
+    toast(id ? 'עודכן ✅' : 'נוסף ✅','ok');
     closeM('foodModal');
-    if(!id){
-      allFoods.push(saved);
-    } else {
-      const idx=allFoods.findIndex(x=>x.id===id);
-      if(idx>=0) allFoods[idx]={...allFoods[idx],...data,id};
+    if (!id) { allFoods.push(saved); }
+    else {
+      const idx = allFoods.findIndex(x=>x.id===id);
+      if (idx>=0) allFoods[idx] = {...allFoods[idx],...data,id};
     }
     cacheSet('foods',allFoods);
     renderCatChips(); renderFoods();
-  } catch(e){toast('שגיאה: '+e.message,'err');}
-  finally{syncOff();}
+  } catch(e) { toast('שגיאה: '+e.message,'err'); }
+  finally { syncOff(); }
 }
 async function toggleFav(id,val) {
   const f=allFoods.find(x=>x.id===id);if(!f)return;
@@ -1114,32 +1401,105 @@ async function toggleFav(id,val) {
   finally{syncOff();}
 }
 
-/* ── RECIPE MODAL ───────────────────────────────────────── */
+/* ── RECIPE MODAL with GALLERY ──────────────────────────── */
+let rmCurrentSlide = 0;
+let rmSlides = [];
+
+function rmTab(tab) {
+  const showRecipe = tab === 'recipe';
+  document.getElementById('rmPanelRecipe').style.display = showRecipe ? '' : 'none';
+  document.getElementById('rmPanelImg').style.display    = showRecipe ? 'none' : '';
+  // Tab button styles
+  const tr = document.getElementById('rmTabRecipe');
+  const ti = document.getElementById('rmTabImg');
+  tr.style.borderBottomColor = showRecipe ? 'var(--gold)' : 'transparent';
+  tr.style.color = showRecipe ? 'var(--l-txt)' : 'var(--l-txt3)';
+  ti.style.borderBottomColor = !showRecipe ? 'var(--gold)' : 'transparent';
+  ti.style.color = !showRecipe ? 'var(--l-txt)' : 'var(--l-txt3)';
+}
+
+function buildGallery(urls) {
+  rmSlides = urls;
+  rmCurrentSlide = 0;
+  const el = document.getElementById('rmGallery');
+  if (!urls.length) {
+    el.innerHTML = `<div style="padding:30px;text-align:center;color:var(--l-txt3)">
+      <div style="font-size:2rem;margin-bottom:8px">📸</div>
+      <div style="font-size:.85rem">אין תמונות שמורות למאכל זה</div>
+      <div style="font-size:.75rem;margin-top:6px;color:var(--l-txt3);line-height:1.5">
+        ערוך את המאכל ← הוסף לינק Google Drive
+      </div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="gallery">
+      <div class="gallery-counter" id="galCounter">1 / ${urls.length}</div>
+      <div class="gallery-track" id="galTrack">
+        ${urls.map((u,i)=>`
+          <div class="gallery-slide">
+            <img src="${driveEmbed(u)}" alt="תמונת מתכון ${i+1}"
+              onerror="this.parentNode.innerHTML='<div class=img-err><span>🖼️</span><span>לא ניתן לטעון תמונה</span><a href=&quot;${esc(u)}&quot; target=_blank style=&quot;color:var(--gold2);font-size:.78rem&quot;>פתח בדפדפן</a></div>'"
+              onclick="window.open('${esc(u)}','_blank')" style="cursor:zoom-in"/>
+          </div>`).join('')}
+      </div>
+      ${urls.length > 1 ? `
+        <button class="gallery-nav prev" onclick="galMove(-1)">‹</button>
+        <button class="gallery-nav next" onclick="galMove(1)">›</button>` : ''}
+    </div>
+    ${urls.length > 1 ? `
+      <div class="gallery-dots">
+        ${urls.map((_,i)=>`<div class="gallery-dot ${i===0?'on':''}" id="gd-${i}" onclick="galGoto(${i})"></div>`).join('')}
+      </div>` : ''}`;
+}
+
+function galMove(dir) {
+  galGoto((rmCurrentSlide + dir + rmSlides.length) % rmSlides.length);
+}
+function galGoto(idx) {
+  rmCurrentSlide = idx;
+  const track = document.getElementById('galTrack');
+  if (track) track.style.transform = `translateX(${idx * 100}%)`;  // RTL: positive = right
+  document.getElementById('galCounter').textContent = `${idx+1} / ${rmSlides.length}`;
+  document.querySelectorAll('.gallery-dot').forEach((d,i) => d.classList.toggle('on', i===idx));
+}
+
 async function viewRecipe(id) {
-  const f=allFoods.find(x=>x.id===id);if(!f)return;
-  curRecipeFood=f;
-  document.getElementById('rmName').textContent  =(f.favorite?'⭐ ':'')+f.name;
-  document.getElementById('rmCat').innerHTML     =`<div class="cat-badge" data-cat="${f.category}">${EMO(f.category)} ${f.category}</div>`;
-  document.getElementById('rmSrc').textContent   =f.recipe_source?'📖 מאת: '+f.recipe_source:'';
-  document.getElementById('rmRecipe').textContent=f.recipe||'אין מתכון שמור';
-  document.getElementById('rmNotes').textContent =f.notes?'💬 '+f.notes:'';
-  document.getElementById('rmEditBtn').onclick   =()=>{closeM('recipeModal');openFoodModal(id,null);};
-  document.getElementById('rmHist').innerHTML    ='';
+  const f = allFoods.find(x=>x.id===id); if(!f) return;
+  curRecipeFood = f;
+
+  document.getElementById('rmName').textContent   = (f.favorite?'⭐ ':'')+f.name;
+  document.getElementById('rmCat').innerHTML      = `<div class="cat-badge" data-cat="${f.category}">${EMO(f.category)} ${f.category}</div>`;
+  document.getElementById('rmSrc').textContent    = f.recipe_source ? '📖 מאת: '+f.recipe_source : '';
+  document.getElementById('rmRecipe').textContent = f.recipe||'אין מתכון שמור';
+  document.getElementById('rmNotes').textContent  = f.notes ? '💬 '+f.notes : '';
+  document.getElementById('rmEditBtn').onclick    = ()=>{ closeM('recipeModal'); openFoodModal(id,null); };
+  document.getElementById('rmHist').innerHTML     = '';
+
+  // Setup images
+  const imgs = f.image_urls ? f.image_urls.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  document.getElementById('rmImgCount').textContent = imgs.length ? `(${imgs.length})` : '';
+  buildGallery(imgs);
+
+  // Start on recipe tab
+  rmTab('recipe');
   openM('recipeModal');
+
+  // Lazy-load history
   try {
-    const h=await GET('getFoodHistory',{id});
-    document.getElementById('rmHist').innerHTML=h?.count>0
-      ?`<div style="background:var(--l-bg2);border-radius:7px;padding:10px;border:1px solid var(--l-brd)">
+    const h = await GET('getFoodHistory',{id});
+    document.getElementById('rmHist').innerHTML = h?.count > 0
+      ? `<div style="background:var(--l-bg2);border-radius:7px;padding:10px;border:1px solid var(--l-brd)">
           <b style="font-size:.81rem">📅 היסטוריה</b>
           <div style="font-size:.78rem;color:var(--l-txt2);margin-top:3px">הוכן <b>${h.count}</b> פעמים${h.lastDate?', אחרון: '+fmtDate(h.lastDate):''}</div>
           ${h.dates.slice(0,4).map(d=>`<div style="font-size:.72rem;color:var(--l-txt3);margin-top:2px">• ${fmtDate(d)}</div>`).join('')}
-        </div>`:'';
+        </div>` : '';
   } catch {}
 }
 function copyRecipeCur() {
-  if(!curRecipeFood) return;
-  const f=curRecipeFood;
-  const txt=[f.name,f.category,f.recipe_source?'מאת: '+f.recipe_source:'','',f.recipe||'אין מתכון'].filter(Boolean).join('\n');
+  if (!curRecipeFood) return;
+  const f = curRecipeFood;
+  const txt = [f.name, f.category, f.recipe_source?'מאת: '+f.recipe_source:'', '', f.recipe||'אין מתכון'].filter(Boolean).join('\n');
   navigator.clipboard.writeText(txt).then(()=>toast('הועתק!','ok')).catch(()=>toast('לא ניתן','err'));
 }
 
