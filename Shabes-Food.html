@@ -122,10 +122,10 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
 .c-circle{width:27px;height:27px;border-radius:50%;border:1.8px solid var(--brd2);
   display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--tr);font-size:.88rem}
 .cook-row.done .c-circle{background:var(--sage);border-color:var(--sage);color:#fff;transform:scale(.82)}
-.cr-info{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:nowrap;gap:0;overflow:hidden}
-.cr-sep{color:var(--txt3);margin:0 4px;font-size:.64rem;flex-shrink:0}
-.cr-name{font-weight:700;color:var(--txt);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;transition:var(--tr)}
-.cr-src{font-size:.67rem;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;flex-shrink:0}
+.cr-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;overflow:hidden}
+.cr-name{font-weight:700;color:var(--txt);font-size:.9rem;line-height:1.3;
+  white-space:normal;word-break:break-word;transition:var(--tr)}
+.cr-src{font-size:.67rem;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .expand-btn{background:none;border:1px solid var(--brd2);color:var(--txt3);
   width:25px;height:25px;border-radius:6px;cursor:pointer;font-size:.9rem;
   display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0}
@@ -408,29 +408,12 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
 
 /* ── COOK ROW — done state collapses ────────────────────── */
 /* When done: row shrinks to a slim single line */
-.cook-row.done{
-  opacity:1;          /* override previous 0.35 */
-  padding:4px 3px;    /* tighter vertical */
-  border-bottom:1px solid rgba(255,255,255,.04);
-}
-.cook-row.done .cr-name{
-  font-size:.72rem;
-  font-weight:400;
-  color:var(--txt3);
-  text-decoration:line-through;
-  max-width:200px;
-}
-.cook-row.done .cr-src{ display:none }
-.cook-row.done .c-circle{
-  width:20px;height:20px;
-  font-size:.68rem;
-  background:var(--sage);border-color:var(--sage);color:#fff;
-  transform:scale(.8);
-}
-/* hide expand btn when done */
-.cook-row.done .expand-btn{ display:none }
-/* collapse recipe panel when row becomes done */
-.cook-row.done + .recipe-panel{ display:none !important }
+.cook-row.done{opacity:1;padding:4px 3px;border-bottom:1px solid rgba(255,255,255,.04)}
+.cook-row.done .cr-name{font-size:.78rem;font-weight:400;color:var(--txt3);text-decoration:line-through}
+.cook-row.done .cr-src{display:none}
+.cook-row.done .c-circle{width:20px;height:20px;font-size:.68rem;background:var(--sage);border-color:var(--sage);color:#fff;transform:scale(.8)}
+.cook-row.done .expand-btn{display:none}
+.cook-row.done+.recipe-panel{display:none!important}
 
 /* ── GALLERY ─────────────────────────────────────────────── */
 .gallery{position:relative;background:#000;border-radius:10px;overflow:hidden;margin-bottom:10px}
@@ -542,7 +525,6 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
   <div class="cook-btns">
     <button class="btn btn-gold btn-sm" onclick="go('planning')">📅 תכנן שבת חדשה</button>
     <button class="btn btn-ghost btn-sm" id="homeEditBtn" onclick="editCurrentShabbat()" style="display:none">✏️ ערוך שבת</button>
-    <button class="btn btn-ghost btn-sm" onclick="go('history')">📜 היסטוריה</button>
     <button class="btn btn-ghost btn-sm" id="homePickBtn" onclick="pickShabbat()" style="display:none">🔀 החלף</button>
   </div>
 </div>
@@ -1116,7 +1098,7 @@ async function renderHomeScreen(shabOverride) {
         <div class="c-circle" id="cc-${f.id}">${done?'✓':''}</div>
         <div class="cr-info">
           <span class="cr-name">${esc(f.name)}</span>
-          ${f.recipe_source?`<span class="cr-sep">·</span><span class="cr-src">${esc(f.recipe_source)}</span>`:''}
+          ${f.recipe_source?`<span class="cr-src">${esc(f.recipe_source)}</span>`:''}
         </div>
         ${f.recipe?`<button class="expand-btn" id="eb-${f.id}" onclick="event.stopPropagation();xRcp('${f.id}')">›</button>`:''}
       </div>
