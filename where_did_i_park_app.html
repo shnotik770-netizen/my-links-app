@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>איפה חניתי? 🚗</title>
+    <!-- Favicon: שימוש באייקון המקומי icon.png -->
+    <link rel="icon" type="image/png" href="icon.png">
     <!-- Tailwind CSS for modern responsive UI -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for icons -->
+    <!-- FontAwesome for fallback icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;900&display=swap');
@@ -17,231 +19,234 @@
             animation: pulse 2s infinite;
         }
         @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
-            70% { transform: scale(1.03); box-shadow: 0 0 0 15px rgba(245, 158, 11, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1.03); box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Header with Besiyata Dishmaya and User Greeting -->
-    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 sticky top-0 z-50 shadow-md">
-        <div class="max-w-md mx-auto flex justify-between items-center relative">
-            <span class="absolute -top-3 left-0 text-[10px] text-slate-500 font-mono">בס"ד</span>
-            <div class="flex flex-col">
-                <h1 class="text-xl font-black text-amber-400 tracking-wide flex items-center gap-2">
-                    <i class="fa-solid fa-square-p text-2xl text-amber-500"></i>
-                    איפה חניתי?
-                </h1>
-                <p id="header-greeting" class="text-xs text-slate-300 mt-0.5 font-medium"></p>
-            </div>
-            <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-700">
+    <!-- בס"ד & Header -->
+    <header class="bg-slate-800 border-b border-slate-700 pt-1 pb-4 px-6 sticky top-0 z-50 shadow-md">
+        <div class="max-w-md mx-auto text-left text-[10px] text-slate-500 font-serif select-none">
+            בס"ד
+        </div>
+        <div class="max-w-md mx-auto flex justify-between items-center mt-1">
+            <h1 class="text-xl font-black text-blue-400 tracking-wide flex items-center gap-2">
+                <img src="icon.png" alt="לוגו" class="w-8 h-8 object-contain rounded-lg shadow-md" onerror="this.style.display='none'; document.getElementById('header-fallback-icon').classList.remove('hidden');">
+                <i id="header-fallback-icon" class="fa-solid fa-square-p text-2xl text-blue-500 hidden"></i>
+                <span id="header-title">איפה חניתי?</span>
+            </h1>
+            <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-700" title="הגדרות">
                 <i class="fa-solid fa-gear text-xl"></i>
             </button>
         </div>
     </header>
 
+    <!-- Welcome Greeting Bar (User Name) -->
+    <div id="greeting-bar" class="hidden bg-slate-800/50 border-b border-slate-800/30 py-2 px-6 text-center text-xs font-semibold text-blue-300">
+        שלום ל<span id="greeting-username">השליח</span>! 👋
+    </div>
+
     <!-- Main Content Container -->
-    <main class="flex-grow flex items-center justify-center p-6 w-full max-w-md mx-auto">
-        <div class="w-full">
+    <main class="flex-grow flex flex-col items-center justify-start p-4 w-full max-w-md mx-auto space-y-6">
+        
+        <!-- Safe Sandbox Alert (For iframe previews) -->
+        <div id="sandbox-alert" class="hidden w-full p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-300 text-sm flex gap-3 items-start">
+            <i class="fa-solid fa-circle-exclamation text-lg mt-0.5 shrink-0"></i>
+            <div>
+                <p class="font-bold">שים לב: אתה מריץ את האפליקציה בתוך תצוגה מקדימה.</p>
+                <p class="mt-1 opacity-90">דפדפנים חוסמים גישה ל-GPS בתוך חלונות פנימיים. כדי שהאפליקציה תעבוד מצוין, <strong>הורד את הקובץ</strong> ופתח אותו ישירות בדפדפן של הטלפון.</p>
+            </div>
+        </div>
+
+        <!-- Onboarding: Name & Phone Number Setup -->
+        <div id="screen-onboarding" class="hidden w-full bg-slate-800 p-6 rounded-3xl shadow-2xl border border-slate-700/50 space-y-5">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-500/10 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-1">ברוך הבא! 👋</h2>
+                <p class="text-slate-400 text-sm">הזן את פרטיך פעם אחת לשמירה מקומית בלבד</p>
+            </div>
             
-            <!-- Safe Sandbox Alert (For iframe previews) -->
-            <div id="sandbox-alert" class="hidden mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-300 text-sm flex gap-3 items-start">
-                <i class="fa-solid fa-circle-exclamation text-lg mt-0.5 shrink-0"></i>
+            <div class="space-y-4">
                 <div>
-                    <p class="font-bold">שים לב: אתה מריץ את האפליקציה בתוך תצוגה מקדימה.</p>
-                    <p class="mt-1 opacity-90">דפדפנים חוסמים גישה ל-GPS בתוך חלונות פנימיים. כדי שהאפליקציה תעבוד מצוין, <strong>הורד את הקובץ</strong> ופתח אותו ישירות בדפדפן של הטלפון.</p>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">השם שלך (יופיע בברכת השלום):</label>
+                    <input type="text" id="input-name" placeholder="לדוגמה: מנחם מענדל..." 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 px-4 text-center text-white focus:outline-none focus:border-blue-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">מספר וואטסאפ (לדוגמה: 0545555000):</label>
+                    <input type="tel" id="input-phone" placeholder="הכנס מספר טלפון..." 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 px-4 text-center text-lg text-white font-mono tracking-wider focus:outline-none focus:border-blue-500 transition-colors">
+                </div>
+                <button onclick="saveOnboarding()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <span>שמור והמשך</span>
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- App Active Dashboard (Visible when logged in) -->
+        <div id="app-dashboard" class="hidden w-full space-y-6">
+            
+            <!-- ALWAYS VISIBLE: Start New Parking / Action Section -->
+            <div class="bg-slate-800/60 p-5 rounded-3xl border border-slate-700/30 text-center space-y-5">
+                <div class="space-y-1">
+                    <h2 id="display-ready-title" class="text-xl font-extrabold text-white tracking-tight">מוכן להתחיל את המבצועים שלך?</h2>
+                    <p id="display-ready-subtitle" class="text-slate-400 text-xs px-2">בלחיצה אחת תוכל להיות רגוע ולשכוח מכל הנחות עולם</p>
+                </div>
+
+                <!-- Big Action Button (Always available to trigger new coordinates) -->
+                <div class="flex justify-center">
+                    <button onclick="parkCar()" id="btn-park" class="pulse-animation w-36 h-36 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-full flex flex-col items-center justify-center shadow-xl transition-all cursor-pointer">
+                        <i class="fa-solid fa-location-dot text-3xl mb-2"></i>
+                        <span id="display-btn-park-text" class="text-sm font-black px-2 leading-tight">מכאן יוצאים לפעילות</span>
+                    </button>
+                </div>
+
+                <!-- Status / Loading Indicator -->
+                <div id="location-status" class="text-slate-300 text-xs font-medium px-4 min-h-[24px] leading-relaxed">
+                    אנא שמור את המיקום ולך לעבודת הכנת העולם למשיח בשמחה
                 </div>
             </div>
 
-            <!-- Onboarding: Name and Phone Number Setup -->
-            <div id="screen-onboarding" class="hidden bg-slate-800 p-6 rounded-3xl shadow-2xl border border-slate-700/50 space-y-5">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                        <i class="fa-solid fa-user-check"></i>
-                    </div>
-                    <h2 class="text-2xl font-bold mb-2">ברוך הבא! 👋</h2>
-                    <p class="text-slate-400 text-sm">הזן את שמך ומספר הטלפון פעם אחת כדי להתחיל בפעילות ולשמור את המיקומים שלך בקלות.</p>
+            <!-- Verification Card with Embedded Map -->
+            <div id="verification-card" class="hidden bg-slate-800 p-5 rounded-3xl border border-slate-700/50 space-y-3">
+                <div class="flex items-center gap-2 text-blue-400 font-bold text-sm pb-1 border-b border-slate-700/40">
+                    <i class="fa-solid fa-map-pin animate-bounce"></i>
+                    <span>אימות מיקום מיידי</span>
                 </div>
+                <p id="display-resolved-address" class="text-sm font-semibold text-slate-100">המיקום שנבחר הוא: מזהה כתובת...</p>
+                <!-- Embedded OpenStreetMap Iframe for visual reassurance -->
+                <div class="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-700 shadow-inner">
+                    <iframe id="embedded-map-frame" class="w-full h-full border-0" src=""></iframe>
+                </div>
+            </div>
+
+            <!-- #1 MOST RECENT PARKING (Displayed Separately and Larger) -->
+            <div id="latest-parking-card" class="hidden bg-blue-950/40 border-2 border-blue-500/30 p-5 rounded-3xl shadow-xl space-y-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="bg-blue-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">מיקום חנייה נוכחי אחרון 🌟</span>
+                        <h3 id="latest-time-title" class="text-lg font-black text-white mt-2">נשמר ממש עכשיו</h3>
+                        <p id="latest-address-text" class="text-slate-300 text-xs mt-1">מפענח כתובת...</p>
+                    </div>
+                    <div class="text-left">
+                        <p id="latest-date-badge" class="text-xs text-blue-300 font-bold">--/--/----</p>
+                        <p id="latest-time-badge" class="text-lg font-mono font-black text-white">--:--</p>
+                    </div>
+                </div>
+
+                <!-- Main Actions for the Latest Item -->
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <!-- Google Maps Link -->
+                    <a id="latest-gmaps-btn" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 shadow-md">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <span>Google Maps</span>
+                    </a>
+                    <!-- Waze Link -->
+                    <a id="latest-waze-btn" href="#" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 border border-slate-600">
+                        <i class="fa-brands fa-waze text-blue-400"></i>
+                        <span>Waze</span>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <!-- Send WhatsApp -->
+                    <button id="latest-wa-btn" onclick="sendHistoryToWhatsapp(0)" class="bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 shadow-md">
+                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                        <span>שלח לוואטסאפ</span>
+                    </button>
+                    <!-- Copy Link -->
+                    <button id="latest-copy-btn" onclick="copyHistoryLink(0)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>העתק קישור</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- HISTORY TABLE (Older Sessions: Items 2 to 5) -->
+            <div id="history-section" class="hidden bg-slate-800/40 p-5 rounded-3xl border border-slate-700/20 space-y-4">
+                <h4 class="text-xs font-bold text-slate-400 tracking-wider">היסטוריית חניות קודמות (עד 5 אחרונות)</h4>
                 
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1.5">שם השליח / המשתמש:</label>
-                        <input type="text" id="input-name" placeholder="הכנס את שמך..." 
-                               class="w-full bg-slate-900 border border-slate-700 rounded-2xl py-3 px-4 text-center text-lg text-white font-medium focus:outline-none focus:border-amber-500 transition-colors">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1.5">מספר וואטסאפ (לדוגמה: 0545555000)</label>
-                        <input type="tel" id="input-phone" placeholder="הכנס מספר טלפון..." 
-                               class="w-full bg-slate-900 border border-slate-700 rounded-2xl py-3 px-4 text-center text-lg text-white font-mono tracking-wider focus:outline-none focus:border-amber-500 transition-colors">
-                    </div>
-                    <button onclick="saveOnboarding()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
-                        <span>שמור וצא לשליחות!</span>
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Screen 1: Ready to Park (No Active Parking) -->
-            <div id="screen-ready" class="hidden text-center space-y-8">
-                <div class="space-y-3">
-                    <h2 id="display-text-header" class="text-3xl font-extrabold tracking-tight text-white leading-tight"></h2>
-                    <p id="display-text-sub" class="text-slate-400 text-md"></p>
-                </div>
-
-                <!-- Big Circular Pulse Button (Gold Accent) -->
-                <div class="flex justify-center py-4">
-                    <button onclick="parkCar()" id="btn-park" class="pulse-animation w-48 h-48 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 rounded-full flex flex-col items-center justify-center shadow-2xl transition-all cursor-pointer">
-                        <i class="fa-solid fa-car text-5xl mb-3"></i>
-                        <span id="display-text-btn-park" class="text-xl font-black px-4 leading-tight"></span>
-                    </button>
-                </div>
-
-                <!-- Status Indicator -->
-                <div id="location-status" class="text-slate-300 text-sm font-medium min-h-[24px] px-4 max-w-sm mx-auto">
-                </div>
-            </div>
-
-            <!-- Screen 2: Active Parking (Car Saved) -->
-            <div id="screen-parked" class="hidden bg-slate-800 p-6 rounded-3xl shadow-2xl border border-slate-700/50 space-y-6">
-                <div class="text-center pb-4 border-b border-slate-700/50">
-                    <div class="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-1.5 rounded-full text-xs font-bold mb-3 uppercase tracking-wider">
-                        <span class="w-2 h-2 bg-emerald-400 rounded-full animate-ping"></span>
-                        חנייה פעילה בשליחות
-                    </div>
-                    <h2 class="text-2xl font-black text-white">המיקום נשמר בהצלחה!</h2>
-                    <p id="parking-time-display" class="text-slate-400 text-sm mt-1">חנית לפני: 0 דקות</p>
-                </div>
-
-                <!-- Navigation Options -->
-                <div class="space-y-3">
-                    <p class="text-slate-300 font-bold text-sm">איך תרצה לנווט חזרה?</p>
-                    
-                    <!-- Google Maps (First/Primary Choice) -->
-                    <a id="btn-gmaps" href="#" target="_blank" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 px-5 rounded-2xl flex items-center justify-between transition-all active:scale-95 border border-slate-600 shadow-md">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-map-location-dot text-2xl text-green-400"></i>
-                            <span>ניווט ב-Google Maps (מומלץ)</span>
-                        </span>
-                        <span class="flex items-center gap-1 text-xs text-amber-400">
-                            <span>מועדף</span>
-                            <i class="fa-solid fa-star"></i>
-                        </span>
-                    </a>
-
-                    <!-- Waze (Secondary Choice) -->
-                    <a id="btn-waze" href="#" target="_blank" class="w-full bg-[#33f]/85 hover:bg-blue-700 text-white font-bold py-4 px-5 rounded-2xl flex items-center justify-between transition-all active:scale-95 shadow-md">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-brands fa-waze text-2xl"></i>
-                            <span>ניווט ב-Waze</span>
-                        </span>
-                        <i class="fa-solid fa-chevron-left text-xs opacity-70"></i>
-                    </a>
-                </div>
-
-                <!-- Sharing Options -->
-                <div class="space-y-3 pt-2">
-                    <p class="text-slate-300 font-bold text-sm">גיבוי ושיתוף מחוץ לאפליקציה:</p>
-                    <div class="grid grid-cols-2 gap-3">
-                        <!-- WhatsApp Send -->
-                        <button onclick="sendToWhatsapp()" class="bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 font-black py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md text-sm">
-                            <i class="fa-brands fa-whatsapp text-xl text-slate-950"></i>
-                            <span>שלח לווטסאפ</span>
-                        </button>
-                        
-                        <!-- Copy Link -->
-                        <button onclick="copyToClipboard()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 text-sm">
-                            <i class="fa-solid fa-copy text-lg text-amber-400"></i>
-                            <span id="btn-copy-text">העתק קישור</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Release Car Button -->
-                <div class="pt-4 border-t border-slate-700/50">
-                    <button onclick="showClearConfirmation()" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold py-3.5 px-3 rounded-2xl border border-rose-500/20 transition-all flex items-center justify-center gap-2 text-sm">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span id="display-text-btn-clear" class="whitespace-normal leading-normal text-center"></span>
-                    </button>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-slate-700/60 pb-2">
+                                <th class="pb-2 font-semibold">זמן ותאריך</th>
+                                <th class="pb-2 font-semibold">כתובת</th>
+                                <th class="pb-2 text-center font-semibold">ניווט ושיתוף</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-800">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
         </div>
     </main>
 
-    <!-- Custom Modal: Settings (Advanced Texts & Variables) -->
-    <div id="modal-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 my-8 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center pb-2 border-b border-slate-700 shrink-0">
-                <h3 class="text-lg font-bold text-amber-400">הגדרות האפליקציה ⚙️</h3>
+    <!-- Custom Modal: Settings -->
+    <div id="modal-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 space-y-4 my-8">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-700">
+                <h3 class="text-lg font-bold">הגדרות האפליקציה ⚙️</h3>
                 <button onclick="toggleSettings()" class="text-slate-400 hover:text-white p-1">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
             
-            <!-- Settings Form inside scrollable area -->
-            <div class="space-y-4 overflow-y-auto pr-1 flex-grow scrollbar-thin scrollbar-thumb-slate-700">
-                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-700/30 space-y-3">
-                    <h4 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-1">פרטי זיהוי וקשר</h4>
+            <div class="space-y-4 max-h-[60vh] overflow-y-auto px-1">
+                <!-- Name & Phone -->
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">שם המשתמש:</label>
-                        <input type="text" id="settings-name" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-sm text-white">
+                        <input type="text" id="settings-name" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">מספר הווטסאפ שלך:</label>
-                        <input type="tel" id="settings-phone" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-sm text-white font-mono">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">מספר וואטסאפ:</label>
+                        <input type="tel" id="settings-phone" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-mono text-sm text-center">
                     </div>
                 </div>
 
-                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-700/30 space-y-3">
-                    <h4 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-1">התאמת טקסטים אישית</h4>
-                    
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">כותרת המבצעים הראשית:</label>
-                        <textarea id="settings-text-header" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white"></textarea>
-                    </div>
+                <div class="border-t border-slate-700/50 my-2 pt-2">
+                    <p class="text-xs font-bold text-blue-400 mb-3">התאמת משפטי האפליקציה (שמירה ב-Local):</p>
+                </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">תת הכותרת:</label>
-                        <textarea id="settings-text-sub" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white"></textarea>
-                    </div>
+                <!-- Custom Text: Title -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">כותרת ראשית (מוכן להתחיל...):</label>
+                    <input type="text" id="setting-text-ready-title" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-xs">
+                </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">טקסט כפתור השמירה (העגול):</label>
-                        <input type="text" id="settings-text-btn-park" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white">
-                    </div>
+                <!-- Custom Text: Subtitle -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">כותרת משנית (בלחיצה אחת...):</label>
+                    <textarea id="setting-text-ready-subtitle" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-xs"></textarea>
+                </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">טקסט ההמתנה והסטטוס:</label>
-                        <textarea id="settings-text-status" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white"></textarea>
-                    </div>
+                <!-- Custom Text: Big Button -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">טקסט כפתור השמירה (מכאן יוצאים...):</label>
+                    <input type="text" id="setting-text-btn-park" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-xs">
+                </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">טקסט כפתור פינוי החנייה והחלפת שליחות:</label>
-                        <textarea id="settings-text-btn-clear" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white"></textarea>
-                    </div>
+                <!-- Custom Text: Status -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">הודעת סטטוס (אנא שמור...):</label>
+                    <textarea id="setting-text-status-waiting" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-xs"></textarea>
                 </div>
             </div>
 
-            <div class="flex gap-2 pt-2 border-t border-slate-700 shrink-0">
-                <button onclick="saveSettings()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-2.5 rounded-xl text-sm transition-all shadow">שמור שינויים</button>
-                <button onclick="resetTextsToDefault()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2.5 px-3 rounded-xl text-xs transition-all">איפוס ברירת מחדל</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Modal: Confirmation -->
-    <div id="modal-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-xs w-full p-6 text-center space-y-4">
-            <div class="text-rose-400 text-4xl">
-                <i class="fa-solid fa-circle-question"></i>
-            </div>
-            <h3 class="text-lg font-bold">לסיים את השליחות הנוכחית?</h3>
-            <p class="text-slate-400 text-xs">המיקום השמור הנוכחי יימחק כדי להתכונן למשימה הבאה.</p>
-            <div class="flex gap-2 pt-2">
-                <button onclick="clearParking()" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 rounded-xl text-sm">כן, סיימתי</button>
-                <button onclick="hideClearConfirmation()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2.5 rounded-xl text-sm">ביטול</button>
+            <div class="flex gap-2 pt-4 border-t border-slate-700">
+                <button onclick="saveSettings()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm transition-all">שמור שינויים</button>
+                <button onclick="resetTextsToDefault()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold px-3 py-2.5 rounded-xl text-sm transition-all" title="אפס ברירות מחדל">איפוס</button>
+                <button onclick="toggleSettings()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 py-2.5 px-4 rounded-xl text-sm transition-all">ביטול</button>
             </div>
         </div>
     </div>
@@ -254,32 +259,26 @@
 
     <!-- Footer -->
     <footer class="bg-slate-950 py-4 px-6 text-center border-t border-slate-800/80">
-        <p class="text-xs text-slate-500">עשו עוד מעשה קטן והביאו את המשיח בפועל ממש 👑</p>
+        <p class="text-xs text-slate-500">עשה טוב בשמחה - לעולם לא תשכח איפה חנית ❤️</p>
     </footer>
 
     <!-- Application Script -->
     <script>
-        // Default Constants for text configuration
-        const DEFAULTS = {
-            textHeader: "מוכן להתחיל את המבצועים שלך? 🗺️",
-            textSub: "בלחיצה אחת תוכל להיות רגוע ולשכוח מכל הנחות עולם",
-            textBtnPark: "מכאן יוצאים לפעילות",
-            textStatusReady: "אנא שמור את המיקום ולך לעבודת הכנת העולם למשיח בשמחה",
-            textBtnClear: "סיימנו את השליחות הנוכחית, עוברים למשימה הבאה (מחק מיקום חניה)"
+        // Default App texts
+        const defaultTexts = {
+            readyTitle: "מוכן להתחיל את המבצועים שלך?",
+            readySubtitle: "בלחיצה אחת תוכל להיות רגוע ולשכוח מכל הנחות עולם",
+            btnPark: "מכאן יוצאים לפעילות",
+            statusWaiting: "אנא שמור את המיקום ולך לעבודת הכנת העולם למשיח בשמחה"
         };
 
-        // App States and Local Storage values
-        let name = localStorage.getItem('parking_name') || '';
+        // App State
         let phone = localStorage.getItem('parking_phone') || '';
-        let parkingData = JSON.parse(localStorage.getItem('parking_data')) || null;
+        let userName = localStorage.getItem('parking_name') || '';
+        // Load history as an array. Limit to 5 elements.
+        let parkingHistory = JSON.parse(localStorage.getItem('parking_history_list')) || [];
+        let customTexts = JSON.parse(localStorage.getItem('parking_custom_texts')) || { ...defaultTexts };
         let timerInterval = null;
-
-        // Custom texts customized by user
-        let textHeader = localStorage.getItem('parking_text_header') || DEFAULTS.textHeader;
-        let textSub = localStorage.getItem('parking_text_sub') || DEFAULTS.textSub;
-        let textBtnPark = localStorage.getItem('parking_text_btn_park') || DEFAULTS.textBtnPark;
-        let textStatusReady = localStorage.getItem('parking_text_status_ready') || DEFAULTS.textStatusReady;
-        let textBtnClear = localStorage.getItem('parking_text_btn_clear') || DEFAULTS.textBtnClear;
 
         // Detect if app is running inside iframe sandbox
         function checkSandbox() {
@@ -295,59 +294,197 @@
         // Initialize App UI on load
         window.onload = function() {
             checkSandbox();
+            customTexts = { ...defaultTexts, ...customTexts };
             renderApp();
         };
 
-        // Apply updated texts and show the correct screen
         function renderApp() {
-            // Screen elements
             const screenOnboarding = document.getElementById('screen-onboarding');
-            const screenReady = document.getElementById('screen-ready');
-            const screenParked = document.getElementById('screen-parked');
+            const appDashboard = document.getElementById('app-dashboard');
+            const greetingBar = document.getElementById('greeting-bar');
+            const greetingUsername = document.getElementById('greeting-username');
             
-            // Hide all first
             screenOnboarding.classList.add('hidden');
-            screenReady.classList.add('hidden');
-            screenParked.classList.add('hidden');
+            appDashboard.classList.add('hidden');
+            greetingBar.classList.add('hidden');
 
-            // Reset timers
             if (timerInterval) clearInterval(timerInterval);
 
-            // Render Header personalized greeting
-            const greetingEl = document.getElementById('header-greeting');
-            if (name) {
-                greetingEl.innerText = `שלום ל${name}! 👋`;
+            // Apply custom texts to UI Elements
+            document.getElementById('display-ready-title').innerText = customTexts.readyTitle;
+            document.getElementById('display-ready-subtitle').innerText = customTexts.readySubtitle;
+            document.getElementById('display-btn-park-text').innerText = customTexts.btnPark;
+
+            if (!phone || !userName) {
+                screenOnboarding.classList.remove('hidden');
             } else {
-                greetingEl.innerText = "";
+                greetingUsername.innerText = userName;
+                greetingBar.classList.remove('hidden');
+                appDashboard.classList.remove('hidden');
+
+                // Render Verification Card and History Sections
+                renderVerificationCard();
+                renderHistoryLayout();
+                
+                timerInterval = setInterval(updateAllTimers, 60000); // Live timer counter update
+            }
+        }
+
+        // Asynchronously resolves address via OpenStreetMap Nominatim reverse geocoder
+        async function fetchHebrewAddress(lat, lng, callback) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=he`);
+                const data = await response.json();
+                if (data && data.address) {
+                    const road = data.address.road || '';
+                    const houseNumber = data.address.house_number || '';
+                    const city = data.address.city || data.address.town || data.address.village || '';
+                    
+                    let summary = '';
+                    if (road) summary += road;
+                    if (houseNumber) summary += ' ' + houseNumber;
+                    if (city) summary += (summary ? ', ' : '') + city;
+                    
+                    if (!summary) {
+                        summary = data.display_name.split(',').slice(0, 3).join(',');
+                    }
+                    callback(summary);
+                } else {
+                    callback("כתובת לא ידועה");
+                }
+            } catch (error) {
+                console.error("Geocoding failed:", error);
+                callback("שגיאה בפענוח כתובת");
+            }
+        }
+
+        // Renders the verification card for the latest saved coordinates
+        function renderVerificationCard() {
+            const verificationCard = document.getElementById('verification-card');
+            if (parkingHistory.length === 0) {
+                verificationCard.classList.add('hidden');
+                return;
             }
 
-            // Apply customizable text values to UI
-            document.getElementById('display-text-header').innerText = textHeader;
-            document.getElementById('display-text-sub').innerText = textSub;
-            document.getElementById('display-text-btn-park').innerText = textBtnPark;
-            document.getElementById('display-text-btn-clear').innerText = textBtnClear;
+            const latest = parkingHistory[0];
+            verificationCard.classList.remove('hidden');
+            
+            const displayAddress = document.getElementById('display-resolved-address');
+            displayAddress.innerText = `המיקום שנבחר הוא: ${latest.address || "מזהה כתובת..."}`;
+            
+            // Embed secure OpenStreetMap iframe centered around coords with a marker
+            const mapFrame = document.getElementById('embedded-map-frame');
+            const offset = 0.0015; // Zoom scale bounding box
+            const bbox = `${latest.lng - offset}%2C${latest.lat - offset / 2}%2C${latest.lng + offset}%2C${latest.lat + offset / 2}`;
+            mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latest.lat}%2C${latest.lng}`;
+        }
 
-            // Route between states based on locally saved data
-            if (!name || !phone) {
-                screenOnboarding.classList.remove('hidden');
-            } else if (!parkingData) {
-                screenReady.classList.remove('hidden');
-                document.getElementById('location-status').innerText = textStatusReady;
+        // Returns relative verbal duration
+        function getRelativeTimeString(timestamp) {
+            const now = new Date().getTime();
+            const diffMs = now - timestamp;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) return "ממש ברגע זה";
+            if (diffMins < 60) return `לפני ${diffMins} דקות`;
+            
+            const hours = Math.floor(diffMins / 60);
+            const remainingMins = diffMins % 60;
+            if (remainingMins === 0) {
+                return `לפני ${hours} שעות`;
+            }
+            return `לפני ${hours} שעות ו-${remainingMins} דק'`;
+        }
+
+        // Renders both #1 latest card and table of historical parking records (up to 5)
+        function renderHistoryLayout() {
+            const latestCard = document.getElementById('latest-parking-card');
+            const historySection = document.getElementById('history-section');
+            const statusDiv = document.getElementById('location-status');
+
+            if (parkingHistory.length === 0) {
+                latestCard.classList.add('hidden');
+                historySection.classList.add('hidden');
+                statusDiv.innerText = customTexts.statusWaiting;
+                return;
+            }
+
+            // --- RENDER #1 LATEST CARD ---
+            latestCard.classList.remove('hidden');
+            statusDiv.innerText = "החנייה הפעילה מוצגת מטה. תוכל להתחיל חנייה חדשה בכל עת!";
+            
+            const latest = parkingHistory[0];
+            const dateObj = new Date(latest.timestamp);
+            const dateStr = dateObj.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+            document.getElementById('latest-time-title').innerText = getRelativeTimeString(latest.timestamp);
+            document.getElementById('latest-address-text').innerText = latest.address || "מזהה כתובת...";
+            document.getElementById('latest-date-badge').innerText = dateStr;
+            document.getElementById('latest-time-badge').innerText = timeStr;
+
+            // Set links for primary card buttons
+            document.getElementById('latest-gmaps-btn').href = `https://www.google.com/maps/search/?api=1&query=${latest.lat},${latest.lng}`;
+            document.getElementById('latest-waze-btn').href = `https://waze.com/ul?ll=${latest.lat},${latest.lng}&navigate=yes`;
+
+            // --- RENDER OLDER SESSIONS TABLE (Items 2-5) ---
+            const olderSessions = parkingHistory.slice(1, 5);
+            const tableBody = document.getElementById('history-table-body');
+            tableBody.innerHTML = '';
+
+            if (olderSessions.length > 0) {
+                historySection.classList.remove('hidden');
+                olderSessions.forEach((record, index) => {
+                    const idxInHistory = index + 1; // absolute index in parkingHistory array
+                    const recDate = new Date(record.timestamp);
+                    const formattedDate = recDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' });
+                    const formattedTime = recDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+                    const relativeTime = getRelativeTimeString(record.timestamp);
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/30 transition-colors";
+                    tr.innerHTML = `
+                        <td class="py-3 pl-2">
+                            <p class="font-bold text-white text-xs">${formattedTime}</p>
+                            <p class="text-[10px] text-slate-400 font-mono">${formattedDate} (${relativeTime})</p>
+                        </td>
+                        <td class="py-3 text-slate-300 text-xs max-w-[120px] truncate" title="${record.address || 'ללא כתובת'}">
+                            ${record.address || 'טוען כתובת...'}
+                        </td>
+                        <td class="py-3 text-center">
+                            <div class="flex justify-center gap-1.5">
+                                <a href="https://waze.com/ul?ll=${record.lat},${record.lng}&navigate=yes" target="_blank" 
+                                   class="w-7 h-7 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center justify-center text-[#33f]" title="נווט ב-Waze">
+                                    <i class="fa-brands fa-waze text-xs"></i>
+                                </a>
+                                <button onclick="sendHistoryToWhatsapp(${idxInHistory})" 
+                                        class="w-7 h-7 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400" title="שלח לוואטסאפ">
+                                    <i class="fa-brands fa-whatsapp text-xs"></i>
+                                </button>
+                                <button onclick="copyHistoryLink(${idxInHistory})" 
+                                        class="w-7 h-7 bg-slate-700/50 hover:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400" title="העתק קישור">
+                                    <i class="fa-solid fa-copy text-[10px]"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
             } else {
-                screenParked.classList.remove('hidden');
-                setupParkingLinks();
-                updateTimer();
-                timerInterval = setInterval(updateTimer, 60000); // Update every minute
+                historySection.classList.add('hidden');
+            }
+        }
+
+        function updateAllTimers() {
+            if (parkingHistory.length > 0) {
+                renderHistoryLayout();
             }
         }
 
         // --- PHONE NUMBER PARSING & FORMATTING ---
-        // Converts "054-5555000" or "+972545555000" into clean "972545555000"
         function cleanAndFormatPhone(rawNum) {
             let clean = rawNum.replace(/[\s\-\(\)\+]/g, ''); 
             if (!clean) return '';
-
-            // Standardize Israeli mobiles
             if (clean.startsWith('0')) {
                 clean = '972' + clean.slice(1);
             } else if (clean.startsWith('5') && clean.length === 9) {
@@ -356,126 +493,109 @@
             return clean;
         }
 
-        // --- STREAMING_CHUNK: Setup Save and Update Functions ---
-        // Save Name and Phone inside Onboarding screen
+        // --- ONBOARDING & SETTINGS MANAGEMENT ---
+        
         function saveOnboarding() {
-            const inputName = document.getElementById('input-name');
             const inputPhone = document.getElementById('input-phone');
+            const inputName = document.getElementById('input-name');
             
-            let rawName = inputName.value.trim();
-            let rawPhone = inputPhone.value.trim();
+            let rawNum = inputPhone.value.trim();
+            let nameVal = inputName.value.trim();
+            let formattedPhone = cleanAndFormatPhone(rawNum);
 
-            if (!rawName) {
-                showToast("אנא הזן את שמך הפרטי", "error");
+            if (!nameVal) {
+                showToast("אנא הכנס את שמך", "error");
                 return;
             }
-
-            let formattedPhone = cleanAndFormatPhone(rawPhone);
             if (!formattedPhone || formattedPhone.length < 10) {
                 showToast("אנא הכנס מספר טלפון תקין", "error");
                 return;
             }
 
-            name = rawName;
             phone = formattedPhone;
+            userName = nameVal;
             
-            localStorage.setItem('parking_name', name);
             localStorage.setItem('parking_phone', phone);
+            localStorage.setItem('parking_name', userName);
             
-            showToast("נרשמת בהצלחה! השליחות יוצאת לדרך 👍");
+            showToast("הפרטים נשמרו בהצלחה! 👍");
             renderApp();
         }
 
-        // Open/Close settings dialog
         function toggleSettings() {
             const modal = document.getElementById('modal-settings');
             
             if (modal.classList.contains('hidden')) {
-                // Populate current variables to input fields
-                document.getElementById('settings-name').value = name;
-                
-                // Show human-readable zero-prefixed phone number in modal input
                 let displayPhone = phone;
                 if (displayPhone.startsWith('972')) {
                     displayPhone = '0' + displayPhone.substring(3);
                 }
+                
                 document.getElementById('settings-phone').value = displayPhone;
-
-                // Load custom values or defaults
-                document.getElementById('settings-text-header').value = textHeader;
-                document.getElementById('settings-text-sub').value = textSub;
-                document.getElementById('settings-text-btn-park').value = textBtnPark;
-                document.getElementById('settings-text-status').value = textStatusReady;
-                document.getElementById('settings-text-btn-clear').value = textBtnClear;
-
+                document.getElementById('settings-name').value = userName;
+                
+                document.getElementById('setting-text-ready-title').value = customTexts.readyTitle;
+                document.getElementById('setting-text-ready-subtitle').value = customTexts.readySubtitle;
+                document.getElementById('setting-text-btn-park').value = customTexts.btnPark;
+                document.getElementById('setting-text-status-waiting').value = customTexts.statusWaiting;
+                
                 modal.classList.remove('hidden');
             } else {
                 modal.classList.add('hidden');
             }
         }
 
-        // Save customized values to localStorage
         function saveSettings() {
-            const newName = document.getElementById('settings-name').value.trim();
-            const rawPhone = document.getElementById('settings-phone').value.trim();
+            const inputPhone = document.getElementById('settings-phone');
+            const inputName = document.getElementById('settings-name');
             
-            if (!newName) {
-                showToast("אנא הזן שם משתמש חוקי", "error");
+            let rawNum = inputPhone.value.trim();
+            let nameVal = inputName.value.trim();
+            
+            if (!nameVal) {
+                showToast("אנא הזן שם", "error");
                 return;
             }
 
-            let formattedPhone = cleanAndFormatPhone(rawPhone);
+            let formattedPhone = cleanAndFormatPhone(rawNum);
             if (!formattedPhone || formattedPhone.length < 10) {
-                showToast("אנא הזן מספר טלפון תקין", "error");
+                showToast("מספר טלפון לא תקין", "error");
                 return;
             }
 
-            // Save variables and text overrides
-            name = newName;
             phone = formattedPhone;
-            textHeader = document.getElementById('settings-text-header').value.trim() || DEFAULTS.textHeader;
-            textSub = document.getElementById('settings-text-sub').value.trim() || DEFAULTS.textSub;
-            textBtnPark = document.getElementById('settings-text-btn-park').value.trim() || DEFAULTS.textBtnPark;
-            textStatusReady = document.getElementById('settings-text-status').value.trim() || DEFAULTS.textStatusReady;
-            textBtnClear = document.getElementById('settings-text-btn-clear').value.trim() || DEFAULTS.textBtnClear;
-
-            localStorage.setItem('parking_name', name);
+            userName = nameVal;
             localStorage.setItem('parking_phone', phone);
-            localStorage.setItem('parking_text_header', textHeader);
-            localStorage.setItem('parking_text_sub', textSub);
-            localStorage.setItem('parking_text_btn_park', textBtnPark);
-            localStorage.setItem('parking_text_status_ready', textStatusReady);
-            localStorage.setItem('parking_text_btn_clear', textBtnClear);
+            localStorage.setItem('parking_name', userName);
 
-            showToast("ההגדרות והטקסטים עודכנו בהצלחה!");
+            customTexts.readyTitle = document.getElementById('setting-text-ready-title').value.trim() || defaultTexts.readyTitle;
+            customTexts.readySubtitle = document.getElementById('setting-text-ready-subtitle').value.trim() || defaultTexts.readySubtitle;
+            customTexts.btnPark = document.getElementById('setting-text-btn-park').value.trim() || defaultTexts.btnPark;
+            customTexts.statusWaiting = document.getElementById('setting-text-status-waiting').value.trim() || defaultTexts.statusWaiting;
+
+            localStorage.setItem('parking_custom_texts', JSON.stringify(customTexts));
+
+            showToast("ההגדרות עודכנו בהצלחה!");
             toggleSettings();
             renderApp();
         }
 
-        // Reset texts back to defaults
         function resetTextsToDefault() {
-            if (confirm("האם אתה בטוח שברצונך לאפס את כל הטקסטים לניסוח ברירת המחדל?")) {
-                textHeader = DEFAULTS.textHeader;
-                textSub = DEFAULTS.textSub;
-                textBtnPark = DEFAULTS.textBtnPark;
-                textStatusReady = DEFAULTS.textStatusReady;
-                textBtnClear = DEFAULTS.textBtnClear;
-
-                // Remove values from localstorage
-                localStorage.removeItem('parking_text_header');
-                localStorage.removeItem('parking_text_sub');
-                localStorage.removeItem('parking_text_btn_park');
-                localStorage.removeItem('parking_text_status_ready');
-                localStorage.removeItem('parking_text_btn_clear');
-
+            if (confirm("האם לאפס את כל המשפטים והטקסטים לברירת המחדל המקורית?")) {
+                customTexts = { ...defaultTexts };
+                localStorage.setItem('parking_custom_texts', JSON.stringify(customTexts));
+                
+                document.getElementById('setting-text-ready-title').value = customTexts.readyTitle;
+                document.getElementById('setting-text-ready-subtitle').value = customTexts.readySubtitle;
+                document.getElementById('setting-text-btn-park').value = customTexts.btnPark;
+                document.getElementById('setting-text-status-waiting').value = customTexts.statusWaiting;
+                
                 showToast("הטקסטים אופסו לברירת המחדל");
-                toggleSettings();
-                renderApp();
             }
         }
 
-        // --- GPS AND NAVIGATION LOGIC ---
-
+        // --- LOCATION ACQUISITION & HISTORY APPEND ---
+        
         function parkCar() {
             const statusDiv = document.getElementById('location-status');
             const btnPark = document.getElementById('btn-park');
@@ -491,28 +611,52 @@
             btnPark.classList.remove('pulse-animation');
             btnPark.style.opacity = '0.7';
 
-            // High accuracy lookup
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
+                    const timestamp = new Date().getTime();
                     
-                    parkingData = {
+                    // Create dynamic record block
+                    const newRecord = {
                         lat: lat,
                         lng: lng,
-                        timestamp: new Date().getTime()
+                        timestamp: timestamp,
+                        address: "מזהה כתובת... ⌛"
                     };
+
+                    // Insert to front of array
+                    parkingHistory.unshift(newRecord);
                     
-                    // Saved directly inside localstorage object
-                    localStorage.setItem('parking_data', JSON.stringify(parkingData));
+                    // Max limit of 5 stored spots in memory
+                    if (parkingHistory.length > 5) {
+                        parkingHistory = parkingHistory.slice(0, 5);
+                    }
+
+                    localStorage.setItem('parking_history_list', JSON.stringify(parkingHistory));
                     
                     statusDiv.innerHTML = "המיקום נמצא ונשמר! 🎉";
-                    showToast("המיקום נשמר! צא לשליחות בשמחה 🚗");
+                    showToast("החנייה נשמרה בהצלחה! 🚗");
                     
+                    // Trigger immediate UI refresh
+                    renderApp();
+
+                    // Query Nominatim API for Hebrew address
+                    fetchHebrewAddress(lat, lng, (resolvedAddress) => {
+                        // Find the item with matching timestamp and update its address
+                        const matchedRecordIdx = parkingHistory.findIndex(r => r.timestamp === timestamp);
+                        if (matchedRecordIdx !== -1) {
+                            parkingHistory[matchedRecordIdx].address = resolvedAddress;
+                            localStorage.setItem('parking_history_list', JSON.stringify(parkingHistory));
+                            // Refresh layout with the resolved address string
+                            renderApp();
+                        }
+                    });
+
                     setTimeout(() => {
                         btnPark.disabled = false;
                         btnPark.style.opacity = '1';
-                        renderApp();
+                        btnPark.classList.add('pulse-animation');
                     }, 1000);
                 },
                 (error) => {
@@ -535,67 +679,36 @@
             );
         }
 
-        // Create standard external link protocols
-        function setupParkingLinks() {
-            if (!parkingData) return;
-            
-            const lat = parkingData.lat;
-            const lng = parkingData.lng;
-            
-            // Google Maps link (Top priority)
-            document.getElementById('btn-gmaps').href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        // --- WHATSAPP & CLIPBOARD UTILITIES ---
 
-            // Waze fallback link
-            document.getElementById('btn-waze').href = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+        function generateHistoryShareText(index) {
+            if (index >= parkingHistory.length) return "";
+            const record = parkingHistory[index];
+            
+            const gmapsLink = `https://www.google.com/maps/search/?api=1&query=${record.lat},${record.lng}`;
+            const wazeLink = `https://waze.com/ul?ll=${record.lat},${record.lng}&navigate=yes`;
+            
+            const timeStr = new Date(record.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+            const addressString = record.address || "מפענח כתובת...";
+            
+            return `מיקום השליחות שלי 🚗📍\n\nשמרתי את מיקום הרכב/ההתחלה שלי בקישור הבא:\n${gmapsLink}\n\nניווט ישיר ב-Waze:\n${wazeLink}\n\nכתובת משוערת: ${addressString}\n(שעה שמורה: ${timeStr})`;
         }
 
-        // Active timer difference counter
-        function updateTimer() {
-            if (!parkingData) return;
+        function sendHistoryToWhatsapp(index) {
+            const text = generateHistoryShareText(index);
+            if (!text) return;
             
-            const now = new Date().getTime();
-            const parkedTime = parkingData.timestamp;
-            const diffMs = now - parkedTime;
-            const diffMins = Math.floor(diffMs / 60000);
-            
-            const display = document.getElementById('parking-time-display');
-            if (diffMins < 1) {
-                display.innerText = "הפעילות החלה ממש ברגע זה";
-            } else if (diffMins < 60) {
-                display.innerText = `זמן פעילות: ${diffMins} דקות`;
-            } else {
-                const hours = Math.floor(diffMins / 60);
-                const remainingMins = diffMins % 60;
-                display.innerText = `זמן פעילות: ${hours} שעות ו-${remainingMins} דקות`;
-            }
-        }
-
-        // --- STREAMING_CHUNK: Setup Share & Dialogs ---
-        // Generating standard SMS/WhatsApp templates
-        function generateShareText() {
-            if (!parkingData) return "";
-            
-            const lat = parkingData.lat;
-            const lng = parkingData.lng;
-            const gmapsLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-            const wazeLink = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-            
-            const timeStr = new Date(parkingData.timestamp).toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-            
-            return `החנייה שלי 🚗📍\n\nשמרתי את מיקום הרכב שלי בקישור הבא:\n${gmapsLink}\n\nניווט ישיר ב-Waze:\n${wazeLink}\n\n(שעה שמורה: ${timeStr})`;
-        }
-
-        function sendToWhatsapp() {
-            if (!parkingData) return;
-            const message = encodeURIComponent(generateShareText());
+            const message = encodeURIComponent(text);
             const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
+            
             window.open(whatsappUrl, '_blank');
         }
 
-        function copyToClipboard() {
-            const textToCopy = generateShareText();
-            const btnText = document.getElementById('btn-copy-text');
-            
+        // Clipboard copy mechanism inside IFrames
+        function copyHistoryLink(index) {
+            const textToCopy = generateHistoryShareText(index);
+            if (!textToCopy) return;
+
             const tempInput = document.createElement("textarea");
             tempInput.value = textToCopy;
             tempInput.style.position = "absolute";
@@ -609,43 +722,25 @@
             } catch (err) {
                 success = false;
             }
+            
             document.body.removeChild(tempInput);
 
             if (success) {
                 showToast("קישור הניווט הועתק ללוח!");
-                btnText.innerText = "הועתק! ✓";
-                setTimeout(() => {
-                    btnText.innerText = "העתק קישור";
-                }, 2000);
             } else {
                 showToast("שגיאה בהעתקה, אנא העתק ידנית", "error");
             }
         }
 
-        // Confirm parking clear action modal
-        function showClearConfirmation() {
-            document.getElementById('modal-confirm').classList.remove('hidden');
-        }
+        // --- TOAST NOTIFICATIONS ---
 
-        function hideClearConfirmation() {
-            document.getElementById('modal-confirm').classList.add('hidden');
-        }
-
-        function clearParking() {
-            localStorage.removeItem('parking_data');
-            parkingData = null;
-            hideClearConfirmation();
-            showToast("סיימנו! שיהיה בהצלחה במשימה הבאה 🚀");
-            renderApp();
-        }
-
-        // Alert message popup banner
         function showToast(message, type = "success") {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toast-icon');
             const text = document.getElementById('toast-text');
 
             text.innerText = message;
+            
             if (type === "success") {
                 icon.className = "fa-solid fa-circle-check text-green-400 text-lg";
             } else {
