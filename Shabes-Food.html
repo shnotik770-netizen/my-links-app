@@ -98,15 +98,18 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
 
 /* ═══ COOK SCREEN (dark always) ══════════════════════════ */
 .cook-header{
-  background:transparent;border:none;border-bottom:1px solid var(--brd);
-  padding:10px 2px 13px;margin-bottom:10px;
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.cook-shab-title{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;color:var(--gold2);line-height:1.25}
-.cook-shab-sub{font-size:.78rem;color:var(--txt2);margin-top:3px;opacity:.9}
-.cook-shab-notes{font-size:.76rem;color:var(--txt2);margin-top:2px;opacity:.85}
-.prog-bar{width:110px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:3px}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold2));border-radius:2px;transition:width .35s ease}
-.prog-txt{font-size:.68rem;color:var(--txt3);text-align:left}
+  background:rgba(253,246,227,0.92);
+  border:1px solid rgba(212,168,67,.3);
+  border-radius:var(--r);padding:10px 14px;margin-bottom:11px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:nowrap;}
+.cook-header-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0;flex-wrap:wrap}
+.cook-shab-title{font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;font-weight:700;
+  color:#1a1a2e;line-height:1.2;white-space:nowrap}
+.cook-shab-sub{font-size:.78rem;color:#5a4035;white-space:nowrap}
+.cook-shab-notes{font-size:.74rem;color:#8a6050;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog-bar{width:90px;height:4px;background:rgba(26,26,46,.12);border-radius:2px;overflow:hidden;margin-bottom:3px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold));border-radius:2px;transition:width .35s ease}
+.prog-txt{font-size:.67rem;color:#8a6050;text-align:left}
 
 .cook-list{display:flex;flex-direction:column}
 .cook-divider{display:flex;align-items:center;gap:8px;padding:9px 0 4px}
@@ -1118,12 +1121,12 @@ async function renderHomeScreen(shabOverride) {
 
   el.innerHTML=`
     <div class="cook-header">
-      <div>
-        <div class="cook-shab-title">🕯️ ${hebDate||fmtDate(shab.date)}</div>
-        ${hebDate?`<div class="cook-shab-sub">${fmtDate(shab.date)}</div>`:''}
-        ${shab.notes?`<div class="cook-shab-notes">💬 ${esc(shab.notes)}</div>`:''}
+      <div class="cook-header-left">
+        <span class="cook-shab-title">🕯️ ${hebDate||fmtDate(shab.date)}</span>
+        ${hebDate?`<span class="cook-shab-sub">${fmtDate(shab.date)}</span>`:''}
+        ${shab.notes?`<span class="cook-shab-notes">· ${esc(shab.notes)}</span>`:''}
       </div>
-      <div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0">
         <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:${pct}%"></div></div>
         <div class="prog-txt" id="progTxt">${doneCount}/${total} הוכנו</div>
       </div>
