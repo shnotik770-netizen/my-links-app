@@ -98,12 +98,12 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
 
 /* ═══ COOK SCREEN (dark always) ══════════════════════════ */
 .cook-header{
-  background:rgba(212,168,67,.07);border:1px solid rgba(212,168,67,.14);
-  border-radius:var(--r);padding:13px 15px;margin-bottom:11px;
+  background:transparent;border:none;border-bottom:1px solid var(--brd);
+  padding:10px 2px 13px;margin-bottom:10px;
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.cook-shab-title{font-family:'Frank Ruhl Libre',serif;font-size:1.2rem;color:var(--gold2);line-height:1.2}
-.cook-shab-sub{font-size:.73rem;color:var(--txt3);margin-top:2px}
-.cook-shab-notes{font-size:.72rem;color:var(--txt2);margin-top:2px}
+.cook-shab-title{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;color:var(--gold2);line-height:1.25}
+.cook-shab-sub{font-size:.78rem;color:var(--txt2);margin-top:3px;opacity:.9}
+.cook-shab-notes{font-size:.76rem;color:var(--txt2);margin-top:2px;opacity:.85}
 .prog-bar{width:110px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:3px}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold2));border-radius:2px;transition:width .35s ease}
 .prog-txt{font-size:.68rem;color:var(--txt3);text-align:left}
@@ -391,7 +391,12 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--txt);min-he
 .cat-row{display:flex;align-items:center;gap:7px;padding:7px 10px;
   background:var(--l-bg2);border-radius:8px;border:1.5px solid var(--l-brd)}
 .cat-row-emo{font-size:1.1rem;flex-shrink:0}
-.cat-row-name{flex:1;font-weight:600;color:var(--l-txt);font-size:.85rem}
+.cat-row-name-inp{
+  flex:1;background:transparent;border:none;border-bottom:1.5px dashed var(--l-brd2);
+  font-family:'Heebo',sans-serif;font-size:.87rem;font-weight:600;color:var(--l-txt);
+  padding:2px 5px;direction:rtl;cursor:text;min-width:0;transition:var(--tr);border-radius:4px;}
+.cat-row-name-inp:hover{background:var(--l-bg2)}
+.cat-row-name-inp:focus{outline:none;border-bottom:1.5px solid var(--gold);background:var(--l-bg2)}
 .cat-row-clr{width:22px;height:22px;border-radius:50%;flex-shrink:0;border:2px solid var(--l-brd2);cursor:pointer}
 .cat-row-del{background:none;border:none;cursor:pointer;color:var(--l-txt3);font-size:1rem;padding:2px;transition:var(--tr);line-height:1}
 .cat-row-del:hover{color:var(--red)}
@@ -1595,33 +1600,63 @@ async function doDelFood(id) {
 /* ── PLANNING ────────────────────────────────────────────── */
 function renderPlanning() {
   const el=document.getElementById('planCats');
-  if(!allFoods.length){el.innerHTML='<div class="empty"><div class="ei">🍽️</div><p>הוסף מאכלים תחילה</p></div>';return;}
-  el.innerHTML=CATS_DATA.map(cd=>{
-    const cat=cd.name;
-    const fs=allFoods.filter(f=>f.category===cat);
-    if(!fs.length) return '';
-    return `<div class="cat-sec" id="catS-${esc(cat)}">
-      <div class="cat-hdr" style="background:${CLR(cat)}" onclick="toggleCatS('catS-${esc(cat)}')">
-        <h3>${cd.emo} ${esc(cat)}</h3><span class="cat-cnt">${fs.length}</span><span class="cat-chev">▼</span>
-      </div>
-      <div class="cat-foods">
-        ${fs.map(f=>`
-          <div class="fci ${selIds.has(f.id)?'sel':''}" onclick="toggleSel('${f.id}')" id="fci-${f.id}">
-            <div class="cbox">${selIds.has(f.id)?'✓':''}</div>
-            <div>
-              <div class="fci-name">${esc(f.name)} ${f.favorite?'⭐':''}</div>
-              ${f.recipe_source?`<div class="fci-meta">📖 ${esc(f.recipe_source)}</div>`:''}
-            </div>
-          </div>`).join('')}
-        <div class="quick-add-row">
-          <input placeholder="+ מאכל חדש ב${esc(cat)}..." id="qa-${esc(cat)}"
-            onkeydown="if(event.key==='Enter') quickAdd('${esc(cat)}')"/>
-          <button class="btn btn-ghost btn-sm" onclick="openQuickAdd('${esc(cat)}')" title="פרטים נוספים">📝</button>
-          <button class="btn btn-gold btn-sm" onclick="quickAdd('${esc(cat)}')">➕</button>
+  if(!allFoods.length && !CATS_DATA.length){
+    el.innerHTML='<div class="empty"><div class="ei">🍽️</div><p>הוסף מאכלים תחילה</p></div>';return;
+  }
+
+  // Also show foods whose category is not in CATS_DATA ("other")
+  const knownCats = new Set(CATS_DATA.map(c=>c.name));
+  const otherFoods = allFoods.filter(f=>!knownCats.has(f.category));
+
+  el.innerHTML=[
+    // All defined categories (even empty ones — so user can quick-add to them)
+    ...CATS_DATA.map(cd=>{
+      const cat=cd.name;
+      const fs=allFoods.filter(f=>f.category===cat);
+      return `<div class="cat-sec" id="catS-${esc(cat)}">
+        <div class="cat-hdr" style="background:${CLR(cat)}" onclick="toggleCatS('catS-${esc(cat)}')">
+          <h3>${cd.emo} ${esc(cat)}</h3>
+          <span class="cat-cnt">${fs.length}</span>
+          <span class="cat-chev">▼</span>
         </div>
-      </div>
-    </div>`;
-  }).join('');
+        <div class="cat-foods">
+          ${fs.length ? fs.map(f=>`
+            <div class="fci ${selIds.has(f.id)?'sel':''}" onclick="toggleSel('${f.id}')" id="fci-${f.id}">
+              <div class="cbox">${selIds.has(f.id)?'✓':''}</div>
+              <div>
+                <div class="fci-name">${esc(f.name)} ${f.favorite?'⭐':''}</div>
+                ${f.recipe_source?`<div class="fci-meta">📖 ${esc(f.recipe_source)}</div>`:''}
+              </div>
+            </div>`).join('')
+          : `<div style="font-size:.77rem;color:var(--l-txt3);padding:6px 4px;font-style:italic">אין מאכלים עדיין בקטגוריה זו</div>`}
+          <div class="quick-add-row">
+            <input placeholder="+ מאכל חדש ב${esc(cat)}..." id="qa-${esc(cat)}"
+              onkeydown="if(event.key==='Enter') quickAdd('${esc(cat)}')"/>
+            <button class="btn btn-ghost btn-sm" onclick="openQuickAdd('${esc(cat)}')" title="פרטים נוספים">📝</button>
+            <button class="btn btn-gold btn-sm" onclick="quickAdd('${esc(cat)}')">➕</button>
+          </div>
+        </div>
+      </div>`;
+    }),
+    // "Other" foods whose category was deleted or never in CATS_DATA
+    ...(otherFoods.length ? [`
+      <div class="cat-sec" id="catS-אחר">
+        <div class="cat-hdr" style="background:#374151" onclick="toggleCatS('catS-אחר')">
+          <h3>• אחר</h3><span class="cat-cnt">${otherFoods.length}</span><span class="cat-chev">▼</span>
+        </div>
+        <div class="cat-foods">
+          ${otherFoods.map(f=>`
+            <div class="fci ${selIds.has(f.id)?'sel':''}" onclick="toggleSel('${f.id}')" id="fci-${f.id}">
+              <div class="cbox">${selIds.has(f.id)?'✓':''}</div>
+              <div>
+                <div class="fci-name">${esc(f.name)}</div>
+                <div class="fci-meta">${esc(f.category)}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`] : [])
+  ].join('');
+
   updateSelSummary();
 }
 
@@ -1649,7 +1684,7 @@ function planSearchInput(){
   const matches=allFoods.filter(f=>f.name.toLowerCase().includes(q)||(f.category||'').toLowerCase().includes(q)).slice(0,12);
   res.innerHTML=(matches.length
     ?matches.map(f=>`
-      <div class="psr-item ${selIds.has(f.id)?'checked':''}" onclick="psrClick('${f.id}')">
+      <div class="psr-item ${selIds.has(f.id)?'checked':''}" data-fid="${f.id}" onclick="psrClick('${f.id}')">
         <div class="psr-check">${selIds.has(f.id)?'✓':''}</div>
         <div style="flex:1">
           <div class="psr-name">${esc(f.name)}</div>
@@ -1662,15 +1697,27 @@ function planSearchInput(){
 }
 function planSearchKey(e){if(e.key==='Escape') document.getElementById('planSearchResults').classList.remove('show');}
 function psrClick(id){
-  toggleSel(id);
-  // Update check in results
-  document.querySelectorAll('.psr-item').forEach(el=>{
-    if(el.getAttribute('onclick')===`psrClick('${id}')`)
-      el.classList.toggle('checked',selIds.has(id));
-  });
-  // Also re-check in planning list
-  const fci=document.getElementById('fci-'+id);
-  if(fci){fci.classList.toggle('sel',selIds.has(id));fci.querySelector('.cbox').textContent=selIds.has(id)?'✓':'';}
+  // Toggle selection
+  selIds.has(id) ? selIds.delete(id) : selIds.add(id);
+  const isNowSelected = selIds.has(id);
+
+  // Update the search result item visually
+  const psrItem = document.querySelector(`.psr-item[data-fid="${id}"]`);
+  if(psrItem) {
+    psrItem.classList.toggle('checked', isNowSelected);
+    const chk = psrItem.querySelector('.psr-check');
+    if(chk) chk.textContent = isNowSelected ? '✓' : '';
+  }
+
+  // Update planning list item if visible
+  const fci = document.getElementById('fci-'+id);
+  if(fci) {
+    fci.classList.toggle('sel', isNowSelected);
+    const cbox = fci.querySelector('.cbox');
+    if(cbox) cbox.textContent = isNowSelected ? '✓' : '';
+  }
+
+  updateSelSummary();
 }
 function openQuickAddFromSearch(){
   const q=document.getElementById('planSearch').value.trim();
@@ -1731,10 +1778,19 @@ async function saveQuickAdd(){
   finally{syncOff();}
 }
 
+let isSavingShabbat = false;
 async function saveShabbat(){
+  if(isSavingShabbat) return;                        // block double-click
   const date=document.getElementById('shabDate').value;
   if(!date){toast('נא לבחור תאריך','err');return;}
   if(!selIds.size){toast('נא לבחור לפחות מאכל אחד','err');return;}
+
+  // Visual feedback immediately
+  isSavingShabbat = true;
+  const btn = document.querySelector('[onclick="saveShabbat()"]');
+  const origText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='⏳ שומר...'; }
+
   try {
     syncOn();
     const saved=await POST({action:'addShabbat',data:{date,notes:document.getElementById('shabNotes').value.trim(),foodIds:[...selIds]}});
@@ -1745,7 +1801,11 @@ async function saveShabbat(){
     go('home');
     await renderHomeScreen(saved);
   } catch(e){toast('שגיאה: '+e.message,'err');}
-  finally{syncOff();}
+  finally{
+    syncOff();
+    isSavingShabbat = false;
+    if(btn){ btn.disabled=false; btn.textContent=origText; }
+  }
 }
 async function copyLast(){
   if(!allShabbats.length){toast('אין שבתות קודמות','err');return;}
@@ -1917,12 +1977,20 @@ function esClearAll() {
   renderEsFoodList(q);
 }
 
+let isSavingEdit = false;
 async function saveEditShabbat() {
+  if(isSavingEdit) return;
   const id    = document.getElementById('esShabId').value;
   const date  = document.getElementById('esDate').value;
   const notes = document.getElementById('esNotes').value.trim();
   if (!date)             { toast('נא לבחור תאריך','err'); return; }
   if (!esSelectedIds.size){ toast('נא לבחור לפחות מאכל אחד','err'); return; }
+
+  isSavingEdit = true;
+  const btn = document.querySelector('[onclick="saveEditShabbat()"]');
+  const origText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='⏳ שומר...'; }
+
   try {
     syncOn();
     const updated = await POST({
@@ -1931,15 +1999,17 @@ async function saveEditShabbat() {
     });
     toast('השבת עודכנה ✅','ok');
     closeM('editShabModal');
-    // Update local cache
     const idx = allShabbats.findIndex(s => s.id === id);
     if (idx >= 0) allShabbats[idx] = updated;
     cacheSet('shabbats', allShabbats);
-    // Re-render wherever needed
     if (document.getElementById('page-history').classList.contains('on')) renderHist();
     if (currentShab?.id === id) { currentShab = updated; renderHomeScreen(updated); }
   } catch(e) { toast('שגיאה: '+e.message,'err'); }
-  finally { syncOff(); }
+  finally {
+    syncOff();
+    isSavingEdit = false;
+    if(btn){ btn.disabled=false; btn.textContent=origText; }
+  }
 }
 
 async function copyShabbat(id){
@@ -2016,12 +2086,32 @@ function saveSettings(){
 /* category manager */
 function renderCatManager(){
   document.getElementById('catManager').innerHTML=CATS_DATA.map((c,i)=>`
-    <div class="cat-row">
+    <div class="cat-row" id="crow-${i}">
       <span class="cat-row-emo">${c.emo}</span>
-      <span class="cat-row-name">${esc(c.name)}</span>
-      <input type="color" class="cat-row-clr" value="${c.clr}" onchange="updateCatClr(${i},this.value)" title="שנה צבע"/>
-      ${CATS_DATA.length>1?`<button class="cat-row-del" onclick="deleteCat(${i})" title="מחק קטגוריה">✕</button>`:''}
+      <input class="cat-row-name-inp" value="${esc(c.name)}"
+        onblur="renameCat(${i},this.value)"
+        onkeydown="if(event.key==='Enter'){this.blur()}"
+        title="לחץ לשינוי שם"/>
+      <input type="color" class="cat-row-clr" value="${c.clr}"
+        onchange="updateCatClr(${i},this.value)" title="שנה צבע"/>
+      ${CATS_DATA.length>1?`<button class="cat-row-del" onclick="deleteCat(${i})" title="מחק">✕</button>`:''}
     </div>`).join('');
+}
+function renameCat(i, newName){
+  newName = newName.trim();
+  if(!newName){ renderCatManager(); return; }
+  if(newName === CATS_DATA[i].name) return; // no change
+  if(CATS_DATA.find((c,j)=>c.name===newName && j!==i)){
+    toast('שם קטגוריה כבר קיים','err'); renderCatManager(); return;
+  }
+  const oldName = CATS_DATA[i].name;
+  CATS_DATA[i].name = newName;
+  saveCats(CATS_DATA);
+  // Update all foods with old category name in local cache
+  allFoods.forEach(f=>{ if(f.category===oldName) f.category=newName; });
+  cacheSet('foods', allFoods);
+  buildCatOptions(); renderCatManager(); renderCatChips(); renderFoods();
+  toast(`"${oldName}" → "${newName}" ✅`,'ok');
 }
 function updateCatClr(i,clr){
   CATS_DATA[i].clr=clr; saveCats(CATS_DATA);
