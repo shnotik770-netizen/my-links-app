@@ -1123,7 +1123,6 @@ async function renderHomeScreen(shabOverride) {
     <div class="cook-header">
       <div class="cook-header-left">
         <span class="cook-shab-title">🕯️ ${hebDate||fmtDate(shab.date)}</span>
-        ${hebDate?`<span class="cook-shab-sub">${fmtDate(shab.date)}</span>`:''}
         ${shab.notes?`<span class="cook-shab-notes">· ${esc(shab.notes)}</span>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0">
