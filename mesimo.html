@@ -52,6 +52,12 @@
                         טוען חיבור...
                     </span>
                 </div>
+                <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-4 rounded-xl shadow-md transition flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                    פתיחת יום עבודה
+                </button>
                 <button onclick="triggerEndDay()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold py-2.5 px-4 rounded-xl shadow-md transition flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
@@ -106,10 +112,10 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1">סוג משימה</label>
                             <select id="task-type" onchange="handleTaskTypeChange()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                                <option value="רוטינה יומית">רוטינה יומית 🔄</option>
-                                <option value="רוטינה חודשית">רוטינה חודשית 📅</option>
-                                <option value="רוטינה שנתית">רוטינה שנתית 🗓️</option>
-                                <option value="מזדמנת" selected>מזדמנת ⚡</option>
+                                <option value="משימה יומית">משימה יומית 🔄</option>
+                                <option value="משימה חודשית">משימה חודשית 📅</option>
+                                <option value="משימה שנתית">משימה שנתית 🗓️</option>
+                                <option value="משימה מזדמנת" selected>משימה מזדמנת ⚡</option>
                             </select>
                         </div>
                         <div id="routing-selector-container">
@@ -122,6 +128,8 @@
                             </select>
                         </div>
                     </div>
+
+                    <p id="type-hint" class="text-[11px] text-slate-400 leading-snug -mt-1"></p>
 
                     <div id="initial-due-date-container" class="hidden">
                         <label class="block text-xs font-semibold text-slate-500 mb-1">תאריך ביצוע מבוקש</label>
@@ -190,12 +198,20 @@
 
                 <!-- טאב: משימות לתאריך -->
                 <div id="tab-bydate-content" class="hidden">
-                    <div class="px-6 py-4 bg-slate-50/60 border-b border-slate-100 flex items-center gap-3">
-                        <label class="text-xs font-semibold text-slate-600">הצג משימות לתאריך:</label>
-                        <input type="date" id="bydate-picker" onchange="onByDateChange(this.value)" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        <div class="flex gap-1.5">
-                            <button onclick="quickByDate('tomorrow')" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1.5 rounded-lg transition">מחר</button>
-                            <button onclick="quickByDate('week')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-2.5 py-1.5 rounded-lg transition">בעוד שבוע</button>
+                    <div class="px-6 py-4 bg-slate-50/60 border-b border-slate-100 space-y-3">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <label class="text-xs font-semibold text-slate-600">הצג משימות לתאריך:</label>
+                            <input type="date" id="bydate-picker" onchange="onByDateChange(this.value)" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <div class="flex gap-1.5">
+                                <button onclick="quickByDate('tomorrow')" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1.5 rounded-lg transition">מחר</button>
+                                <button onclick="quickByDate('week')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-2.5 py-1.5 rounded-lg transition">בעוד שבוע</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button onclick="triggerGeneratePlan()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-2 rounded-lg transition">
+                                📋 צור תוכנית ליום זה (רוטינות)
+                            </button>
+                            <span class="text-[11px] text-slate-400">יוצר בפועל את משימות היומית/חודשית/שנתית שנופלות בתאריך הזה, כדי שתוכל להפיק תוכנית עבודה מראש.</span>
                         </div>
                     </div>
                     <div id="bydate-list" class="divide-y divide-slate-100"></div>
@@ -237,15 +253,15 @@
     <!-- מודל סגירת יום -->
     <div id="end-day-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <h3 class="font-bold text-lg text-slate-900 mb-1">סגירת יום עבודה ושמירה</h3>
-            <p class="text-xs text-slate-500 mb-4">להלן סיכום מה יקרה למשימות בעת סגירת היום. עם האישור, היום יישמר להיסטוריה.</p>
+            <h3 class="font-bold text-lg text-slate-900 mb-1">סגירת יום עבודה — דוח יומי</h3>
+            <p class="text-xs text-slate-500 mb-4">הסגירה שומרת דוח של היום להיסטוריה בלבד. את ההעברה/שכפול של משימות שלא הסתיימו כדאי לעשות מראש. אפשר לערוך את הדוח בכל עת דרך ההיסטוריה.</p>
             <div class="bg-slate-50 p-4 rounded-xl mb-6 space-y-3 text-sm">
                 <div class="flex justify-between border-b border-slate-200 pb-2">
                     <span class="text-slate-500">נוכחות מדווחת:</span>
                     <span class="font-bold text-slate-800" id="modal-attendance-summary">0.0 שעות</span>
                 </div>
                 <div>
-                    <span class="block font-semibold text-slate-700 mb-2">מה יקרה למשימות:</span>
+                    <span class="block font-semibold text-slate-700 mb-2">משימות היום שיישמרו בדוח:</span>
                     <div id="modal-tasks-transfer-list" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
                 </div>
             </div>
@@ -256,14 +272,23 @@
         </div>
     </div>
 
-    <!-- מודל בחירת תאריך (לתזמון מחדש) -->
-    <div id="date-pick-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <!-- מודל תזמון מחדש: העברה או שכפול -->
+    <div id="reschedule-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
-            <h3 class="font-bold text-base text-slate-900 mb-3">בחירת תאריך ביצוע</h3>
-            <input type="date" id="date-pick-input" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
-            <div class="flex gap-2">
-                <button id="date-pick-confirm" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">קבע תאריך</button>
-                <button id="date-pick-cancel" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
+            <h3 class="font-bold text-base text-slate-900 mb-1">תזמון מחדש</h3>
+            <p class="text-xs text-slate-500 mb-4" id="reschedule-task-name">—</p>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">לאיזה תאריך?</label>
+            <input type="date" id="reschedule-date-input" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <div class="space-y-2">
+                <button id="reschedule-move-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">
+                    ➡️ העבר לתאריך זה
+                    <span class="block text-[10px] font-normal opacity-80">המשימה תעבור. לא תישאר במקום הנוכחי.</span>
+                </button>
+                <button id="reschedule-copy-btn" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-sm font-semibold py-2.5 rounded-xl transition">
+                    📑 שכפל לתאריך זה
+                    <span class="block text-[10px] font-normal opacity-80">יווצר עותק בתאריך החדש, והמשימה תישאר גם היום (להמשך טיפול).</span>
+                </button>
+                <button id="reschedule-cancel-btn" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
             </div>
         </div>
     </div>
@@ -479,25 +504,36 @@
         }
 
         // ====== הוספת משימה ======
+        // עזרי סוג משימה (עברית חדשה, עם תאימות לשמות ישנים)
+        function isDaily(t){ return t === 'משימה יומית' || t === 'רוטינה יומית'; }
+        function isMonthly(t){ return t === 'משימה חודשית' || t === 'רוטינה חודשית'; }
+        function isYearly(t){ return t === 'משימה שנתית' || t === 'רוטינה שנתית'; }
+        function isRoutine(t){ return isDaily(t) || isMonthly(t) || isYearly(t); }
+
         function handleTaskTypeChange() {
             const type = document.getElementById('task-type').value;
             const routing = document.getElementById('routing-selector-container');
             const monthly = document.getElementById('monthly-day-container');
             const annual = document.getElementById('annual-month-container');
             const dueWrap = document.getElementById('initial-due-date-container');
+            const hint = document.getElementById('type-hint');
 
             monthly.classList.add('hidden');
             annual.classList.add('hidden');
             dueWrap.classList.add('hidden');
             routing.classList.remove('hidden');
 
-            if (type === 'רוטינה יומית') {
+            if (isDaily(type)) {
                 routing.classList.add('hidden');
-            } else if (type === 'רוטינה חודשית') {
+                hint.innerText = 'משימה שחוזרת כל יום עבודה (נוצרת אוטומטית בכל פתיחת יום).';
+            } else if (isMonthly(type)) {
                 routing.classList.add('hidden'); monthly.classList.remove('hidden');
-            } else if (type === 'רוטינה שנתית') {
+                hint.innerText = 'משימה שחוזרת פעם בחודש, ביום שתבחר.';
+            } else if (isYearly(type)) {
                 routing.classList.add('hidden'); annual.classList.remove('hidden');
+                hint.innerText = 'משימה שחוזרת פעם בשנה, בתחילת החודש שתבחר.';
             } else {
+                hint.innerText = 'משימה חד-פעמית.';
                 handleWhenChange();
             }
         }
@@ -520,7 +556,7 @@
 
             const newTasks = [];
 
-            if (type === 'מזדמנת') {
+            if (type === 'משימה מזדמנת') {
                 const when = document.getElementById('task-when').value;
                 let task = { id: Date.now(), name, type, status: 'dated', dueDate: '', dayOfMonth: '', monthOfYear: '', done: false, notes: '' };
                 if (when === 'today') task.dueDate = todayISO();
@@ -532,13 +568,12 @@
                 } else if (when === 'general') { task.status = 'general'; task.dueDate = ''; }
                 newTasks.push(task);
 
-            } else if (type === 'רוטינה יומית') {
+            } else if (isDaily(type)) {
                 const seedId = Date.now();
                 newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: '', dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
-                // מופע להיום מיד
                 newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
 
-            } else if (type === 'רוטינה חודשית') {
+            } else if (isMonthly(type)) {
                 const day = document.getElementById('task-monthly-day').value;
                 if (!day || day < 1 || day > 31) { showNotification('נא להזין יום בחודש תקין (1-31).', true); return; }
                 const seedId = Date.now();
@@ -547,7 +582,7 @@
                     newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
                 }
 
-            } else if (type === 'רוטינה שנתית') {
+            } else if (isYearly(type)) {
                 const month = document.getElementById('task-annual-month').value;
                 const seedId = Date.now();
                 newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: '', dayOfMonth: '', monthOfYear: String(month), done: false, notes: '' });
@@ -668,9 +703,14 @@
                         </div>
                         <h3 class="font-bold text-slate-900 text-lg mb-1">יום העבודה נסגר ונשמר ✅</h3>
                         <p class="text-sm text-slate-500 mb-5">המשימות והנוכחות של היום נשמרו בהיסטוריה.<br>אפשר לעדכן מה בוצע ומה לא, או לערוך את ההערות, דרך הדוח בהיסטוריה.</p>
-                        <button onclick="openTodayReportForEdit()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl transition shadow-sm">
-                            ✏️ ערוך את דוח היום
-                        </button>
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            <button onclick="openTodayReportForEdit()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl transition shadow-sm">
+                                ✏️ ערוך את דוח היום
+                            </button>
+                            <button onclick="planNextDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl transition shadow-sm">
+                                📋 צור תוכנית ליום הבא
+                            </button>
+                        </div>
                     </div>`;
                 return;
             }
@@ -725,9 +765,9 @@
                                 ${task.notes ? `<span class="text-[11px] text-slate-400 italic">📝 ${escapeHtml(task.notes)}</span>` : ''}
                             </div>
                             <div class="flex items-center gap-1.5 shrink-0">
-                                <button onclick="rescheduleTask(${task.id}, 'today')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs py-1.5 px-3 rounded-lg transition">➕ להיום</button>
-                                <button onclick="rescheduleTask(${task.id}, 'tomorrow')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs py-1.5 px-2.5 rounded-lg transition">למחר</button>
-                                <button onclick="rescheduleTask(${task.id}, 'pick')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs py-1.5 px-2.5 rounded-lg transition">תאריך…</button>
+                                <button onclick="quickSchedule(${task.id}, 'today')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs py-1.5 px-3 rounded-lg transition">➕ להיום</button>
+                                <button onclick="quickSchedule(${task.id}, 'tomorrow')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs py-1.5 px-2.5 rounded-lg transition">למחר</button>
+                                <button onclick="openReschedule(${task.id}, 'pick')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs py-1.5 px-2.5 rounded-lg transition">תאריך…</button>
                                 <button onclick="handleDeleteTask(${task.id})" class="text-slate-300 hover:text-rose-600 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
                             </div>
                         </div>`);
@@ -754,15 +794,15 @@
         }
 
         function seedScheduleText(t){
-            if (t.type === 'רוטינה יומית') return 'כל יום';
-            if (t.type === 'רוטינה חודשית') return `כל ${t.dayOfMonth} לחודש`;
-            if (t.type === 'רוטינה שנתית') return `כל שנה בתחילת ${MONTHS_HE[Number(t.monthOfYear)] || ''}`;
+            if (isDaily(t.type)) return 'כל יום';
+            if (isMonthly(t.type)) return `כל ${t.dayOfMonth} לחודש`;
+            if (isYearly(t.type)) return `כל שנה בתחילת ${MONTHS_HE[Number(t.monthOfYear)] || ''}`;
             return '';
         }
         function getTypeBadgeStyle(type) {
-            if(type === 'רוטינה יומית') return 'bg-sky-50 text-sky-700 border border-sky-100';
-            if(type === 'רוטינה חודשית') return 'bg-indigo-50 text-indigo-700 border border-indigo-100';
-            if(type === 'רוטינה שנתית') return 'bg-purple-50 text-purple-700 border border-purple-100';
+            if(isDaily(type)) return 'bg-sky-50 text-sky-700 border border-sky-100';
+            if(isMonthly(type)) return 'bg-indigo-50 text-indigo-700 border border-indigo-100';
+            if(isYearly(type)) return 'bg-purple-50 text-purple-700 border border-purple-100';
             return 'bg-amber-50 text-amber-700 border border-amber-100';
         }
 
@@ -803,44 +843,63 @@
             sendPostToSheets({ action: 'updateTask', taskId: id, updates: { notes: value } }, true);
         }
 
-        // ====== תזמון מחדש ======
-        let pendingPickId = null;
-        function onRescheduleSelect(id, mode){ if (mode) rescheduleTask(id, mode); }
-        function rescheduleTask(id, mode){
-            const t = tasks.find(x => x.id === id);
-            if (!t) return;
-            if (mode === 'pick') { openDatePicker(id); return; }
-            let updates = {};
-            if (mode === 'today') updates = { status:'dated', dueDate: todayISO() };
-            else if (mode === 'tomorrow') updates = { status:'dated', dueDate: tomorrowISO() };
-            else if (mode === 'general') updates = { status:'general', dueDate:'' };
-            else return;
-            Object.assign(t, updates);
-            renderTasks();
-            sendPostToSheets({ action:'updateTask', taskId:id, updates }, true)
-                .then(ok => { if (ok) showNotification('המשימה תוזמנה מחדש.'); });
-        }
-        function openDatePicker(id){
-            pendingPickId = id;
-            const input = document.getElementById('date-pick-input');
-            input.value = tomorrowISO();
-            document.getElementById('date-pick-modal').classList.remove('hidden');
-        }
-        document.getElementById('date-pick-confirm').onclick = function(){
-            const d = document.getElementById('date-pick-input').value;
-            const t = tasks.find(x => x.id === pendingPickId);
-            document.getElementById('date-pick-modal').classList.add('hidden');
-            if (t && d) {
-                t.status = 'dated'; t.dueDate = d;
-                renderTasks();
-                sendPostToSheets({ action:'updateTask', taskId:t.id, updates:{ status:'dated', dueDate:d } }, true)
-                    .then(ok => { if (ok) showNotification('המשימה תוזמנה ל-' + heDate(d)); });
+        // ====== תזמון מחדש (העברה / שכפול) ======
+        let reschedulePendingId = null;
+        function onRescheduleSelect(id, mode){
+            if (!mode) return;
+            if (mode === 'general') {
+                const t = tasks.find(x => x.id === id); if (!t) return;
+                t.status = 'general'; t.dueDate = ''; renderTasks();
+                sendPostToSheets({ action:'updateTask', taskId:id, updates:{ status:'general', dueDate:'' } }, true)
+                    .then(ok => { if (ok) showNotification('המשימה הועברה לרשימה הכללית.'); });
+                return;
             }
-            pendingPickId = null;
+            openReschedule(id, mode);
+        }
+        function openReschedule(id, mode){
+            reschedulePendingId = id;
+            const t = tasks.find(x => x.id === id);
+            document.getElementById('reschedule-task-name').innerText = t ? t.name : '';
+            let d = tomorrowISO();
+            if (mode === 'today') d = todayISO();
+            else if (mode === 'tomorrow') d = tomorrowISO();
+            document.getElementById('reschedule-date-input').value = d;
+            document.getElementById('reschedule-modal').classList.remove('hidden');
+        }
+        function closeReschedule(){ document.getElementById('reschedule-modal').classList.add('hidden'); reschedulePendingId = null; renderTasks(); }
+
+        function quickSchedule(id, mode){
+            const t = tasks.find(x => x.id === id); if (!t) return;
+            const d = (mode === 'today') ? todayISO() : tomorrowISO();
+            t.status = 'dated'; t.dueDate = d; renderTasks();
+            sendPostToSheets({ action:'updateTask', taskId:id, updates:{ status:'dated', dueDate:d } }, true)
+                .then(ok => { if (ok) showNotification('נקבע ל-' + heDate(d)); });
+        }
+
+        document.getElementById('reschedule-move-btn').onclick = function(){
+            const d = document.getElementById('reschedule-date-input').value;
+            const t = tasks.find(x => x.id === reschedulePendingId);
+            document.getElementById('reschedule-modal').classList.add('hidden');
+            if (t && d) {
+                t.status = 'dated'; t.dueDate = d; renderTasks();
+                sendPostToSheets({ action:'updateTask', taskId:t.id, updates:{ status:'dated', dueDate:d } }, true)
+                    .then(ok => { if (ok) showNotification('המשימה הועברה ל-' + heDate(d)); });
+            }
+            reschedulePendingId = null;
         };
-        document.getElementById('date-pick-cancel').onclick = function(){
-            document.getElementById('date-pick-modal').classList.add('hidden'); pendingPickId = null; renderTasks();
+        document.getElementById('reschedule-copy-btn').onclick = function(){
+            const d = document.getElementById('reschedule-date-input').value;
+            const t = tasks.find(x => x.id === reschedulePendingId);
+            document.getElementById('reschedule-modal').classList.add('hidden');
+            if (t && d) {
+                const copy = { id: Date.now(), name: t.name, type: t.type, status:'dated', dueDate:d, dayOfMonth:'', monthOfYear:'', done:false, notes:t.notes };
+                tasks.push(copy); renderTasks();
+                sendPostToSheets({ action:'addTask', task:copy }, true)
+                    .then(ok => { if (ok) showNotification('נוצר עותק ל-' + heDate(d) + '. המשימה נשארה גם במקום הנוכחי.'); });
+            }
+            reschedulePendingId = null;
         };
+        document.getElementById('reschedule-cancel-btn').onclick = closeReschedule;
 
         // ====== מחיקה ======
         function handleDeleteTask(id){
@@ -893,21 +952,19 @@
             list.innerHTML = '';
             const today = todayISO();
 
-            tasks.forEach(t => {
-                let txt = '', color = '';
-                if (t.status === 'seed') { txt = 'רוטינה קבועה — נשמרת'; color = 'text-sky-700 bg-sky-50 border-sky-100'; }
-                else if (t.status === 'general') { txt = 'נשארת ברשימה הכללית'; color = 'text-slate-600 bg-slate-50 border-slate-100'; }
-                else if (t.status === 'dated' && t.dueDate && t.dueDate <= today) {
-                    if (t.done) { txt = 'בוצעה — יורדת מהרשימה'; color = 'text-emerald-700 bg-emerald-50 border-emerald-100'; }
-                    else { txt = 'לא בוצעה — עוברת למחר'; color = 'text-indigo-700 bg-indigo-50 border-indigo-100'; }
-                } else if (t.status === 'dated') { txt = `מתוזמנת ל-${heDateShort(t.dueDate)}`; color = 'text-purple-700 bg-purple-50 border-purple-100'; }
-                else return;
-
+            // דוח בלבד: משימות היום (עם תאריך עד היום). ללא תבניות רוטינה, ללא כפילות.
+            const board = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today);
+            if (board.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">אין משימות מתוארכות להיום.</p>`;
+            }
+            board.forEach(t => {
+                const txt = t.done ? 'בוצעה' : 'טרם בוצעה';
+                const color = t.done ? 'text-emerald-700 bg-emerald-50 border-emerald-100' : 'text-slate-600 bg-slate-50 border-slate-200';
                 const notesHtml = t.notes ? `<div class="text-[11px] text-slate-500 italic mt-1.5 leading-snug">📝 ${escapeHtml(t.notes)}</div>` : '';
                 list.insertAdjacentHTML('beforeend', `
                     <div class="p-2.5 bg-white border border-slate-200 rounded-xl text-xs">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="font-medium text-slate-800">${escapeHtml(t.name)}</span>
+                            <span class="font-medium text-slate-800">${t.done ? '✅' : '⬜'} ${escapeHtml(t.name)}</span>
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${color} shrink-0">${txt}</span>
                         </div>
                         ${notesHtml}
@@ -935,6 +992,50 @@
                     }
                 })
                 .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור בסגירת היום.", true); });
+        }
+
+        // ====== פתיחת יום עבודה ======
+        function triggerOpenDay(){
+            showLoader("פותח יום עבודה ויוצר משימות…");
+            fetchJSONP(gasUrl, { action: 'openDay' }, 'cb_open')
+                .then(data => {
+                    hideLoader();
+                    if (data && data.status === 'success') {
+                        applyLoadedData(data);
+                        renderAttendance();
+                        switchTab('today');
+                        showNotification("יום העבודה נפתח. המשימות והרוטינות נוצרו ✅");
+                    } else {
+                        showNotification((data && data.message) || "שגיאה בפתיחת היום.", true);
+                    }
+                })
+                .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור בפתיחת היום.", true); });
+        }
+
+        // ====== יצירת תוכנית ליום עתידי (רק רוטינות) ======
+        function triggerGeneratePlan(){
+            const d = selectedDate;
+            if (!d) { showNotification('בחר תאריך תחילה.', true); return; }
+            showLoader("יוצר תוכנית ליום " + heDate(d) + "…");
+            fetchJSONP(gasUrl, { action: 'generatePlan', date: d }, 'cb_plan')
+                .then(data => {
+                    hideLoader();
+                    if (data && data.status === 'success') {
+                        tasks = data.tasks || [];
+                        renderTasks();
+                        showNotification("נוצרו משימות הרוטינה לתאריך " + heDate(d) + " ✅");
+                    } else {
+                        showNotification((data && data.message) || "שגיאה ביצירת התוכנית.", true);
+                    }
+                })
+                .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור ביצירת התוכנית.", true); });
+        }
+
+        function planNextDay(){
+            selectedDate = tomorrowISO();
+            switchTab('bydate');
+            document.getElementById('bydate-picker').value = selectedDate;
+            triggerGeneratePlan();
         }
 
         // ====== היסטוריה ======
