@@ -47,10 +47,15 @@
             <div class="flex items-center gap-3">
                 <div class="text-left hidden md:block">
                     <p class="text-sm font-medium text-slate-900" id="current-date-display">טוען תאריך...</p>
-                    <span id="connection-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                        טוען חיבור...
-                    </span>
+                    <div class="flex items-center gap-1.5 justify-end">
+                        <span id="day-state-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> —
+                        </span>
+                        <span id="connection-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            טוען...
+                        </span>
+                    </div>
                 </div>
                 <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-4 rounded-xl shadow-md transition flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -208,10 +213,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <button onclick="triggerGeneratePlan()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-2 rounded-lg transition">
-                                📋 צור תוכנית ליום זה (רוטינות)
-                            </button>
-                            <span class="text-[11px] text-slate-400">יוצר בפועל את משימות היומית/חודשית/שנתית שנופלות בתאריך הזה, כדי שתוכל להפיק תוכנית עבודה מראש.</span>
+                            <span class="text-[11px] text-slate-500">🔮 זו הדמיה בלבד — מציגה מה צפוי באותו יום (רוטינות + מתוזמנות + מה שעשוי להיגרר). המשימות נוצרות בפועל רק ב"פתיחת יום עבודה".</span>
                         </div>
                     </div>
                     <div id="bydate-list" class="divide-y divide-slate-100"></div>
@@ -250,25 +252,13 @@
         </div>
     </main>
 
-    <!-- מודל סגירת יום -->
-    <div id="end-day-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <h3 class="font-bold text-lg text-slate-900 mb-1">סגירת יום עבודה — דוח יומי</h3>
-            <p class="text-xs text-slate-500 mb-4">הסגירה שומרת דוח של היום להיסטוריה בלבד. את ההעברה/שכפול של משימות שלא הסתיימו כדאי לעשות מראש. אפשר לערוך את הדוח בכל עת דרך ההיסטוריה.</p>
-            <div class="bg-slate-50 p-4 rounded-xl mb-6 space-y-3 text-sm">
-                <div class="flex justify-between border-b border-slate-200 pb-2">
-                    <span class="text-slate-500">נוכחות מדווחת:</span>
-                    <span class="font-bold text-slate-800" id="modal-attendance-summary">0.0 שעות</span>
-                </div>
-                <div>
-                    <span class="block font-semibold text-slate-700 mb-2">משימות היום שיישמרו בדוח:</span>
-                    <div id="modal-tasks-transfer-list" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="confirmEndDay()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">אשר וסגור את היום 💾</button>
-                <button onclick="closeEndDayModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-xl text-sm transition">חזור לעריכה</button>
-            </div>
+    <!-- מודל בורר רוטינות להוספה להיום -->
+    <div id="routine-picker-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 max-h-[80vh] overflow-y-auto">
+            <h3 class="font-bold text-base text-slate-900 mb-1">הוספת משימת רוטינה להיום</h3>
+            <p class="text-xs text-slate-500 mb-4">בחר רוטינה מוגדרת כדי לבצע אותה היום, גם אם היום אינו המועד הקבוע שלה.</p>
+            <div id="routine-picker-list" class="space-y-2"></div>
+            <button onclick="closeRoutinePicker()" class="w-full mt-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">סגור</button>
         </div>
     </div>
 
@@ -340,6 +330,22 @@
         let history = [];
         let attendanceIntervals = [];
         let dayClosed = false;
+        let dayOpen = false;
+
+        function updateDayStateBadge(){
+            const b = document.getElementById('day-state-badge');
+            if (!b) return;
+            if (dayClosed) {
+                b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200";
+                b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> היום נסגר`;
+            } else if (dayOpen) {
+                b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200";
+                b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> יום עבודה פתוח`;
+            } else {
+                b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200";
+                b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> היום טרם נפתח`;
+            }
+        }
         let currentTab = 'today';
         let selectedDate = '';        // טאב "משימות לתאריך"
         let editingNameId = null;     // עריכת שם משימה אינלייןֿ
@@ -359,6 +365,27 @@
         function heDate(iso){ if(!iso) return ''; const p=iso.split('-'); if(p.length!==3) return iso; return `${Number(p[2])}/${Number(p[1])}/${p[0]}`; }
         function heDateShort(iso){ if(!iso) return ''; const p=iso.split('-'); if(p.length!==3) return iso; return `${Number(p[2])}/${Number(p[1])}`; }
         const MONTHS_HE = ['','ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+        // לוגיקת מועד רוטינה (כולל השלמה וחודשים קצרים) — תואם לשרת
+        function pad2(n){ return ('0'+n).slice(-2); }
+        function daysInMonthJS(y,m){ return new Date(y,m,0).getDate(); } // m 1-based
+        function routineWouldFall(type, dayOfMonth, monthOfYear, lastGen, targetKey){
+            const p = targetKey.split('-'); const y = Number(p[0]), m = Number(p[1]);
+            lastGen = lastGen || '';
+            if (isDaily(type)) return (!lastGen || lastGen < targetKey);
+            if (isMonthly(type)) {
+                const sd = Number(dayOfMonth); if (!sd) return false;
+                const eff = Math.min(sd, daysInMonthJS(y, m));
+                const occ = y + '-' + pad2(m) + '-' + pad2(eff);
+                return (targetKey >= occ && (!lastGen || lastGen < occ));
+            }
+            if (isYearly(type)) {
+                const my = Number(monthOfYear); if (!my) return false;
+                const occ2 = y + '-' + pad2(my) + '-01';
+                return (targetKey >= occ2 && (!lastGen || lastGen < occ2));
+            }
+            return false;
+        }
 
         // ====== אתחול ======
         window.onload = function() {
@@ -396,12 +423,14 @@
         function applyLoadedData(data){
             tasks = data.tasks || [];
             dayClosed = !!data.dayClosed;
+            dayOpen = !!data.dayOpen;
             try {
                 const attData = JSON.parse(data.attendance.intervals);
                 attendanceIntervals = Array.isArray(attData) ? attData : [];
             } catch(e) {
                 attendanceIntervals = [{ start: "08:30", end: "17:30" }];
             }
+            updateDayStateBadge();
         }
 
         function loadDataFromSheets(isInitial = false) {
@@ -570,14 +599,14 @@
 
             } else if (isDaily(type)) {
                 const seedId = Date.now();
-                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: '', dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
                 newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
 
             } else if (isMonthly(type)) {
                 const day = document.getElementById('task-monthly-day').value;
                 if (!day || day < 1 || day > 31) { showNotification('נא להזין יום בחודש תקין (1-31).', true); return; }
                 const seedId = Date.now();
-                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: '', dayOfMonth: String(day), monthOfYear: '', done: false, notes: '' });
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: todayISO(), dayOfMonth: String(day), monthOfYear: '', done: false, notes: '' });
                 if (Number(day) === new Date().getDate()) {
                     newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
                 }
@@ -585,7 +614,7 @@
             } else if (isYearly(type)) {
                 const month = document.getElementById('task-annual-month').value;
                 const seedId = Date.now();
-                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: '', dayOfMonth: '', monthOfYear: String(month), done: false, notes: '' });
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: todayISO(), dayOfMonth: '', monthOfYear: String(month), done: false, notes: '' });
                 if (Number(month) === (new Date().getMonth() + 1) && new Date().getDate() === 1) {
                     newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
                 }
@@ -624,70 +653,56 @@
         function todayClosedSafe(n){ return dayClosed ? 0 : n; }
 
         function taskCardHtml(task, context) {
-            // context: 'today' | 'bydate' | 'general'
             const badge = getTypeBadgeStyle(task.type);
             const isDone = task.done;
             const containerBg = isDone ? 'bg-emerald-50/40 border-r-emerald-500' : 'bg-white border-r-transparent';
 
-            // תווית תאריך/מצב
             let dateNote = '';
             const today = todayISO();
             if (context === 'today' && task.dueDate && task.dueDate < today) {
-                dateNote = `<span class="text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100 font-medium">⏰ באיחור מ-${heDateShort(task.dueDate)}</span>`;
+                dateNote = `<span class="text-[10px] text-rose-600 font-medium shrink-0" title="באיחור">⏰${heDateShort(task.dueDate)}</span>`;
             } else if (context === 'bydate' && task.dueDate) {
-                dateNote = `<span class="text-xs text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 font-medium">📅 ${heDateShort(task.dueDate)}</span>`;
+                dateNote = `<span class="text-[10px] text-purple-600 font-medium shrink-0">📅${heDateShort(task.dueDate)}</span>`;
             }
 
-            // שם משימה - הצגה או עריכה אינלייןֿ
             let nameBlock;
             if (editingNameId === task.id) {
                 nameBlock = `<input id="name-input-${task.id}" type="text" value="${escapeAttr(task.name)}"
                     onkeydown="if(event.key==='Enter'){saveTaskName(${task.id}, this.value)} if(event.key==='Escape'){cancelEditName()}"
                     onblur="saveTaskName(${task.id}, this.value)"
-                    class="font-semibold text-slate-900 bg-amber-50 border border-amber-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-full">`;
+                    class="font-medium text-slate-900 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-40">`;
             } else {
-                nameBlock = `<div class="flex items-center gap-1.5">
-                    <span class="font-semibold text-slate-900 ${isDone ? 'line-through text-slate-400' : ''}">${escapeHtml(task.name)}</span>
+                nameBlock = `<span class="font-medium text-slate-900 text-sm truncate ${isDone ? 'line-through text-slate-400' : ''}" title="${escapeAttr(task.name)}">${escapeHtml(task.name)}</span>
                     <button onclick="startEditName(${task.id})" title="ערוך שם" class="text-slate-300 hover:text-indigo-600 transition shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                    </button>
-                </div>`;
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    </button>`;
             }
 
-            // בורר תזמון
             const rescheduleSelect = `
-                <select onchange="onRescheduleSelect(${task.id}, this.value); this.value='';" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                    <option value="" selected>תזמן מחדש…</option>
+                <select onchange="onRescheduleSelect(${task.id}, this.value); this.value='';" class="text-[11px] bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 shrink-0">
+                    <option value="" selected>תזמון…</option>
                     <option value="today">להיום</option>
                     <option value="tomorrow">למחר</option>
-                    <option value="pick">לתאריך אחר…</option>
+                    <option value="pick">לתאריך…</option>
                     <option value="general">לרשימה הכללית</option>
                 </select>`;
 
             return `
-                <div class="p-5 flex flex-col gap-3 border-r-4 transition-all duration-150 ${containerBg}">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex items-start gap-3 flex-1 min-w-0">
-                            <button onclick="toggleDone(${task.id})" class="mt-0.5 shrink-0 w-5 h-5 rounded-md border-2 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-emerald-400'} flex items-center justify-center transition">
-                                ${isDone ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
-                            </button>
-                            <div class="flex-1 min-w-0 space-y-1.5">
-                                ${nameBlock}
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full ${badge}">${task.type}</span>
-                                    ${dateNote}
-                                </div>
-                            </div>
-                        </div>
-                        <button onclick="handleDeleteTask(${task.id})" class="text-slate-300 hover:text-rose-600 transition p-1 shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
+                <div class="px-3 py-2 flex items-center gap-2 flex-wrap border-r-4 transition-all duration-150 ${containerBg}">
+                    <button onclick="toggleDone(${task.id})" class="shrink-0 w-4 h-4 rounded border-2 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-emerald-400'} flex items-center justify-center transition">
+                        ${isDone ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
+                    </button>
+                    <div class="flex items-center gap-1 min-w-[7rem] max-w-[46%] shrink">
+                        ${nameBlock}
+                        ${dateNote}
+                        <span class="text-[9px] px-1 py-0.5 rounded ${badge} shrink-0 hidden sm:inline">${task.type}</span>
                     </div>
-                    <div class="flex items-center gap-2 pr-8">
-                        <input type="text" placeholder="הוסף הערה…" value="${escapeAttr(task.notes)}" onchange="updateTaskNotes(${task.id}, this.value)"
-                            class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        ${rescheduleSelect}
-                    </div>
+                    <input type="text" placeholder="הערה…" value="${escapeAttr(task.notes)}" onchange="updateTaskNotes(${task.id}, this.value)"
+                        class="flex-1 min-w-[7rem] text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    ${rescheduleSelect}
+                    <button onclick="handleDeleteTask(${task.id})" class="text-slate-300 hover:text-rose-600 transition shrink-0 p-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
                 </div>`;
         }
 
@@ -708,7 +723,7 @@
                                 ✏️ ערוך את דוח היום
                             </button>
                             <button onclick="planNextDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl transition shadow-sm">
-                                📋 צור תוכנית ליום הבא
+                                🔮 הצג תוכנית ליום הבא
                             </button>
                         </div>
                     </div>`;
@@ -720,8 +735,18 @@
                                  .sort((a,b)=> (a.dueDate||'').localeCompare(b.dueDate||''));
             const doneToday = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today && t.done);
 
+            // סרגל פעולות: הוספת משימת רוטינה שאינה של היום
+            const actionBar = `
+                <div class="px-3 py-2 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between gap-2">
+                    <span class="text-[11px] text-slate-400">${pending.length} משימות פתוחות להיום</span>
+                    <button onclick="openRoutinePicker()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-semibold px-3 py-1.5 rounded-lg transition">
+                        🔄 הוסף משימת רוטינה
+                    </button>
+                </div>`;
+            c.insertAdjacentHTML('beforeend', actionBar);
+
             if (pending.length === 0 && doneToday.length === 0) {
-                c.innerHTML = `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות להיום. 🎉</p><p class="text-xs mt-1">אפשר להוסיף משימה חדשה מימין.</p></div>`;
+                c.insertAdjacentHTML('beforeend', `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות להיום. 🎉</p><p class="text-xs mt-1">אפשר להוסיף משימה חדשה מימין, או למשוך רוטינה קיימת מהכפתור למעלה.</p></div>`);
                 return;
             }
 
@@ -735,13 +760,104 @@
         function renderByDateTab() {
             const c = document.getElementById('bydate-list');
             c.innerHTML = '';
-            const list = tasks.filter(t => t.status === 'dated' && t.dueDate === selectedDate)
-                              .sort((a,b)=> Number(b.done) - Number(a.done));
-            if (list.length === 0) {
-                c.innerHTML = `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות לתאריך ${heDate(selectedDate)}.</p></div>`;
+            const d = selectedDate;
+            const real = tasks.filter(t => t.status === 'dated' && t.dueDate === d)
+                              .sort((a,b)=> Number(a.done) - Number(b.done));
+            const sim = simulateDay(d, real);
+
+            if (real.length === 0 && sim.length === 0) {
+                c.innerHTML = `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות צפויות לתאריך ${heDate(d)}.</p></div>`;
                 return;
             }
-            list.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'bydate')));
+            real.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'bydate')));
+            if (sim.length > 0) {
+                c.insertAdjacentHTML('beforeend', `<div class="px-3 py-1.5 bg-indigo-50/50 text-[11px] font-bold text-indigo-500 border-y border-indigo-100">🔮 צפוי בתוכנית (עדיין לא נוצר — ייווצר ב"פתיחת יום")</div>`);
+                sim.forEach(s => c.insertAdjacentHTML('beforeend', simCardHtml(s)));
+            }
+        }
+
+        // הדמיה: מה צפוי ליפול בתאריך נתון, בלי ליצור כלום בפועל
+        function simulateDay(dateKey, real) {
+            const realNames = {}; real.forEach(t => realNames[t.name] = true);
+            const p = dateKey.split('-'); const dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+            const day = dt.getDate(), month = dt.getMonth() + 1;
+            const out = []; const seen = {};
+            // רוטינות שנופלות בתאריך (כולל השלמה של מועד שעבר)
+            tasks.filter(t => t.status === 'seed').forEach(t => {
+                if (routineWouldFall(t.type, t.dayOfMonth, t.monthOfYear, t.dueDate, dateKey)
+                    && !realNames[t.name] && !seen[t.name]) {
+                    out.push({ name: t.name, type: t.type, reason: 'רוטינה' }); seen[t.name] = true;
+                }
+            });
+            // משימות שלא בוצעו מתאריך מוקדם - עשויות להיגרר
+            tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate < dateKey && !t.done).forEach(t => {
+                if (!realNames[t.name] && !seen[t.name]) { out.push({ name: t.name, type: t.type, reason: 'תיגרר מ-' + heDateShort(t.dueDate) }); seen[t.name] = true; }
+            });
+            return out;
+        }
+        function simCardHtml(s) {
+            return `<div class="px-3 py-2 flex items-center gap-2 border-r-4 border-r-indigo-200 bg-indigo-50/20">
+                <span class="shrink-0 w-4 h-4 rounded border-2 border-dashed border-indigo-300"></span>
+                <span class="text-sm text-slate-500 flex-1 truncate" title="${escapeAttr(s.name)}">${escapeHtml(s.name)}</span>
+                <span class="text-[9px] px-1 py-0.5 rounded ${getTypeBadgeStyle(s.type)} shrink-0 hidden sm:inline">${s.type}</span>
+                <span class="text-[10px] text-indigo-500 shrink-0">${s.reason}</span>
+            </div>`;
+        }
+
+        // ====== בורר רוטינות: הוספת רוטינה מוגדרת להיום ======
+        function openRoutinePicker(){
+            const list = document.getElementById('routine-picker-list');
+            list.innerHTML = '';
+            const today = todayISO();
+            const seeds = tasks.filter(t => t.status === 'seed');
+            const avail = seeds.filter(s => !tasks.some(t => t.status === 'dated' && t.name === s.name && t.dueDate === today));
+            if (avail.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">כל הרוטינות המוגדרות כבר נמצאות בלוח היום, או שלא הוגדרו רוטינות.</p>`;
+            } else {
+                avail.forEach(s => {
+                    list.insertAdjacentHTML('beforeend', `
+                        <button onclick="addRoutineInstanceToday(${s.id})" class="w-full text-right p-3 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-200 rounded-xl transition flex items-center justify-between gap-2">
+                            <span class="min-w-0">
+                                <span class="font-medium text-slate-800 text-sm block truncate">${escapeHtml(s.name)}</span>
+                                <span class="text-[11px] text-slate-400">${seedScheduleText(s)}</span>
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(s.type)} shrink-0">${s.type}</span>
+                        </button>`);
+                });
+            }
+            document.getElementById('routine-picker-modal').classList.remove('hidden');
+        }
+        function closeRoutinePicker(){ document.getElementById('routine-picker-modal').classList.add('hidden'); }
+
+        function currentPeriodOccurrence(seed, todayKey){
+            const p = todayKey.split('-'); const y = Number(p[0]), m = Number(p[1]);
+            if (isDaily(seed.type)) return todayKey;
+            if (isMonthly(seed.type)) { const sd = Number(seed.dayOfMonth); if (!sd) return ''; const eff = Math.min(sd, daysInMonthJS(y, m)); return y + '-' + pad2(m) + '-' + pad2(eff); }
+            if (isYearly(seed.type)) { const my = Number(seed.monthOfYear); if (!my) return ''; return y + '-' + pad2(my) + '-01'; }
+            return '';
+        }
+
+        function addRoutineInstanceToday(seedId){
+            const seed = tasks.find(t => t.id === seedId && t.status === 'seed');
+            closeRoutinePicker();
+            if (!seed) return;
+            const today = todayISO();
+            const exists = tasks.some(t => t.status === 'dated' && t.name === seed.name && t.dueDate === today);
+            const calls = [];
+            if (!exists) {
+                const instance = { id: Date.now(), name: seed.name, type: seed.type, status: 'dated', dueDate: today, dayOfMonth: '', monthOfYear: '', done: false, notes: '' };
+                tasks.push(instance);
+                calls.push(sendPostToSheets({ action: 'addTask', task: instance }, true));
+            }
+            // קידום lastGen של הזרע כדי שהרוטינה לא תיווצר שוב אוטומטית באותו מחזור
+            const occ = currentPeriodOccurrence(seed, today);
+            if (occ && (!seed.dueDate || seed.dueDate < occ)) {
+                seed.dueDate = occ;
+                calls.push(sendPostToSheets({ action: 'updateTask', taskId: seedId, updates: { dueDate: occ } }, true));
+            }
+            renderTasks();
+            if (calls.length) Promise.all(calls).then(r => { if (r.every(Boolean)) showNotification('משימת הרוטינה נוספה להיום ✅'); });
+            else showNotification('הרוטינה כבר נמצאת בלוח היום.');
         }
 
         function renderGeneralTab() {
@@ -946,47 +1062,19 @@
             if (dayClosed) { showNotification('היום כבר נסגר. אפשר לערוך אותו דרך ההיסטוריה.', true); return; }
             if (attendanceIntervals.length === 0) { showNotification('אנא הוסף לפחות סבב נוכחות אחד.', true); return; }
             if (attendanceIntervals.some(i => !i.start || !i.end)) { showNotification('יש סבב נוכחות עם שעת התחלה או סיום ריקה.', true); return; }
-
-            document.getElementById('modal-attendance-summary').innerText = `${calcHours(attendanceIntervals)} שעות`;
-            const list = document.getElementById('modal-tasks-transfer-list');
-            list.innerHTML = '';
-            const today = todayISO();
-
-            // דוח בלבד: משימות היום (עם תאריך עד היום). ללא תבניות רוטינה, ללא כפילות.
-            const board = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today);
-            if (board.length === 0) {
-                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">אין משימות מתוארכות להיום.</p>`;
-            }
-            board.forEach(t => {
-                const txt = t.done ? 'בוצעה' : 'טרם בוצעה';
-                const color = t.done ? 'text-emerald-700 bg-emerald-50 border-emerald-100' : 'text-slate-600 bg-slate-50 border-slate-200';
-                const notesHtml = t.notes ? `<div class="text-[11px] text-slate-500 italic mt-1.5 leading-snug">📝 ${escapeHtml(t.notes)}</div>` : '';
-                list.insertAdjacentHTML('beforeend', `
-                    <div class="p-2.5 bg-white border border-slate-200 rounded-xl text-xs">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="font-medium text-slate-800">${t.done ? '✅' : '⬜'} ${escapeHtml(t.name)}</span>
-                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${color} shrink-0">${txt}</span>
-                        </div>
-                        ${notesHtml}
-                    </div>`);
-            });
-
-            document.getElementById('end-day-modal').classList.remove('hidden');
+            doCloseDay();
         }
-        function closeEndDayModal(){ document.getElementById('end-day-modal').classList.add('hidden'); }
 
-        function confirmEndDay(){
-            closeEndDayModal();
-            showLoader("סוגר יום עבודה ושומר…");
-            // קריאה אחת בלבד שמחזירה את המצב המעודכן (מהיר, ללא סבב טעינה נוסף)
+        function doCloseDay(){
+            showLoader("סוגר יום עבודה ושומר דוח…");
             fetchJSONP(gasUrl, { action: 'closeDay', intervals: JSON.stringify(attendanceIntervals) }, 'cb_close')
                 .then(data => {
                     hideLoader();
                     if (data && data.status === 'success') {
                         applyLoadedData(data);
                         renderAttendance();
-                        switchTab('today');
-                        showNotification("יום העבודה נסגר ונשמר בהצלחה ✅");
+                        showNotification("יום העבודה נסגר. הדוח נשמר ✅");
+                        switchTab('history'); // הצגת הדוח הסגור מיד
                     } else {
                         showNotification((data && data.message) || "שגיאה בסגירת היום.", true);
                     }
@@ -1012,33 +1100,20 @@
                 .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור בפתיחת היום.", true); });
         }
 
-        // ====== יצירת תוכנית ליום עתידי (רק רוטינות) ======
-        function triggerGeneratePlan(){
-            const d = selectedDate;
-            if (!d) { showNotification('בחר תאריך תחילה.', true); return; }
-            showLoader("יוצר תוכנית ליום " + heDate(d) + "…");
-            fetchJSONP(gasUrl, { action: 'generatePlan', date: d }, 'cb_plan')
-                .then(data => {
-                    hideLoader();
-                    if (data && data.status === 'success') {
-                        tasks = data.tasks || [];
-                        renderTasks();
-                        showNotification("נוצרו משימות הרוטינה לתאריך " + heDate(d) + " ✅");
-                    } else {
-                        showNotification((data && data.message) || "שגיאה ביצירת התוכנית.", true);
-                    }
-                })
-                .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור ביצירת התוכנית.", true); });
-        }
-
+        // ====== מעבר לתצוגת הדמיה של יום עתידי (לא יוצר כלום) ======
         function planNextDay(){
             selectedDate = tomorrowISO();
-            switchTab('bydate');
             document.getElementById('bydate-picker').value = selectedDate;
-            triggerGeneratePlan();
+            switchTab('bydate');
         }
 
         // ====== היסטוריה ======
+        function parseSnapshot(raw){
+            let parsed; try { parsed = JSON.parse(raw); } catch(e) { parsed = []; }
+            if (Array.isArray(parsed)) return { tasks: parsed, tomorrow: [] };
+            return { tasks: parsed.tasks || [], tomorrow: parsed.tomorrow || [] };
+        }
+
         function renderHistory(){
             const container = document.getElementById('history-list');
             const empty = document.getElementById('history-empty-state');
@@ -1047,32 +1122,56 @@
             empty.classList.add('hidden');
 
             history.forEach(dayLog => {
-                let parsedTasks = [];
-                try { parsedTasks = JSON.parse(dayLog.tasks); } catch(e) {}
+                const snap = parseSnapshot(dayLog.tasks);
+                const done = snap.tasks.filter(t => t.done);
+                const notDone = snap.tasks.filter(t => !t.done);
+                const tomorrow = snap.tomorrow;
+
                 let parsedIntervals = [];
                 try { parsedIntervals = JSON.parse(dayLog.intervals); } catch(e) {}
                 const intervalsDisplay = parsedIntervals.map(i => `${i.start}-${i.end}`).join(', ') || 'לא דווח';
 
-                const tasksHtml = parsedTasks.map(t => `
-                    <div class="flex items-start justify-between gap-3 text-xs py-1.5 border-b border-slate-100 last:border-0">
-                        <span class="text-slate-700 ${t.done ? 'font-medium' : 'text-slate-400'}">
-                            ${t.done ? '✅' : '⬜'} ${escapeHtml(t.name)} <span class="text-[10px] text-slate-400">(${t.type})</span>
-                        </span>
-                        <span class="text-slate-500 italic font-light text-left max-w-[45%]">${t.notes ? escapeHtml(t.notes) : 'אין הערות'}</span>
-                    </div>`).join('');
+                // 1) בוצעו היום (בולט) + הערות
+                const doneHtml = done.length ? done.map(t => `
+                    <div class="flex items-start justify-between gap-3 text-xs py-1.5 border-b border-emerald-100/70 last:border-0">
+                        <span class="text-slate-800 font-medium">✅ ${escapeHtml(t.name)} <span class="text-[10px] text-slate-400 font-normal">(${t.type})</span></span>
+                        <span class="text-slate-500 italic text-left max-w-[45%]">${t.notes ? escapeHtml(t.notes) : ''}</span>
+                    </div>`).join('') : '<span class="text-xs text-slate-400 italic">לא סומנו משימות שבוצעו.</span>';
+
+                // 2) לביצוע מחר
+                const reasonColor = { 'רוטינה':'text-sky-600', 'מתוזמנת':'text-purple-600', 'נדחתה מהיום':'text-rose-500' };
+                const tomorrowHtml = tomorrow.length ? tomorrow.map(t => `
+                    <div class="flex items-center justify-between gap-3 text-xs py-1.5 border-b border-indigo-100/60 last:border-0">
+                        <span class="text-slate-700">➡️ ${escapeHtml(t.name)} <span class="text-[10px] text-slate-400">(${t.type})</span></span>
+                        <span class="text-[10px] ${reasonColor[t.reason] || 'text-slate-400'} shrink-0">${t.reason}</span>
+                    </div>`).join('') : '<span class="text-xs text-slate-400 italic">אין משימות מתוכננות למחר.</span>';
+
+                // 3) לא בוצעו היום (בקטן)
+                const notDoneHtml = notDone.length
+                    ? `<div class="text-[11px] text-slate-400 leading-relaxed">⬜ לא בוצעו היום: ${notDone.map(t => escapeHtml(t.name)).join(' · ')}</div>`
+                    : '';
 
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
                         <div class="flex justify-between items-center flex-wrap gap-2">
-                            <span class="font-bold text-slate-900 text-sm">${heDate(dayLog.date)}</span>
+                            <span class="font-bold text-slate-900 text-sm">📄 דוח יום ${heDate(dayLog.date)}</span>
                             <div class="flex items-center gap-2 text-xs">
                                 <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-mono font-medium">${intervalsDisplay} (${dayLog.totalHours} שעות)</span>
                                 <button onclick="openHistoryEdit('${dayLog.date}')" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg transition">✏️ ערוך</button>
                             </div>
                         </div>
-                        <div class="bg-white px-4 py-2.5 rounded-lg border border-slate-100 space-y-1">
-                            ${tasksHtml || '<span class="text-xs text-slate-400 italic">אין משימות מתועדות</span>'}
+
+                        <div>
+                            <div class="text-xs font-bold text-emerald-700 mb-1.5">בוצעו היום</div>
+                            <div class="bg-emerald-50/50 border border-emerald-100 rounded-lg px-3 py-2">${doneHtml}</div>
                         </div>
+
+                        <div>
+                            <div class="text-xs font-bold text-indigo-700 mb-1.5">לביצוע מחר</div>
+                            <div class="bg-indigo-50/40 border border-indigo-100 rounded-lg px-3 py-2">${tomorrowHtml}</div>
+                        </div>
+
+                        ${notDoneHtml ? `<div class="pt-1 border-t border-slate-100">${notDoneHtml}</div>` : ''}
                     </div>`);
             });
         }
@@ -1086,10 +1185,10 @@
         function openHistoryEdit(dateKey){
             const dayLog = history.find(h => h.date === dateKey);
             if (!dayLog) { showNotification('הדוח עדיין נטען, נסה שוב בעוד רגע.', true); return; }
-            let intervals = []; let dtasks = [];
+            let intervals = [];
             try { intervals = JSON.parse(dayLog.intervals); } catch(e) {}
-            try { dtasks = JSON.parse(dayLog.tasks); } catch(e) {}
-            historyEditState = { date: dateKey, intervals: JSON.parse(JSON.stringify(intervals)), tasks: JSON.parse(JSON.stringify(dtasks)) };
+            const snap = parseSnapshot(dayLog.tasks);
+            historyEditState = { date: dateKey, intervals: JSON.parse(JSON.stringify(intervals)), tasks: JSON.parse(JSON.stringify(snap.tasks)), tomorrow: snap.tomorrow };
 
             document.getElementById('history-edit-date').innerText = 'תאריך: ' + heDate(dateKey);
             renderHistoryEditIntervals();
@@ -1135,7 +1234,7 @@
                 action: 'updateHistory',
                 date: st.date,
                 intervals: JSON.stringify(st.intervals),
-                tasks: JSON.stringify(st.tasks)
+                tasks: JSON.stringify({ tasks: st.tasks, tomorrow: st.tomorrow || [] })
             }, 'cb_histedit').then(data => {
                 hideLoader();
                 if (data && data.status === 'success') {
