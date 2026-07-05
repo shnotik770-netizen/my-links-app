@@ -252,11 +252,12 @@
         </div>
     </main>
 
-    <!-- מודל בורר רוטינות להוספה להיום -->
+    <!-- מודל בורר להוספת משימה להיום (רוטינות / רשימה כללית) -->
     <div id="routine-picker-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 max-h-[80vh] overflow-y-auto">
-            <h3 class="font-bold text-base text-slate-900 mb-1">הוספת משימת רוטינה להיום</h3>
-            <p class="text-xs text-slate-500 mb-4">בחר רוטינה מוגדרת כדי לבצע אותה היום, גם אם היום אינו המועד הקבוע שלה.</p>
+            <h3 id="picker-title" class="font-bold text-base text-slate-900 mb-1">הוספת משימה להיום</h3>
+            <p id="picker-subtitle" class="text-xs text-slate-500 mb-3">בחר משימה כדי להוסיף אותה ללוח היום.</p>
+            <input type="text" id="picker-search" oninput="renderPickerList(this.value)" placeholder="🔍 חיפוש משימה…" class="w-full px-3 py-2 mb-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <div id="routine-picker-list" class="space-y-2"></div>
             <button onclick="closeRoutinePicker()" class="w-full mt-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">סגור</button>
         </div>
@@ -737,11 +738,16 @@
 
             // סרגל פעולות: הוספת משימת רוטינה שאינה של היום
             const actionBar = `
-                <div class="px-3 py-2 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between gap-2">
+                <div class="px-3 py-2 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                     <span class="text-[11px] text-slate-400">${pending.length} משימות פתוחות להיום</span>
-                    <button onclick="openRoutinePicker()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-semibold px-3 py-1.5 rounded-lg transition">
-                        🔄 הוסף משימת רוטינה
-                    </button>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="openRoutinePicker()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-semibold px-3 py-1.5 rounded-lg transition">
+                            🔄 הוסף משימת רוטינה
+                        </button>
+                        <button onclick="openGeneralPicker()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold px-3 py-1.5 rounded-lg transition">
+                            📋 הוסף מהרשימה הכללית
+                        </button>
+                    </div>
                 </div>`;
             c.insertAdjacentHTML('beforeend', actionBar);
 
@@ -804,30 +810,84 @@
             </div>`;
         }
 
-        // ====== בורר רוטינות: הוספת רוטינה מוגדרת להיום ======
+        // ====== בורר משימות (רוטינות / רשימה כללית) עם חיפוש ======
+        let pickerMode = 'routine'; // 'routine' | 'general'
+
         function openRoutinePicker(){
-            const list = document.getElementById('routine-picker-list');
-            list.innerHTML = '';
-            const today = todayISO();
-            const seeds = tasks.filter(t => t.status === 'seed');
-            const avail = seeds.filter(s => !tasks.some(t => t.status === 'dated' && t.name === s.name && t.dueDate === today));
-            if (avail.length === 0) {
-                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">כל הרוטינות המוגדרות כבר נמצאות בלוח היום, או שלא הוגדרו רוטינות.</p>`;
-            } else {
-                avail.forEach(s => {
-                    list.insertAdjacentHTML('beforeend', `
-                        <button onclick="addRoutineInstanceToday(${s.id})" class="w-full text-right p-3 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-200 rounded-xl transition flex items-center justify-between gap-2">
-                            <span class="min-w-0">
-                                <span class="font-medium text-slate-800 text-sm block truncate">${escapeHtml(s.name)}</span>
-                                <span class="text-[11px] text-slate-400">${seedScheduleText(s)}</span>
-                            </span>
-                            <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(s.type)} shrink-0">${s.type}</span>
-                        </button>`);
-                });
-            }
+            pickerMode = 'routine';
+            document.getElementById('picker-title').innerText = 'הוספת משימת רוטינה להיום';
+            document.getElementById('picker-subtitle').innerText = 'בחר רוטינה לביצוע היום. "בנוסף" משאיר את המועד הקבוע; "במקום הבא" מדלג על המופע הקרוב.';
+            document.getElementById('picker-search').value = '';
+            renderPickerList('');
             document.getElementById('routine-picker-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('picker-search').focus(), 0);
+        }
+        function openGeneralPicker(){
+            pickerMode = 'general';
+            document.getElementById('picker-title').innerText = 'הוספה מהרשימה הכללית';
+            document.getElementById('picker-subtitle').innerText = 'בחר משימה. "שכפל" משאיר עותק ברשימה הכללית; "העבר" מסיר אותה משם.';
+            document.getElementById('picker-search').value = '';
+            renderPickerList('');
+            document.getElementById('routine-picker-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('picker-search').focus(), 0);
         }
         function closeRoutinePicker(){ document.getElementById('routine-picker-modal').classList.add('hidden'); }
+
+        function renderPickerList(filter){
+            const list = document.getElementById('routine-picker-list');
+            const q = (filter || '').trim().toLowerCase();
+            const today = todayISO();
+            list.innerHTML = '';
+
+            if (pickerMode === 'routine') {
+                let items = tasks.filter(t => t.status === 'seed' &&
+                    !tasks.some(x => x.status === 'dated' && x.name === t.name && x.dueDate === today));
+                if (q) items = items.filter(s => s.name.toLowerCase().includes(q));
+                if (items.length === 0) {
+                    list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">אין רוטינות מתאימות.</p>`;
+                    return;
+                }
+                items.forEach(s => {
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="min-w-0">
+                                    <span class="font-medium text-slate-800 text-sm block truncate">${escapeHtml(s.name)}</span>
+                                    <span class="text-[11px] text-slate-400">${seedScheduleText(s)}</span>
+                                </span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(s.type)} shrink-0">${s.type}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="addRoutineInstanceToday(${s.id}, 'addition')" class="flex-1 text-xs bg-white hover:bg-sky-50 text-sky-700 border border-sky-200 font-semibold py-1.5 rounded-lg transition">➕ בנוסף</button>
+                                <button onclick="addRoutineInstanceToday(${s.id}, 'replace')" class="flex-1 text-xs bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold py-1.5 rounded-lg transition">↪️ במקום הבא</button>
+                            </div>
+                        </div>`);
+                });
+            } else {
+                let items = tasks.filter(t => t.status === 'general');
+                if (q) items = items.filter(g => g.name.toLowerCase().includes(q));
+                if (items.length === 0) {
+                    list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">אין משימות מתאימות ברשימה הכללית.</p>`;
+                    return;
+                }
+                items.forEach(g => {
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="min-w-0">
+                                    <span class="font-medium text-slate-800 text-sm block truncate">${escapeHtml(g.name)}</span>
+                                    ${g.notes ? `<span class="text-[11px] text-slate-400 truncate block">📝 ${escapeHtml(g.notes)}</span>` : ''}
+                                </span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(g.type)} shrink-0">${g.type}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="addGeneralTaskToday(${g.id}, 'copy')" class="flex-1 text-xs bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold py-1.5 rounded-lg transition">📑 שכפל (נשאר)</button>
+                                <button onclick="addGeneralTaskToday(${g.id}, 'move')" class="flex-1 text-xs bg-white hover:bg-amber-50 text-amber-700 border border-amber-200 font-semibold py-1.5 rounded-lg transition">➡️ העבר</button>
+                            </div>
+                        </div>`);
+                });
+            }
+        }
 
         function currentPeriodOccurrence(seed, todayKey){
             const p = todayKey.split('-'); const y = Number(p[0]), m = Number(p[1]);
@@ -837,7 +897,8 @@
             return '';
         }
 
-        function addRoutineInstanceToday(seedId){
+        // mode: 'addition' = בנוסף (הרוטינה עדיין תופיע במועדה) | 'replace' = במקום המופע הקרוב
+        function addRoutineInstanceToday(seedId, mode){
             const seed = tasks.find(t => t.id === seedId && t.status === 'seed');
             closeRoutinePicker();
             if (!seed) return;
@@ -849,15 +910,36 @@
                 tasks.push(instance);
                 calls.push(sendPostToSheets({ action: 'addTask', task: instance }, true));
             }
-            // קידום lastGen של הזרע כדי שהרוטינה לא תיווצר שוב אוטומטית באותו מחזור
-            const occ = currentPeriodOccurrence(seed, today);
-            if (occ && (!seed.dueDate || seed.dueDate < occ)) {
-                seed.dueDate = occ;
-                calls.push(sendPostToSheets({ action: 'updateTask', taskId: seedId, updates: { dueDate: occ } }, true));
+            if (mode === 'replace') {
+                // קידום lastGen כדי לדלג על המופע הקרוב של אותו מחזור
+                const occ = currentPeriodOccurrence(seed, today);
+                if (occ && (!seed.dueDate || seed.dueDate < occ)) {
+                    seed.dueDate = occ;
+                    calls.push(sendPostToSheets({ action: 'updateTask', taskId: seedId, updates: { dueDate: occ } }, true));
+                }
             }
             renderTasks();
-            if (calls.length) Promise.all(calls).then(r => { if (r.every(Boolean)) showNotification('משימת הרוטינה נוספה להיום ✅'); });
+            const msg = mode === 'replace' ? 'הרוטינה נוספה להיום במקום המופע הקרוב ✅' : 'הרוטינה נוספה להיום (בנוסף למועדה הקבוע) ✅';
+            if (calls.length) Promise.all(calls).then(r => { if (r.every(Boolean)) showNotification(msg); });
             else showNotification('הרוטינה כבר נמצאת בלוח היום.');
+        }
+
+        // mode: 'copy' = שכפול (נשאר ברשימה הכללית) | 'move' = העברה (מוסר מהרשימה)
+        function addGeneralTaskToday(id, mode){
+            closeRoutinePicker();
+            const g = tasks.find(t => t.id === id && t.status === 'general');
+            if (!g) return;
+            const today = todayISO();
+            if (mode === 'move') {
+                quickSchedule(id, 'today');
+                return;
+            }
+            // copy
+            const copy = { id: Date.now(), name: g.name, type: g.type, status: 'dated', dueDate: today, dayOfMonth: '', monthOfYear: '', done: false, notes: g.notes };
+            tasks.push(copy);
+            renderTasks();
+            sendPostToSheets({ action: 'addTask', task: copy }, true)
+                .then(ok => { if (ok) showNotification('נוצר עותק להיום. המשימה נשארה ברשימה הכללית.'); });
         }
 
         function renderGeneralTab() {
