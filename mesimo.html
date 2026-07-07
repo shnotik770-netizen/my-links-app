@@ -332,6 +332,7 @@
         let attendanceIntervals = [];
         let dayClosed = false;
         let dayOpen = false;
+        let prevUnclosed = false;
 
         function updateDayStateBadge(){
             const b = document.getElementById('day-state-badge');
@@ -342,6 +343,9 @@
             } else if (dayOpen) {
                 b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200";
                 b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> יום עבודה פתוח`;
+            } else if (prevUnclosed) {
+                b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200";
+                b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> טרם נסגר יום קודם`;
             } else {
                 b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200";
                 b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> היום טרם נפתח`;
@@ -425,6 +429,7 @@
             tasks = data.tasks || [];
             dayClosed = !!data.dayClosed;
             dayOpen = !!data.dayOpen;
+            prevUnclosed = !!data.prevUnclosed;
             try {
                 const attData = JSON.parse(data.attendance.intervals);
                 attendanceIntervals = Array.isArray(attData) ? attData : [];
@@ -734,9 +739,32 @@
             const today = todayISO();
             const pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today && !t.done)
                                  .sort((a,b)=> (a.dueDate||'').localeCompare(b.dueDate||''));
-            const doneToday = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today && t.done);
+            const doneToday = tasks.filter(t => t.status === 'dated' && t.dueDate === today && t.done);
 
-            // סרגל פעולות: הוספת משימת רוטינה שאינה של היום
+            // היום טרם נפתח ואין משימות - מסך פתיחה נקי
+            if (!dayOpen && pending.length === 0 && doneToday.length === 0) {
+                const warn = prevUnclosed
+                    ? `<p class="text-xs text-rose-500 mb-4">שים לב: קיים יום קודם שטרם נסגר. פתיחת יום תסגור אותו אוטומטית (עם התאריך שלו) ותתחיל יום חדש.</p>`
+                    : '';
+                c.innerHTML = `
+                    <div class="p-10 text-center">
+                        <div class="w-16 h-16 mx-auto bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2M5.6 5.6l1.4 1.4m10 10l1.4 1.4M3 12h2m14 0h2M5.6 18.4l1.4-1.4m10-10l1.4-1.4M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-lg mb-1">יום העבודה טרם נפתח</h3>
+                        <p class="text-sm text-slate-500 mb-2">לחץ "פתיחת יום עבודה" כדי לשאוב את משימות הרוטינה של היום ולגרור משימות שלא הושלמו — הכל כדף חדש ונקי.</p>
+                        ${warn}
+                        <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-6 rounded-xl transition shadow-sm mt-2">
+                            ➡️ פתיחת יום עבודה
+                        </button>
+                    </div>`;
+                return;
+            }
+
+            // סרגל פעולות
+            const openHint = !dayOpen
+                ? `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 היום טרם נפתח רשמית. לחץ "פתיחת יום עבודה" כדי לשאוב רוטינות ולגרור משימות שלא הושלמו.</div>`
+                : '';
             const actionBar = `
                 <div class="px-3 py-2 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                     <span class="text-[11px] text-slate-400">${pending.length} משימות פתוחות להיום</span>
@@ -749,10 +777,10 @@
                         </button>
                     </div>
                 </div>`;
-            c.insertAdjacentHTML('beforeend', actionBar);
+            c.insertAdjacentHTML('beforeend', openHint + actionBar);
 
             if (pending.length === 0 && doneToday.length === 0) {
-                c.insertAdjacentHTML('beforeend', `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות להיום. 🎉</p><p class="text-xs mt-1">אפשר להוסיף משימה חדשה מימין, או למשוך רוטינה קיימת מהכפתור למעלה.</p></div>`);
+                c.insertAdjacentHTML('beforeend', `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות פתוחות להיום. 🎉</p><p class="text-xs mt-1">אפשר להוסיף משימה חדשה מימין, או למשוך רוטינה קיימת מהכפתור למעלה.</p></div>`);
                 return;
             }
 
