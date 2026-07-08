@@ -56,10 +56,10 @@
     <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         <!-- צד ימין -->
-        <div class="lg:col-span-4 space-y-6">
+        <div class="lg:col-span-4 flex flex-col gap-6">
 
             <!-- בקרת יום עבודה -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 order-1">
                 <h2 class="font-bold text-slate-950 text-sm">בקרת יום עבודה</h2>
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
@@ -85,14 +85,17 @@
                         </span>
                         <span id="workdate-indicator" class="text-[11px] font-semibold text-slate-600"></span>
                     </div>
-                    <span id="connection-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> טוען...
-                    </span>
+                    <div class="flex items-center gap-2">
+                        <button onclick="refreshData()" title="רענן נתונים מהשרת" class="inline-flex items-center gap-1 text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg px-2 py-1 transition">🔄 רענן</button>
+                        <span id="connection-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> טוען...
+                        </span>
+                    </div>
                 </div>
             </div>
 
             <!-- נוכחות -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 order-3">
                 <div class="flex items-center justify-between">
                     <h2 class="font-bold text-slate-950 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -111,16 +114,17 @@
                 </div>
             </div>
 
-            <!-- הוספת משימה -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <h2 class="font-bold text-slate-950 mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    הוספת משימה חדשה
-                </h2>
-
-                <form id="add-task-form" onsubmit="handleAddTask(event)" class="space-y-4">
+            <!-- הוספת משימה (מתקפל, מעל הנוכחות) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm order-2 overflow-hidden">
+                <button onclick="toggleAddTask()" class="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50/50 transition">
+                    <h2 class="font-bold text-slate-950 text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        הוספת משימה
+                    </h2>
+                    <span id="addtask-chevron" class="text-slate-400 text-xs">▼</span>
+                </button>
+                <div id="addtask-body" class="hidden px-4 pb-4 pt-3 border-t border-slate-100">
+                    <form id="add-task-form" onsubmit="handleAddTask(event)" class="space-y-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">שם המשימה / נושא</label>
                         <input type="text" id="task-name" required placeholder="לדוגמה: הגשת דוח מע״מ לקוח משה" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
@@ -183,10 +187,11 @@
                         <button onclick="openGeneralPicker()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold py-2 rounded-lg transition">📋 מהרשימה הכללית</button>
                     </div>
                 </div>
+                </div>
             </div>
 
             <!-- שיתוף -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 order-4">
                 <h3 class="font-bold text-slate-950 text-sm">שיתוף וסיכום</h3>
                 <button onclick="copyDetailedSummaryToClipboard()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
                     📱 שלח סיכום יום לווצאפ
@@ -197,7 +202,7 @@
             </div>
 
             <!-- הגדרות -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden order-5">
                 <button onclick="toggleSettings()" class="w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition">
                     <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -272,6 +277,19 @@
             </div>
         </div>
     </main>
+
+    <!-- מודל שעת סיום היום -->
+    <div id="endtime-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="font-bold text-base text-slate-900 mb-1">מתי הסתיים יום העבודה?</h3>
+            <p class="text-xs text-slate-500 mb-4">לא נרשמה שעת סיום לסבב הנוכחות האחרון. הזן את השעה המדויקת שבה סיימת, כדי שהדיווח יהיה נכון.</p>
+            <input type="time" id="endtime-input" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <div class="flex gap-2">
+                <button onclick="confirmEndTimeAndClose()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">שמור וסגור יום</button>
+                <button onclick="document.getElementById('endtime-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
+            </div>
+        </div>
+    </div>
 
     <!-- מודל דיווח יום קודם -->
     <div id="report-day-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -485,7 +503,7 @@
                 const attData = JSON.parse(data.attendance.intervals);
                 attendanceIntervals = Array.isArray(attData) ? attData : [];
             } catch(e) {
-                attendanceIntervals = [{ start: "10:00", end: "17:30", note: "" }];
+                attendanceIntervals = [{ start: "10:00", end: "", note: "" }];
             }
             updateDayStateBadge();
             updateWorkDateUI();
@@ -1206,7 +1224,27 @@
         function triggerEndDay(){
             if (dayClosed) { showNotification('היום כבר נסגר. אפשר לערוך אותו דרך ההיסטוריה.', true); return; }
             if (attendanceIntervals.length === 0) { showNotification('אנא הוסף לפחות סבב נוכחות אחד.', true); return; }
-            if (attendanceIntervals.some(i => !i.start || !i.end)) { showNotification('יש סבב נוכחות עם שעת התחלה או סיום ריקה.', true); return; }
+            if (attendanceIntervals.some(i => !i.start)) { showNotification('יש סבב נוכחות ללא שעת התחלה.', true); return; }
+            // אם חסרה שעת סיום - נשאל מתי נסגר במקום להניח שעה שגויה
+            if (attendanceIntervals.some(i => i.start && !i.end)) { askEndTime(); return; }
+            doCloseDay();
+        }
+
+        function askEndTime(){
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2,'0');
+            const mm = String(now.getMinutes()).padStart(2,'0');
+            document.getElementById('endtime-input').value = `${hh}:${mm}`;
+            document.getElementById('endtime-modal').classList.remove('hidden');
+        }
+        function confirmEndTimeAndClose(){
+            const t = document.getElementById('endtime-input').value;
+            if (!t) { showNotification('נא להזין שעת סיום.', true); return; }
+            // ממלא את השעה בכל סבב שאין לו שעת סיום (בדרך כלל האחרון)
+            attendanceIntervals.forEach(iv => { if (iv.start && !iv.end) iv.end = t; });
+            renderAttendance();
+            syncAttendanceWithSheets();
+            document.getElementById('endtime-modal').classList.add('hidden');
             doCloseDay();
         }
 
@@ -1488,6 +1526,13 @@
 
         // ====== הגדרות ======
         function toggleSettings(){ document.getElementById('settings-panel').classList.toggle('hidden'); }
+        function toggleAddTask(){
+            const b = document.getElementById('addtask-body');
+            const ch = document.getElementById('addtask-chevron');
+            const hidden = b.classList.toggle('hidden');
+            if (ch) ch.textContent = hidden ? '▼' : '▲';
+        }
+        function refreshData(){ loadDataFromSheets(true); }
         function saveGasUrl(){
             const val = document.getElementById('gas-url-input').value.trim();
             if (val) { gasUrl = val; localStorage.setItem('gas_url', val); showNotification('כתובת הסנכרון עודכנה!'); loadDataFromSheets(true); }
