@@ -57,18 +57,6 @@
                         </span>
                     </div>
                 </div>
-                <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-4 rounded-xl shadow-md transition flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    פתיחת יום עבודה
-                </button>
-                <button onclick="triggerEndDay()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold py-2.5 px-4 rounded-xl shadow-md transition flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                    סגירת יום עבודה
-                </button>
             </div>
         </div>
     </header>
@@ -77,6 +65,34 @@
 
         <!-- צד ימין -->
         <div class="lg:col-span-4 space-y-6">
+
+            <!-- בקרת יום עבודה -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold text-slate-950 text-sm">בקרת יום עבודה</h2>
+                    <span id="workdate-indicator" class="text-[11px] text-slate-400"></span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        פתיחת יום
+                    </button>
+                    <button onclick="triggerEndDay()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                        סגירת יום
+                    </button>
+                </div>
+                <button onclick="openReportDayModal()" class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold py-2 rounded-xl transition">
+                    📅 דווח יום קודם (תאריך אחר)
+                </button>
+                <div id="return-today-wrap" class="hidden">
+                    <button onclick="returnToToday()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold py-2 rounded-xl transition">↩️ חזרה להיום</button>
+                </div>
+                <div class="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                    <button onclick="openRoutinePicker()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-semibold py-2 rounded-lg transition">🔄 הוסף רוטינה</button>
+                    <button onclick="openGeneralPicker()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold py-2 rounded-lg transition">📋 מהכללית</button>
+                </div>
+            </div>
 
             <!-- נוכחות -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
@@ -174,6 +190,25 @@
                     פותח וואטסאפ עם סיכום מסודר (וגם מעתיק ללוח): מה שבוצע היום עם ההערות, מה שפתוח למחר, ופירוט שעות הנוכחות והערותיהן.
                 </p>
             </div>
+
+            <!-- הגדרות -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <button onclick="toggleSettings()" class="w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        </svg>
+                        הגדרות סנכרון
+                    </h3>
+                    <span class="text-slate-400">▼</span>
+                </button>
+                <div id="settings-panel" class="hidden p-5 border-t border-slate-200 bg-slate-50/50 space-y-4 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">קישור ליישום האינטרנט (Web App URL):</label>
+                        <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- צד שמאל -->
@@ -230,27 +265,21 @@
                     <div id="history-list" class="space-y-6"></div>
                 </div>
             </div>
-
-            <!-- הגדרות -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <button onclick="toggleSettings()" class="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 transition">
-                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        </svg>
-                        הגדרות סנכרון ל-Google Sheets
-                    </h3>
-                    <span class="text-slate-400">▼</span>
-                </button>
-                <div id="settings-panel" class="hidden p-6 border-t border-slate-200 bg-slate-50/50 space-y-4 text-xs">
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">קישור ליישום האינטרנט (Web App URL):</label>
-                        <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
+
+    <!-- מודל דיווח יום קודם -->
+    <div id="report-day-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="font-bold text-base text-slate-900 mb-1">דיווח יום קודם</h3>
+            <p class="text-xs text-slate-500 mb-4">בחר תאריך של יום עבר שברצונך לפתוח ולדווח. המערכת תבנה את לוח אותו יום (רוטינות + משימות פתוחות), ותאפשר לך למלא נוכחות ולסגור אותו כדוח נפרד.</p>
+            <input type="date" id="report-day-input" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <div class="flex gap-2">
+                <button onclick="confirmReportDay()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">פתח יום זה</button>
+                <button onclick="document.getElementById('report-day-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
+            </div>
+        </div>
+    </div>
 
     <!-- מודל בורר להוספת משימה להיום (רוטינות / רשימה כללית) -->
     <div id="routine-picker-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -333,6 +362,19 @@
         let dayClosed = false;
         let dayOpen = false;
         let prevUnclosed = false;
+        let workDate = '';       // היום שמדווחים כרגע (ברירת מחדל: היום)
+        let todayReal = '';      // התאריך הקלנדרי האמיתי
+        let lastClosed = '';     // התאריך האחרון שנסגר
+
+        function boardDate(){ return workDate || todayISO(); }
+
+        function updateWorkDateUI(){
+            const ind = document.getElementById('workdate-indicator');
+            const wrap = document.getElementById('return-today-wrap');
+            const isPast = workDate && todayReal && workDate !== todayReal;
+            if (ind) ind.innerText = isPast ? `מדווח יום: ${heDate(workDate)}` : '';
+            if (wrap) wrap.classList.toggle('hidden', !isPast);
+        }
 
         function updateDayStateBadge(){
             const b = document.getElementById('day-state-badge');
@@ -430,6 +472,9 @@
             dayClosed = !!data.dayClosed;
             dayOpen = !!data.dayOpen;
             prevUnclosed = !!data.prevUnclosed;
+            workDate = data.workDate || '';
+            todayReal = data.today || '';
+            lastClosed = data.lastClosed || '';
             try {
                 const attData = JSON.parse(data.attendance.intervals);
                 attendanceIntervals = Array.isArray(attData) ? attData : [];
@@ -437,6 +482,7 @@
                 attendanceIntervals = [{ start: "10:00", end: "17:30", note: "" }];
             }
             updateDayStateBadge();
+            updateWorkDateUI();
         }
 
         function loadDataFromSheets(isInitial = false) {
@@ -652,7 +698,7 @@
         }
 
         function updateCounts() {
-            const today = todayISO();
+            const today = boardDate();
             const todayCount = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today && !t.done).length;
             const byCount = tasks.filter(t => t.status === 'dated' && t.dueDate === selectedDate && !t.done).length;
             const generalCount = tasks.filter(t => t.status === 'general').length;
@@ -668,7 +714,7 @@
             const containerBg = isDone ? 'bg-emerald-50/40 border-r-emerald-500' : 'bg-white border-r-transparent';
 
             let dateNote = '';
-            const today = todayISO();
+            const today = boardDate();
             if (context === 'today' && task.dueDate && task.dueDate < today) {
                 dateNote = `<span class="text-[10px] text-rose-600 font-medium shrink-0" title="באיחור">⏰${heDateShort(task.dueDate)}</span>`;
             } else if (context === 'bydate' && task.dueDate) {
@@ -719,6 +765,9 @@
         function renderTodayTab() {
             const c = document.getElementById('tab-today-content');
             c.innerHTML = '';
+            const bDate = boardDate();
+            const reporting = (workDate && todayReal && workDate !== todayReal);
+            const dayLabel = reporting ? `דוח יום ${heDate(workDate)}` : 'היום';
 
             if (dayClosed) {
                 c.innerHTML = `
@@ -726,29 +775,20 @@
                         <div class="w-16 h-16 mx-auto bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
-                        <h3 class="font-bold text-slate-900 text-lg mb-1">יום העבודה נסגר ונשמר ✅</h3>
-                        <p class="text-sm text-slate-500 mb-5">המשימות והנוכחות של היום נשמרו בהיסטוריה.<br>אפשר לעדכן מה בוצע ומה לא, או לערוך את ההערות, דרך הדוח בהיסטוריה.</p>
-                        <div class="flex items-center justify-center gap-2 flex-wrap">
-                            <button onclick="openTodayReportForEdit()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl transition shadow-sm">
-                                ✏️ ערוך את דוח היום
-                            </button>
-                            <button onclick="planNextDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl transition shadow-sm">
-                                🔮 הצג תוכנית ליום הבא
-                            </button>
-                        </div>
+                        <h3 class="font-bold text-slate-900 text-lg mb-1">${dayLabel} נסגר ונשמר ✅</h3>
+                        <p class="text-sm text-slate-500">המשימות והנוכחות נשמרו בהיסטוריה.<br>לצפייה, עריכה או שיתוף — עבור לטאב <span class="font-semibold text-slate-700">"היסטוריית ימים"</span>.<br>לפתיחת יום חדש — השתמש ב<span class="font-semibold text-slate-700">"בקרת יום עבודה"</span> בצד ימין.</p>
                     </div>`;
                 return;
             }
 
-            const today = todayISO();
-            const pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today && !t.done)
+            const pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
                                  .sort((a,b)=> (a.dueDate||'').localeCompare(b.dueDate||''));
-            const doneToday = tasks.filter(t => t.status === 'dated' && t.dueDate === today && t.done);
+            const doneToday = tasks.filter(t => t.status === 'dated' && t.dueDate === bDate && t.done);
 
-            // היום טרם נפתח ואין משימות - מסך פתיחה נקי
+            // היום טרם נפתח ואין משימות - מסך פתיחה נקי (ללא כפתורים; הפעולה בצד ימין)
             if (!dayOpen && pending.length === 0 && doneToday.length === 0) {
                 const warn = prevUnclosed
-                    ? `<p class="text-xs text-rose-500 mb-4">שים לב: קיים יום קודם שטרם נסגר. פתיחת יום תסגור אותו אוטומטית (עם התאריך שלו) ותתחיל יום חדש.</p>`
+                    ? `<p class="text-xs text-rose-500 mt-3">שים לב: קיים יום קודם שטרם נסגר. פתיחת יום תסגור אותו אוטומטית ותתחיל יום חדש.</p>`
                     : '';
                 c.innerHTML = `
                     <div class="p-10 text-center">
@@ -756,41 +796,26 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2M5.6 5.6l1.4 1.4m10 10l1.4 1.4M3 12h2m14 0h2M5.6 18.4l1.4-1.4m10-10l1.4-1.4M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         </div>
                         <h3 class="font-bold text-slate-900 text-lg mb-1">יום העבודה טרם נפתח</h3>
-                        <p class="text-sm text-slate-500 mb-2">לחץ "פתיחת יום עבודה" כדי לשאוב את משימות הרוטינה של היום ולגרור משימות שלא הושלמו — הכל כדף חדש ונקי.</p>
+                        <p class="text-sm text-slate-500">לחץ <span class="font-semibold text-slate-700">"פתיחת יום"</span> ב"בקרת יום עבודה" בצד ימין — כדי לשאוב את הרוטינות של היום ולגרור משימות שלא הושלמו, כדף חדש ונקי.</p>
                         ${warn}
-                        <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-6 rounded-xl transition shadow-sm mt-2">
-                            ➡️ פתיחת יום עבודה
-                        </button>
                     </div>`;
                 return;
             }
 
-            // סרגל פעולות
             const openHint = !dayOpen
-                ? `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 היום טרם נפתח רשמית. לחץ "פתיחת יום עבודה" כדי לשאוב רוטינות ולגרור משימות שלא הושלמו.</div>`
+                ? `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 ${reporting ? 'יום זה' : 'היום'} טרם נפתח רשמית. פתח אותו מ"בקרת יום עבודה" בצד ימין כדי לשאוב רוטינות ולגרור משימות פתוחות.</div>`
                 : '';
-            const actionBar = `
-                <div class="px-3 py-2 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between gap-2 flex-wrap">
-                    <span class="text-[11px] text-slate-400">${pending.length} משימות פתוחות להיום</span>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <button onclick="openRoutinePicker()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-semibold px-3 py-1.5 rounded-lg transition">
-                            🔄 הוסף משימת רוטינה
-                        </button>
-                        <button onclick="openGeneralPicker()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold px-3 py-1.5 rounded-lg transition">
-                            📋 הוסף מהרשימה הכללית
-                        </button>
-                    </div>
-                </div>`;
-            c.insertAdjacentHTML('beforeend', openHint + actionBar);
+            const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500">${dayLabel} · ${pending.length} משימות פתוחות</div>`;
+            c.insertAdjacentHTML('beforeend', openHint + titleBar);
 
             if (pending.length === 0 && doneToday.length === 0) {
-                c.insertAdjacentHTML('beforeend', `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות פתוחות להיום. 🎉</p><p class="text-xs mt-1">אפשר להוסיף משימה חדשה מימין, או למשוך רוטינה קיימת מהכפתור למעלה.</p></div>`);
+                c.insertAdjacentHTML('beforeend', `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות פתוחות. 🎉</p><p class="text-xs mt-1">אפשר להוסיף משימה מהטופס בצד ימין, או למשוך רוטינה/משימה כללית מ"בקרת יום עבודה".</p></div>`);
                 return;
             }
 
             pending.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'today')));
             if (doneToday.length > 0) {
-                c.insertAdjacentHTML('beforeend', `<div class="px-5 py-2 bg-slate-50/70 text-[11px] font-bold text-slate-400">בוצעו היום (${doneToday.length})</div>`);
+                c.insertAdjacentHTML('beforeend', `<div class="px-5 py-2 bg-slate-50/70 text-[11px] font-bold text-slate-400">בוצעו (${doneToday.length})</div>`);
                 doneToday.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'today')));
             }
         }
@@ -868,7 +893,7 @@
         function renderPickerList(filter){
             const list = document.getElementById('routine-picker-list');
             const q = (filter || '').trim().toLowerCase();
-            const today = todayISO();
+            const today = boardDate();
             list.innerHTML = '';
 
             if (pickerMode === 'routine') {
@@ -934,7 +959,7 @@
             const seed = tasks.find(t => t.id === seedId && t.status === 'seed');
             closeRoutinePicker();
             if (!seed) return;
-            const today = todayISO();
+            const today = boardDate();
             const exists = tasks.some(t => t.status === 'dated' && t.name === seed.name && t.dueDate === today);
             const calls = [];
             if (!exists) {
@@ -961,7 +986,7 @@
             closeRoutinePicker();
             const g = tasks.find(t => t.id === id && t.status === 'general');
             if (!g) return;
-            const today = todayISO();
+            const today = boardDate();
             if (mode === 'move') {
                 quickSchedule(id, 'today');
                 return;
@@ -1197,21 +1222,42 @@
         }
 
         // ====== פתיחת יום עבודה ======
-        function triggerOpenDay(){
-            showLoader("פותח יום עבודה ויוצר משימות…");
-            fetchJSONP(gasUrl, { action: 'openDay' }, 'cb_open')
+        function triggerOpenDay(){ openDayForDate(todayReal || todayISO()); }
+        function returnToToday(){ openDayForDate(todayReal || todayISO()); }
+
+        function openDayForDate(dateKey){
+            const params = { action: 'openDay' };
+            if (dateKey) params.date = dateKey;
+            const isToday = (dateKey === (todayReal || todayISO()));
+            showLoader(isToday ? "פותח יום עבודה…" : ("פותח יום " + heDate(dateKey) + "…"));
+            fetchJSONP(gasUrl, params, 'cb_open')
                 .then(data => {
                     hideLoader();
                     if (data && data.status === 'success') {
                         applyLoadedData(data);
                         renderAttendance();
                         switchTab('today');
-                        showNotification("יום העבודה נפתח. המשימות והרוטינות נוצרו ✅");
+                        showNotification(isToday ? "יום העבודה נפתח ✅" : ("נפתח יום " + heDate(dateKey) + " לדיווח ✅"));
                     } else {
                         showNotification((data && data.message) || "שגיאה בפתיחת היום.", true);
                     }
                 })
                 .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור בפתיחת היום.", true); });
+        }
+
+        function openReportDayModal(){
+            const input = document.getElementById('report-day-input');
+            const yest = addDaysISO(todayReal || todayISO(), -1);
+            input.max = yest;
+            input.value = yest;
+            document.getElementById('report-day-modal').classList.remove('hidden');
+        }
+        function confirmReportDay(){
+            const d = document.getElementById('report-day-input').value;
+            if (!d) { showNotification('נא לבחור תאריך.', true); return; }
+            if (d >= (todayReal || todayISO())) { showNotification('יש לבחור תאריך מהעבר (לפני היום).', true); return; }
+            document.getElementById('report-day-modal').classList.add('hidden');
+            openDayForDate(d);
         }
 
         // ====== מעבר לתצוגת הדמיה של יום עתידי (לא יוצר כלום) ======
@@ -1378,8 +1424,8 @@
         }
 
         function copyDetailedSummaryToClipboard(){
-            const dateStr = new Date().toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-            const today = todayISO();
+            const today = boardDate();
+            const dateStr = (workDate && todayReal && workDate !== todayReal) ? ('יום ' + heDate(workDate)) : new Date().toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
             let text = `📋 סיכום יום עבודה - ${dateStr}\n`;
             text += `⏱️ שעות נוכחות: ${calcHours(attendanceIntervals)} שעות\n`;
             if (attendanceIntervals.length > 0) {
