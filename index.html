@@ -10,6 +10,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for fallback icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS & JS for Live Interactive Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Routing Machine CSS & JS for Path Calculation -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;900&display=swap');
         body {
@@ -22,6 +30,10 @@
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
             70% { transform: scale(1.03); box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        /* הסתרת פאנל הוראות הטקסט הלבן של הניווט כדי להשאיר מפה נקייה */
+        .leaflet-routing-container { 
+            display: none !important; 
         }
     </style>
 </head>
@@ -117,13 +129,12 @@
             <div id="verification-card" class="hidden bg-slate-800 p-5 rounded-3xl border border-slate-700/50 space-y-3">
                 <div class="flex items-center gap-2 text-blue-400 font-bold text-sm pb-1 border-b border-slate-700/40">
                     <i class="fa-solid fa-map-pin animate-bounce"></i>
-                    <span>אימות מיקום מיידי</span>
+                    <span>אימות מיקום ומסלול הליכה</span>
                 </div>
                 <p id="display-resolved-address" class="text-sm font-semibold text-slate-100">המיקום שנבחר הוא: מזהה כתובת...</p>
-                <!-- Embedded OpenStreetMap Iframe for visual reassurance -->
-                <div class="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-700 shadow-inner">
-                    <iframe id="embedded-map-frame" class="w-full h-full border-0" src=""></iframe>
-                </div>
+                
+                <!-- New Live Map Container -->
+                <div id="live-map" class="w-full h-56 rounded-2xl border border-slate-700 shadow-inner z-10"></div>
             </div>
 
             <!-- #1 MOST RECENT PARKING (Displayed Separately and Larger) -->
@@ -275,10 +286,11 @@
         // App State
         let phone = localStorage.getItem('parking_phone') || '';
         let userName = localStorage.getItem('parking_name') || '';
-        // Load history as an array. Limit to 5 elements.
         let parkingHistory = JSON.parse(localStorage.getItem('parking_history_list')) || [];
         let customTexts = JSON.parse(localStorage.getItem('parking_custom_texts')) || { ...defaultTexts };
         let timerInterval = null;
+        let leafletMap = null;
+        let routingControl = null;
 
         // Detect if app is running inside iframe sandbox
         function checkSandbox() {
@@ -330,6 +342,44 @@
             }
         }
 
+        // פונקציית שמירת חנייה חדשה (משיכת מיקום ה-GPS של המכשיר)
+        function parkCar() {
+            const statusDiv = document.getElementById('location-status');
+            statusDiv.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-blue-400 ml-1"></i> מאתר מיקום מדויק ב-GPS...`;
+
+            if (!navigator.geolocation) {
+                statusDiv.innerText = "הדפדפן שלך לא תומך ברכיב GPS.";
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const timestamp = new Date().getTime();
+
+                    statusDiv.innerText = "מפענח כתובת רחוב...";
+
+                    fetchHebrewAddress(lat, lng, (resolvedAddress) => {
+                        const newParking = { lat, lng, timestamp, address: resolvedAddress };
+                        
+                        // הוספה לראש המערך והגבלה ל-5 רשומות
+                        parkingHistory.unshift(newParking);
+                        parkingHistory = parkingHistory.slice(0, 5);
+                        localStorage.setItem('parking_history_list', JSON.stringify(parkingHistory));
+
+                        showToast("החנייה נשמרה בהצלחה! 🚗");
+                        renderApp();
+                    });
+                },
+                (error) => {
+                    console.error(error);
+                    statusDiv.innerText = "שגיאה בקבלת מיקום. ודא שה-GPS פועל ושאישרת הרשאות גישה.";
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
         // Asynchronously resolves address via OpenStreetMap Nominatim reverse geocoder
         async function fetchHebrewAddress(lat, lng, callback) {
             try {
@@ -358,7 +408,7 @@
             }
         }
 
-        // Renders the verification card for the latest saved coordinates
+        // פונקציית טעינת המפה החכמה עם מסלול, מיקום המשתמש ואייקון רכב
         function renderVerificationCard() {
             const verificationCard = document.getElementById('verification-card');
             if (parkingHistory.length === 0) {
@@ -369,14 +419,82 @@
             const latest = parkingHistory[0];
             verificationCard.classList.remove('hidden');
             
-            const displayAddress = document.getElementById('display-resolved-address');
-            displayAddress.innerText = `המיקום שנבחר הוא: ${latest.address || "מזהה כתובת..."}`;
+            document.getElementById('display-resolved-address').innerText = `המיקום שנבחר הוא: ${latest.address || "מזהה כתובת..."}`;
             
-            // Embed secure OpenStreetMap iframe centered around coords with a marker
-            const mapFrame = document.getElementById('embedded-map-frame');
-            const offset = 0.0015; // Zoom scale bounding box
-            const bbox = `${latest.lng - offset}%2C${latest.lat - offset / 2}%2C${latest.lng + offset}%2C${latest.lat + offset / 2}`;
-            mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latest.lat}%2C${latest.lng}`;
+            // אתחול אלמנט המפה הפיזי במידה ולא קיים עדיין
+            if (!leafletMap) {
+                leafletMap = L.map('live-map', { zoomControl: false }).setView([latest.lat, latest.lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(leafletMap);
+            } else {
+                leafletMap.setView([latest.lat, latest.lng], 16);
+            }
+
+            // ניקוי מסלולים קודמים אם קיימים
+            if (routingControl) {
+                leafletMap.removeControl(routingControl);
+            }
+
+            // יצירת אייקונים מותאמים אישית (אמוג'י בתוך HTML חלקי)
+            const carIcon = L.divIcon({
+                html: '<div class="text-3xl filter drop-shadow-md">🚗</div>',
+                className: 'custom-div-icon',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            const userIcon = L.divIcon({
+                html: '<div class="relative flex items-center justify-center"><div class="absolute w-4 h-4 bg-blue-500 rounded-full border-2 border-white animate-ping"></div><div class="w-3.5 h-3.5 bg-blue-600 rounded-full border-2 border-white"></div></div>',
+                className: 'custom-div-icon',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            // ניסיון לקבל את מיקום המשתמש הנוכחי בזמן אמת כדי לצייר מסלול הליכה לאוטו
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+
+                    // יצירת רכיב הניווט (Routing Machine) המחשב מסלול הליכה (Foot)
+                    routingControl = L.Routing.control({
+                        waypoints: [
+                            L.latLng(userLat, userLng), // נקודת התחלה: המשתמש ברגע זה
+                            L.latLng(latest.lat, latest.lng) // נקודת סיום: האוטו החונה
+                        ],
+                        router: L.Routing.osrmv1({
+                            profile: 'foot' // פרופיל הליכה רגלית
+                         }),
+                        createMarker: function(i, waypoint, n) {
+                            // התאמת האייקונים לסיכות על המפה
+                            if (i === 0) {
+                                return L.marker(waypoint.latLng, { icon: userIcon }).bindPopup("אתה נמצא כאן");
+                            } else if (i === n - 1) {
+                                return L.marker(waypoint.latLng, { icon: carIcon }).bindPopup("הרכב שלך מחכה כאן");
+                            }
+                        },
+                        lineOptions: {
+                            styles: [{ color: '#3b82f6', opacity: 0.8, weight: 6, dashArray: '5, 10' }] // קו כחול מקווקו ומודרני
+                        },
+                        show: false // מניעת פתיחת פאנל ההוראות הכתובות
+                    }).addTo(leafletMap);
+                    
+                    // התאמת גבולות הצפייה במפה שתכיל את שני האלמנטים
+                    const bounds = L.latLngBounds([L.latLng(userLat, userLng), L.latLng(latest.lat, latest.lng)]);
+                    leafletMap.fitBounds(bounds, { padding: [40, 40] });
+
+                }, () => {
+                    // במידה והמשתמש חסם מיקום רגעי - נציג רק את מיקום האוטו
+                    createSingleCarMarker(latest, carIcon);
+                });
+            } else {
+                createSingleCarMarker(latest, carIcon);
+            }
+        }
+
+        function createSingleCarMarker(latest, carIcon) {
+            L.marker([latest.lat, latest.lng], { icon: carIcon }).addTo(leafletMap).bindPopup("הרכב שלך").openPopup();
         }
 
         // Returns relative verbal duration
@@ -411,7 +529,7 @@
 
             // --- RENDER #1 LATEST CARD ---
             latestCard.classList.remove('hidden');
-            statusDiv.innerText = "החנייה הפעילה מוצגת מטה. תוכל להתחיל חנייה חדשה בכל עת!";
+            statusDiv.innerText = "החנייה הפעילה מוצגת מטה. המסלול המקווקו מוביל אותך אליה!";
             
             const latest = parkingHistory[0];
             const dateObj = new Date(latest.timestamp);
@@ -494,7 +612,6 @@
         }
 
         // --- ONBOARDING & SETTINGS MANAGEMENT ---
-        
         function saveOnboarding() {
             const inputPhone = document.getElementById('input-phone');
             const inputName = document.getElementById('input-name');
@@ -584,172 +701,48 @@
             if (confirm("האם לאפס את כל המשפטים והטקסטים לברירת המחדל המקורית?")) {
                 customTexts = { ...defaultTexts };
                 localStorage.setItem('parking_custom_texts', JSON.stringify(customTexts));
-                
-                document.getElementById('setting-text-ready-title').value = customTexts.readyTitle;
-                document.getElementById('setting-text-ready-subtitle').value = customTexts.readySubtitle;
-                document.getElementById('setting-text-btn-park').value = customTexts.btnPark;
-                document.getElementById('setting-text-status-waiting').value = customTexts.statusWaiting;
-                
-                showToast("הטקסטים אופסו לברירת המחדל");
+                showToast("הטקסטים אופסו בהצלחה.");
+                toggleSettings();
+                renderApp();
             }
         }
 
-        // --- LOCATION ACQUISITION & HISTORY APPEND ---
-        
-        function parkCar() {
-            const statusDiv = document.getElementById('location-status');
-            const btnPark = document.getElementById('btn-park');
-            
-            if (!navigator.geolocation) {
-                statusDiv.innerHTML = "❌ הדפדפן שלך לא תומך ב-GPS.";
-                showToast("מכשירך לא תומך בשירותי מיקום", "error");
-                return;
-            }
-
-            statusDiv.innerHTML = "מאתר מיקום מדויק... <i class='fa-solid fa-spinner animate-spin mr-1'></i>";
-            btnPark.disabled = true;
-            btnPark.classList.remove('pulse-animation');
-            btnPark.style.opacity = '0.7';
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    const timestamp = new Date().getTime();
-                    
-                    // Create dynamic record block
-                    const newRecord = {
-                        lat: lat,
-                        lng: lng,
-                        timestamp: timestamp,
-                        address: "מזהה כתובת... ⌛"
-                    };
-
-                    // Insert to front of array
-                    parkingHistory.unshift(newRecord);
-                    
-                    // Max limit of 5 stored spots in memory
-                    if (parkingHistory.length > 5) {
-                        parkingHistory = parkingHistory.slice(0, 5);
-                    }
-
-                    localStorage.setItem('parking_history_list', JSON.stringify(parkingHistory));
-                    
-                    statusDiv.innerHTML = "המיקום נמצא ונשמר! 🎉";
-                    showToast("החנייה נשמרה בהצלחה! 🚗");
-                    
-                    // Trigger immediate UI refresh
-                    renderApp();
-
-                    // Query Nominatim API for Hebrew address
-                    fetchHebrewAddress(lat, lng, (resolvedAddress) => {
-                        // Find the item with matching timestamp and update its address
-                        const matchedRecordIdx = parkingHistory.findIndex(r => r.timestamp === timestamp);
-                        if (matchedRecordIdx !== -1) {
-                            parkingHistory[matchedRecordIdx].address = resolvedAddress;
-                            localStorage.setItem('parking_history_list', JSON.stringify(parkingHistory));
-                            // Refresh layout with the resolved address string
-                            renderApp();
-                        }
-                    });
-
-                    setTimeout(() => {
-                        btnPark.disabled = false;
-                        btnPark.style.opacity = '1';
-                        btnPark.classList.add('pulse-animation');
-                    }, 1000);
-                },
-                (error) => {
-                    btnPark.disabled = false;
-                    btnPark.style.opacity = '1';
-                    btnPark.classList.add('pulse-animation');
-                    
-                    let errorMsg = "שגיאה באיתור המיקום.";
-                    if (error.code === error.PERMISSION_DENIED) {
-                        errorMsg = "אנא אשר גישת GPS בדפדפן המכשיר שלך.";
-                    } else if (error.code === error.TIMEOUT) {
-                        errorMsg = "זמן הבקשה פג. נסה שוב תחת כיפת השמיים.";
-                    }
-                    
-                    statusDiv.innerHTML = `❌ ${errorMsg}`;
-                    showToast(errorMsg, "error");
-                    console.error(error);
-                },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-            );
-        }
-
-        // --- WHATSAPP & CLIPBOARD UTILITIES ---
-
-        function generateHistoryShareText(index) {
-            if (index >= parkingHistory.length) return "";
-            const record = parkingHistory[index];
-            
-            const gmapsLink = `https://www.google.com/maps/search/?api=1&query=${record.lat},${record.lng}`;
-            const wazeLink = `https://waze.com/ul?ll=${record.lat},${record.lng}&navigate=yes`;
-            
-            const timeStr = new Date(record.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-            const addressString = record.address || "מפענח כתובת...";
-            
-            return `מיקום השליחות שלי 🚗📍\n\nשמרתי את מיקום הרכב/ההתחלה שלי בקישור הבא:\n${gmapsLink}\n\nניווט ישיר ב-Waze:\n${wazeLink}\n\nכתובת משוערת: ${addressString}\n(שעה שמורה: ${timeStr})`;
-        }
-
+        // שיתוף בוואטסאפ מההיסטוריה
         function sendHistoryToWhatsapp(index) {
-            const text = generateHistoryShareText(index);
-            if (!text) return;
-            
-            const message = encodeURIComponent(text);
-            const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
-            
-            window.open(whatsappUrl, '_blank');
+            if (index >= parkingHistory.length) return;
+            const record = parkingHistory[index];
+            const timeStr = new Date(record.timestamp).toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+            const msg = encodeURIComponent(`היי, חניתי כאן בשעה ${timeStr}. בכתובת: ${record.address || ''}\nקישור למיקום בגוגל מפות:\nhttps://www.google.com/maps/search/?api=1&query=${record.lat},${record.lng}`);
+            window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
         }
 
-        // Clipboard copy mechanism inside IFrames
+        // העתקת קישור מיקום מההיסטוריה
         function copyHistoryLink(index) {
-            const textToCopy = generateHistoryShareText(index);
-            if (!textToCopy) return;
-
-            const tempInput = document.createElement("textarea");
-            tempInput.value = textToCopy;
-            tempInput.style.position = "absolute";
-            tempInput.style.left = "-9999px";
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            
-            let success = false;
-            try {
-                success = document.execCommand("copy");
-            } catch (err) {
-                success = false;
-            }
-            
-            document.body.removeChild(tempInput);
-
-            if (success) {
-                showToast("קישור הניווט הועתק ללוח!");
-            } else {
-                showToast("שגיאה בהעתקה, אנא העתק ידנית", "error");
-            }
+            if (index >= parkingHistory.length) return;
+            const record = parkingHistory[index];
+            const url = `https://www.google.com/maps/search/?api=1&query=${record.lat},${record.lng}`;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast("הקישור לגוגל מפות הועתק!");
+            }).catch(() => {
+                showToast("שגיאה בהעתקה", "error");
+            });
         }
-
-        // --- TOAST NOTIFICATIONS ---
 
         function showToast(message, type = "success") {
             const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
             const text = document.getElementById('toast-text');
-
-            text.innerText = message;
+            const icon = document.getElementById('toast-icon');
             
-            if (type === "success") {
-                icon.className = "fa-solid fa-circle-check text-green-400 text-lg";
+            text.innerText = message;
+            if (type === "error") {
+                icon.className = "fa-solid fa-circle-xmark text-red-400";
             } else {
-                icon.className = "fa-solid fa-triangle-exclamation text-rose-400 text-lg";
+                icon.className = "fa-solid fa-circle-check text-green-400";
             }
-
+            
             toast.classList.remove('opacity-0', 'pointer-events-none');
             toast.classList.add('opacity-100');
-
+            
             setTimeout(() => {
                 toast.classList.remove('opacity-100');
                 toast.classList.add('opacity-0', 'pointer-events-none');
