@@ -1,0 +1,65 @@
+{
+  "date_hebrew_gregorian": "יום רביעי כ״ג. תמוז ה׳תשפ״ו / 8. יולי 2026",
+  "lessons": [
+    {
+      "track": "חומש עם רש\"י",
+      "track_url": "https://he.chabad.org/dailystudy/torahreading.asp?tdate=7/8/2026",
+      "title": "פרשת מטות-מסעי, רביעי (במדבר ל״ב:כ-ל״ג:מ״ט)",
+      "title_url": "https://he.chabad.org/dailystudy/torahreading.asp?tdate=7/8/2026",
+      "links": {
+        "טקסט": "https://he.chabad.org/dailystudy/torahreading.asp?tdate=7/8/2026"
+      }
+    },
+    {
+      "track": "תהילים",
+      "track_url": "https://he.chabad.org/dailystudy/tehillim.asp?tdate=7/8/2026",
+      "title": "פרקים ק״ח-קי״ב",
+      "title_url": "https://he.chabad.org/dailystudy/tehillim.asp?tdate=7/8/2026",
+      "links": {
+        "טקסט": "https://he.chabad.org/dailystudy/tehillim.asp?tdate=7/8/2026",
+        "אודיו": "https://he.chabad.org/dailystudy/tehillim.asp?tdate=7/8/2026&auto=audio"
+      }
+    },
+    {
+      "track": "תניא",
+      "track_url": "https://he.chabad.org/dailystudy/tanya.asp?tdate=7/8/2026",
+      "title": "אגרת התשובה, תחילת פרק ח'",
+      "title_url": "https://he.chabad.org/dailystudy/tanya.asp?tdate=7/8/2026",
+      "links": {
+        "טקסט": "https://he.chabad.org/dailystudy/tanya.asp?tdate=7/8/2026"
+      }
+    },
+    {
+      "track": "היום יום",
+      "track_url": "https://he.chabad.org/dailystudy/hayomyom.asp?tdate=7/8/2026",
+      "title": "",
+      "title_url": "https://he.chabad.org/dailystudy/hayomyom.asp?tdate=7/8/2026",
+      "links": {
+        "טקסט": "https://he.chabad.org/dailystudy/hayomyom.asp?tdate=7/8/2026"
+      }
+    },
+    {
+      "track": "רמב\"ם",
+      "track_url": "https://he.chabad.org/dailystudy/rambam.asp?tdate=7/8/2026",
+      "studies": [
+        {
+          "sub_track": "שלושה פרקים",
+          "title": "ביאת המקדש - פרק ח, ביאת המקדש - פרק ט, איסורי מזבח - פרק א",
+          "text_url": "https://he.chabad.org/dailystudy/rambam.asp?tdate=7/8/2026&rambamChapters=3"
+        },
+        {
+          "sub_track": "פרק אחד",
+          "title": "שביתת יום טוב - פרק ז",
+          "text_url": "https://he.chabad.org/dailystudy/rambam.asp?tdate=7/8/2026&rambamChapters=1"
+        },
+        {
+          "sub_track": "המצווה היומית",
+          "title": "שיעור 156: מצוות לא תעשה ע״ד; מצוות עשה ס״א; מצוות לא תעשה צ״א, צ״ב, צ״ג",
+          "text_url": "https://he.chabad.org/dailystudy/seferHamitzvos.asp?tdate=7/8/2026"
+        }
+      ]
+    }
+  ],
+  "source_url": "https://he.chabad.org/dailystudy/default.htm",
+  "generated_at": "2026-07-08T06:00:00+00:00"
+}
