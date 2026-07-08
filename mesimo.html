@@ -53,44 +53,46 @@
         </div>
     </header>
 
+    <div id="readonly-banner" class="hidden bg-slate-800 text-white text-center text-xs font-semibold py-2">
+        🔒 מצב צפייה בלבד — ניתן לצפות בלבד; פעולות שינוי חסומות.
+    </div>
+
     <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         <!-- צד ימין -->
         <div class="lg:col-span-4 flex flex-col gap-6">
 
             <!-- בקרת יום עבודה -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 order-1">
-                <h2 class="font-bold text-slate-950 text-sm">בקרת יום עבודה</h2>
-                <div class="grid grid-cols-2 gap-2">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5 order-1">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="font-bold text-slate-950 text-sm">בקרת יום עבודה</h2>
+                    <button id="refresh-btn" onclick="refreshData()" title="רענן נתונים" class="inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition bg-amber-50 text-amber-700 border-amber-200">🔄 רענן</button>
+                </div>
+
+                <!-- כפתורי פתיחה (מוסתרים כשיום פתוח) -->
+                <div id="open-buttons" class="grid grid-cols-2 gap-2">
                     <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                        פתיחת יום
+                        פתיחה רגילה
                     </button>
-                    <button onclick="triggerEndDay()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-                        סגירת יום
+                    <button onclick="openReportDayModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5">
+                        📅 פתיחה ישנה
                     </button>
                 </div>
-                <button onclick="openReportDayModal()" class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold py-2 rounded-xl transition">
-                    📅 דווח יום קודם (תאריך אחר)
+
+                <!-- כפתור סגירה (מוצג רק כשיום פתוח) -->
+                <button id="close-button" onclick="triggerEndDay()" class="hidden w-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                    סגירת יום
                 </button>
+
                 <div id="return-today-wrap" class="hidden">
                     <button onclick="returnToToday()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold py-2 rounded-xl transition">↩️ חזרה להיום</button>
                 </div>
-                <!-- סטטוס יום העבודה הנוכחי -->
-                <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span id="day-state-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> —
-                        </span>
-                        <span id="workdate-indicator" class="text-[11px] font-semibold text-slate-600"></span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="refreshData()" title="רענן נתונים מהשרת" class="inline-flex items-center gap-1 text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg px-2 py-1 transition">🔄 רענן</button>
-                        <span id="connection-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> טוען...
-                        </span>
-                    </div>
+
+                <!-- סטטוס מאוחד -->
+                <div class="pt-2.5 border-t border-slate-100">
+                    <span id="day-status-text" class="text-xs font-semibold text-slate-500">—</span>
                 </div>
             </div>
 
@@ -114,84 +116,79 @@
                 </div>
             </div>
 
-            <!-- הוספת משימה (מתקפל, מעל הנוכחות) -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm order-2 overflow-hidden">
-                <button onclick="toggleAddTask()" class="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50/50 transition">
-                    <h2 class="font-bold text-slate-950 text-sm flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        הוספת משימה
-                    </h2>
-                    <span id="addtask-chevron" class="text-slate-400 text-xs">▼</span>
-                </button>
-                <div id="addtask-body" class="hidden px-4 pb-4 pt-3 border-t border-slate-100">
-                    <form id="add-task-form" onsubmit="handleAddTask(event)" class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">שם המשימה / נושא</label>
-                        <input type="text" id="task-name" required placeholder="לדוגמה: הגשת דוח מע״מ לקוח משה" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                    </div>
+            <!-- הוספת משימה (גלוי תמיד, מעל הנוכחות) -->
+            <div id="addtask-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm order-2 space-y-3">
+                <h2 class="font-bold text-slate-950 text-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    הוספת משימה
+                </h2>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">סוג משימה</label>
-                            <select id="task-type" onchange="handleTaskTypeChange()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                                <option value="משימה יומית">משימה יומית 🔄</option>
-                                <option value="משימה חודשית">משימה חודשית 📅</option>
-                                <option value="משימה שנתית">משימה שנתית 🗓️</option>
-                                <option value="משימה מזדמנת" selected>משימה מזדמנת ⚡</option>
+                <select id="add-mode" onchange="handleAddModeChange()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                    <option value="new">➕ משימה חדשה</option>
+                    <option value="routine">🔄 משימה מהמערכת (רוטינה קבועה)</option>
+                    <option value="general">📋 משימה ללא תאריך (לרשימה הכללית)</option>
+                </select>
+
+                <!-- מצב: משימה חדשה -->
+                <div id="mode-new">
+                    <form id="add-task-form" onsubmit="handleAddTask(event)" class="space-y-2.5">
+                        <input type="text" id="task-name" placeholder="שם המשימה / נושא" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                        <div class="flex items-stretch gap-2">
+                            <select id="task-type" onchange="handleTaskTypeChange()" class="flex-1 min-w-0 px-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                                <option value="משימה יומית">יומית 🔄</option>
+                                <option value="משימה חודשית">חודשית 📅</option>
+                                <option value="משימה שנתית">שנתית 🗓️</option>
+                                <option value="משימה מזדמנת" selected>מזדמנת ⚡</option>
+                            </select>
+                            <div id="routing-selector-container" class="flex-1 min-w-0">
+                                <select id="task-when" onchange="handleWhenChange()" class="w-full px-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                                    <option value="today">היום</option>
+                                    <option value="tomorrow">מחר</option>
+                                    <option value="pick">בתאריך אחר</option>
+                                    <option value="general">לרשימה הכללית</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 rounded-xl transition shadow-sm">הוסף</button>
+                        </div>
+
+                        <p id="type-hint" class="text-[11px] text-slate-400 leading-snug"></p>
+
+                        <div id="initial-due-date-container" class="hidden">
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">תאריך ביצוע מבוקש</label>
+                            <input type="date" id="task-due-date" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                        </div>
+                        <div id="monthly-day-container" class="hidden">
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">באיזה יום בחודש? (1-31)</label>
+                            <input type="number" id="task-monthly-day" min="1" max="31" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition" placeholder="לדוגמה: 15">
+                        </div>
+                        <div id="annual-month-container" class="hidden">
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">באיזה חודש בשנה?</label>
+                            <select id="task-annual-month" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                                <option value="1">ינואר (01)</option><option value="2">פברואר (02)</option>
+                                <option value="3">מרץ (03)</option><option value="4">אפריל (04)</option>
+                                <option value="5">מאי (05)</option><option value="6">יוני (06)</option>
+                                <option value="7">יולי (07)</option><option value="8">אוגוסט (08)</option>
+                                <option value="9">ספטמבר (09)</option><option value="10">אוקטובר (10)</option>
+                                <option value="11">נובמבר (11)</option><option value="12">דצמבר (12)</option>
                             </select>
                         </div>
-                        <div id="routing-selector-container">
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">מתי לבצע?</label>
-                            <select id="task-when" onchange="handleWhenChange()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                                <option value="today">היום</option>
-                                <option value="tomorrow">מחר</option>
-                                <option value="pick">בתאריך אחר</option>
-                                <option value="general">לרשימה הכללית</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <p id="type-hint" class="text-[11px] text-slate-400 leading-snug -mt-1"></p>
-
-                    <div id="initial-due-date-container" class="hidden">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">תאריך ביצוע מבוקש</label>
-                        <input type="date" id="task-due-date" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                    </div>
-
-                    <div id="monthly-day-container" class="hidden">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">באיזה יום בחודש לבצע? (1-31)</label>
-                        <input type="number" id="task-monthly-day" min="1" max="31" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition" placeholder="לדוגמה: 15">
-                    </div>
-
-                    <div id="annual-month-container" class="hidden">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">באיזה חודש בשנה לבצע?</label>
-                        <select id="task-annual-month" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                            <option value="1">ינואר (01)</option><option value="2">פברואר (02)</option>
-                            <option value="3">מרץ (03)</option><option value="4">אפריל (04)</option>
-                            <option value="5">מאי (05)</option><option value="6">יוני (06)</option>
-                            <option value="7">יולי (07)</option><option value="8">אוגוסט (08)</option>
-                            <option value="9">ספטמבר (09)</option><option value="10">אוקטובר (10)</option>
-                            <option value="11">נובמבר (11)</option><option value="12">דצמבר (12)</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-sm">
-                        הוסף למערכת
-                    </button>
-                </form>
-
-                <div class="pt-4 mt-4 border-t border-slate-100">
-                    <p class="text-[11px] text-slate-400 mb-2">או משוך משימה קיימת אל היום:</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="openRoutinePicker()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-semibold py-2 rounded-lg transition">🔄 הוסף רוטינה</button>
-                        <button onclick="openGeneralPicker()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold py-2 rounded-lg transition">📋 מהרשימה הכללית</button>
-                    </div>
+                    </form>
                 </div>
+
+                <!-- מצב: רוטינה מהמערכת -->
+                <div id="mode-routine" class="hidden">
+                    <button onclick="openRoutinePicker()" class="w-full bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-sm font-semibold py-2.5 rounded-xl transition">🔄 בחר רוטינה קבועה מהמערכת</button>
+                </div>
+
+                <!-- מצב: ללא תאריך (כללית) -->
+                <div id="mode-general" class="hidden space-y-2">
+                    <input type="text" id="general-name" placeholder="שם המשימה" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                    <button onclick="addGeneralNew()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-sm font-semibold py-2.5 rounded-xl transition">📋 הוסף לרשימה הכללית</button>
                 </div>
             </div>
 
             <!-- שיתוף -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 order-4">
+            <div id="share-card" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 order-4">
                 <h3 class="font-bold text-slate-950 text-sm">שיתוף וסיכום</h3>
                 <button onclick="copyDetailedSummaryToClipboard()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
                     📱 שלח סיכום יום לווצאפ
@@ -216,6 +213,12 @@
                     <div>
                         <label class="block font-semibold text-slate-600 mb-1">קישור ליישום האינטרנט (Web App URL):</label>
                         <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
+                    </div>
+                    <div class="pt-3 border-t border-slate-200">
+                        <button id="readonly-toggle-btn" onclick="toggleReadOnly()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-lg transition">🔒 כניסה למצב צפייה בלבד</button>
+                        <p class="text-[11px] text-slate-400 mt-1.5">במצב צפייה אפשר לראות הכל אך לא לשנות. היציאה דורשת קוד (ברירת מחדל 0000; ניתן לשנות למטה).</p>
+                        <label class="block font-semibold text-slate-600 mt-2 mb-1">קוד יציאה ממצב צפייה:</label>
+                        <input type="text" id="admin-code-input" placeholder="0000" onchange="saveAdminCode()" class="w-full px-3 py-2 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
                     </div>
                 </div>
             </div>
@@ -277,6 +280,19 @@
             </div>
         </div>
     </main>
+
+    <!-- מודל תצוגה מקדימה לפני סגירה -->
+    <div id="close-preview-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <h3 class="font-bold text-lg text-slate-900 mb-1">תצוגה מקדימה של דוח היום</h3>
+            <p class="text-xs text-slate-500 mb-4">כך ייראה הדוח שיישמר. אשר כדי לסגור את היום ולנקות את הלוח, או חזור לעריכה.</p>
+            <div id="close-preview-content" class="space-y-4 mb-6"></div>
+            <div class="flex gap-3">
+                <button onclick="doCloseDay()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">אשר וסגור את היום 💾</button>
+                <button onclick="document.getElementById('close-preview-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-xl text-sm transition">חזור לעריכה</button>
+            </div>
+        </div>
+    </div>
 
     <!-- מודל שעת סיום היום -->
     <div id="endtime-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -391,31 +407,67 @@
 
         function boardDate(){ return workDate || todayISO(); }
 
-        function updateWorkDateUI(){
-            const ind = document.getElementById('workdate-indicator');
-            const wrap = document.getElementById('return-today-wrap');
+        function updateDayStatus(){
             const wd = workDate || todayReal;
             const isPast = wd && todayReal && wd !== todayReal;
-            if (ind) ind.innerText = wd ? ('יום עבודה: ' + heDate(wd) + (isPast ? ' (לא היום)' : '')) : '';
+            let label, color;
+            if (dayClosed) { label = 'יום נסגר'; color = 'text-slate-500'; }
+            else if (dayOpen) { label = 'יום עבודה פתוח'; color = 'text-emerald-600'; }
+            else if (prevUnclosed) { label = 'טרם נסגר יום קודם'; color = 'text-rose-600'; }
+            else { label = 'יום טרם נפתח'; color = 'text-amber-600'; }
+            const txt = document.getElementById('day-status-text');
+            if (txt) {
+                txt.className = 'text-xs font-semibold ' + color;
+                txt.innerText = wd ? (label + ' · ' + heDate(wd) + (isPast ? ' (לא היום)' : '')) : label;
+            }
+            const ob = document.getElementById('open-buttons');
+            const cb = document.getElementById('close-button');
+            if (ob) ob.classList.toggle('hidden', dayOpen);
+            if (cb) cb.classList.toggle('hidden', !dayOpen);
+            const wrap = document.getElementById('return-today-wrap');
             if (wrap) wrap.classList.toggle('hidden', !isPast);
         }
 
-        function updateDayStateBadge(){
-            const b = document.getElementById('day-state-badge');
-            if (!b) return;
-            if (dayClosed) {
-                b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200";
-                b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> היום נסגר`;
-            } else if (dayOpen) {
-                b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200";
-                b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> יום עבודה פתוח`;
-            } else if (prevUnclosed) {
-                b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200";
-                b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> טרם נסגר יום קודם`;
+        // ====== מצב צפייה בלבד ======
+        let readOnly = false;
+        function guardRO(){ if (readOnly) { showNotification('🔒 מצב צפייה בלבד — פעולות שינוי חסומות.', true); return true; } return false; }
+        function applyReadOnlyUI(){
+            const banner = document.getElementById('readonly-banner');
+            if (banner) banner.classList.toggle('hidden', !readOnly);
+            // הסתרת אזורי פעולה עיקריים במצב צפייה
+            ['open-buttons','close-button','return-today-wrap'].forEach(id => {
+                const el = document.getElementById(id); if (el && readOnly) el.classList.add('hidden');
+            });
+            const addCard = document.getElementById('addtask-card'); if (addCard) addCard.classList.toggle('hidden', readOnly);
+            const shareCard = document.getElementById('share-card'); if (shareCard) shareCard.classList.toggle('hidden', readOnly);
+            const roBtn = document.getElementById('readonly-toggle-btn');
+            if (roBtn) roBtn.innerText = readOnly ? '🔓 יציאה ממצב צפייה' : '🔒 כניסה למצב צפייה בלבד';
+            if (!readOnly) updateDayStatus();
+        }
+        function toggleReadOnly(){
+            if (!readOnly) {
+                readOnly = true;
+                applyReadOnlyUI();
+                renderTasks();
+                showNotification('🔒 נכנסת למצב צפייה בלבד.');
             } else {
-                b.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200";
-                b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> היום טרם נפתח`;
+                const code = prompt('הזן קוד יציאה ממצב צפייה:');
+                const admin = localStorage.getItem('admin_code') || '0000';
+                if (code === admin) {
+                    readOnly = false;
+                    applyReadOnlyUI();
+                    renderTasks();
+                    showNotification('🔓 יצאת ממצב צפייה. אפשר לערוך.');
+                } else if (code !== null) {
+                    showNotification('קוד שגוי.', true);
+                }
             }
+        }
+        function initReadOnlyFromUrl(){
+            try {
+                const q = new URLSearchParams(window.location.search);
+                if (q.get('view') === '1' || q.get('readonly') === '1') { readOnly = true; }
+            } catch(e) {}
         }
         let currentTab = 'today';
         let selectedDate = '';        // טאב "משימות לתאריך"
@@ -470,9 +522,19 @@
             selectedDate = tomorrowISO();
             document.getElementById('bydate-picker').value = selectedDate;
 
+            document.getElementById('admin-code-input').value = localStorage.getItem('admin_code') || '';
+
             handleTaskTypeChange();
+            handleAddModeChange();
+            initReadOnlyFromUrl();
+            applyReadOnlyUI();
             loadDataFromSheets(true);
         };
+        function saveAdminCode(){
+            const v = document.getElementById('admin-code-input').value.trim();
+            localStorage.setItem('admin_code', v || '0000');
+            showNotification('קוד היציאה עודכן.');
+        }
 
         // ====== תקשורת JSONP (עוקף CORS) ======
         function fetchJSONP(url, params, callbackName) {
@@ -505,8 +567,7 @@
             } catch(e) {
                 attendanceIntervals = [{ start: "10:00", end: "", note: "" }];
             }
-            updateDayStateBadge();
-            updateWorkDateUI();
+            updateDayStatus();
         }
 
         function loadDataFromSheets(isInitial = false) {
@@ -587,14 +648,15 @@
             calculateAndDisplayTotalHours();
         }
         function addAttendanceInterval() {
+            if (guardRO()) return; 
             let lastEnd = "17:30";
             if (attendanceIntervals.length > 0) lastEnd = attendanceIntervals[attendanceIntervals.length - 1].end || "12:00";
             attendanceIntervals.push({ start: lastEnd, end: "", note: "" });
             renderAttendance(); syncAttendanceWithSheets();
         }
-        function removeInterval(index) { attendanceIntervals.splice(index, 1); renderAttendance(); syncAttendanceWithSheets(); }
-        function updateIntervalTime(index, field, value) { attendanceIntervals[index][field] = value; calculateAndDisplayTotalHours(); syncAttendanceWithSheets(); }
-        function updateIntervalNote(index, value) { attendanceIntervals[index].note = value; syncAttendanceWithSheets(); }
+        function removeInterval(index) { if (guardRO()) return; attendanceIntervals.splice(index, 1); renderAttendance(); syncAttendanceWithSheets(); }
+        function updateIntervalTime(index, field, value) { if (guardRO()) return; attendanceIntervals[index][field] = value; calculateAndDisplayTotalHours(); syncAttendanceWithSheets(); }
+        function updateIntervalNote(index, value) { if (guardRO()) return; attendanceIntervals[index].note = value; syncAttendanceWithSheets(); }
         function calcHours(list){
             let total=0;
             (list||[]).forEach(iv=>{
@@ -659,17 +721,21 @@
 
         function handleAddTask(event) {
             event.preventDefault();
+            if (guardRO()) return;
             const name = document.getElementById('task-name').value.trim();
             const type = document.getElementById('task-type').value;
-            if (!name) return;
+            if (!name) { showNotification('נא להזין שם משימה.', true); return; }
 
+            const bd = boardDate();               // היום הפעיל שעליו עובדים
+            const bdParts = bd.split('-');
+            const bdDay = Number(bdParts[2]), bdMonth = Number(bdParts[1]);
             const newTasks = [];
 
             if (type === 'משימה מזדמנת') {
                 const when = document.getElementById('task-when').value;
                 let task = { id: Date.now(), name, type, status: 'dated', dueDate: '', dayOfMonth: '', monthOfYear: '', done: false, notes: '' };
-                if (when === 'today') task.dueDate = todayISO();
-                else if (when === 'tomorrow') task.dueDate = tomorrowISO();
+                if (when === 'today') task.dueDate = bd;
+                else if (when === 'tomorrow') task.dueDate = addDaysISO(bd, 1);
                 else if (when === 'pick') {
                     const d = document.getElementById('task-due-date').value;
                     if (!d) { showNotification('נא לבחור תאריך.', true); return; }
@@ -679,37 +745,51 @@
 
             } else if (isDaily(type)) {
                 const seedId = Date.now();
-                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
-                newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
 
             } else if (isMonthly(type)) {
                 const day = document.getElementById('task-monthly-day').value;
                 if (!day || day < 1 || day > 31) { showNotification('נא להזין יום בחודש תקין (1-31).', true); return; }
                 const seedId = Date.now();
-                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: todayISO(), dayOfMonth: String(day), monthOfYear: '', done: false, notes: '' });
-                if (Number(day) === new Date().getDate()) {
-                    newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: bd, dayOfMonth: String(day), monthOfYear: '', done: false, notes: '' });
+                if (Number(day) === bdDay) {
+                    newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
                 }
 
             } else if (isYearly(type)) {
                 const month = document.getElementById('task-annual-month').value;
                 const seedId = Date.now();
-                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: todayISO(), dayOfMonth: '', monthOfYear: String(month), done: false, notes: '' });
-                if (Number(month) === (new Date().getMonth() + 1) && new Date().getDate() === 1) {
-                    newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: todayISO(), dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: bd, dayOfMonth: '', monthOfYear: String(month), done: false, notes: '' });
+                if (Number(month) === bdMonth && bdDay === 1) {
+                    newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
                 }
             }
 
-            // עדכון מקומי מיידי (תגובה מהירה) + סנכרון לשרת
             newTasks.forEach(t => tasks.push(t));
             renderTasks();
             Promise.all(newTasks.map(t => sendPostToSheets({ action: 'addTask', task: t }, true)))
-                .then(results => {
-                    if (results.every(Boolean)) showNotification('המשימה נוספה בהצלחה!');
-                });
+                .then(results => { if (results.every(Boolean)) showNotification('המשימה נוספה בהצלחה!'); });
 
             document.getElementById('add-task-form').reset();
             handleTaskTypeChange();
+        }
+
+        function handleAddModeChange(){
+            const m = document.getElementById('add-mode').value;
+            document.getElementById('mode-new').classList.toggle('hidden', m !== 'new');
+            document.getElementById('mode-routine').classList.toggle('hidden', m !== 'routine');
+            document.getElementById('mode-general').classList.toggle('hidden', m !== 'general');
+        }
+        function addGeneralNew(){
+            if (guardRO()) return;
+            const el = document.getElementById('general-name');
+            const name = el.value.trim();
+            if (!name) { showNotification('נא להזין שם משימה.', true); return; }
+            const task = { id: Date.now(), name, type: 'משימה מזדמנת', status: 'general', dueDate: '', dayOfMonth: '', monthOfYear: '', done: false, notes: '' };
+            tasks.push(task); renderTasks();
+            sendPostToSheets({ action: 'addTask', task }, true).then(ok => { if (ok) showNotification('נוספה לרשימה הכללית.'); });
+            el.value = '';
         }
 
         // ====== רינדור משימות (לפי הטאב הפעיל) ======
@@ -980,6 +1060,7 @@
 
         // mode: 'addition' = בנוסף (הרוטינה עדיין תופיע במועדה) | 'replace' = במקום המופע הקרוב
         function addRoutineInstanceToday(seedId, mode){
+            if (guardRO()) return; 
             const seed = tasks.find(t => t.id === seedId && t.status === 'seed');
             closeRoutinePicker();
             if (!seed) return;
@@ -1007,6 +1088,7 @@
 
         // mode: 'copy' = שכפול (נשאר ברשימה הכללית) | 'move' = העברה (מוסר מהרשימה)
         function addGeneralTaskToday(id, mode){
+            if (guardRO()) return; 
             closeRoutinePicker();
             const g = tasks.find(t => t.id === id && t.status === 'general');
             if (!g) return;
@@ -1089,6 +1171,7 @@
         function startEditName(id){ editingNameId = id; renderTasks(); }
         function cancelEditName(){ editingNameId = null; renderTasks(); }
         function saveTaskName(id, value){
+            if (readOnly){ editingNameId=null; renderTasks(); return; }
             if (editingNameId !== id) return; // נמנע משמירה כפולה (blur אחרי enter)
             value = (value || '').trim();
             editingNameId = null;
@@ -1109,6 +1192,7 @@
 
         // ====== סימון ביצוע / הערות ======
         function toggleDone(id){
+            if (guardRO()) return; 
             const t = tasks.find(x => x.id === id);
             if (!t) return;
             t.done = !t.done;
@@ -1116,6 +1200,7 @@
             sendPostToSheets({ action: 'updateTask', taskId: id, updates: { done: t.done } }, true);
         }
         function updateTaskNotes(id, value){
+            if (guardRO()) return; 
             const t = tasks.find(x => x.id === id);
             if (!t) return;
             t.notes = value;
@@ -1125,6 +1210,7 @@
         // ====== תזמון מחדש (העברה / שכפול) ======
         let reschedulePendingId = null;
         function onRescheduleSelect(id, mode){
+            if (guardRO()) return; 
             if (!mode) return;
             if (mode === 'general') {
                 const t = tasks.find(x => x.id === id); if (!t) return;
@@ -1148,6 +1234,7 @@
         function closeReschedule(){ document.getElementById('reschedule-modal').classList.add('hidden'); reschedulePendingId = null; renderTasks(); }
 
         function quickSchedule(id, mode){
+            if (guardRO()) return; 
             const t = tasks.find(x => x.id === id); if (!t) return;
             const d = (mode === 'today') ? todayISO() : tomorrowISO();
             t.status = 'dated'; t.dueDate = d; renderTasks();
@@ -1156,6 +1243,7 @@
         }
 
         document.getElementById('reschedule-move-btn').onclick = function(){
+            if (guardRO()) return;
             const d = document.getElementById('reschedule-date-input').value;
             const t = tasks.find(x => x.id === reschedulePendingId);
             document.getElementById('reschedule-modal').classList.add('hidden');
@@ -1167,6 +1255,7 @@
             reschedulePendingId = null;
         };
         document.getElementById('reschedule-copy-btn').onclick = function(){
+            if (guardRO()) return;
             const d = document.getElementById('reschedule-date-input').value;
             const t = tasks.find(x => x.id === reschedulePendingId);
             document.getElementById('reschedule-modal').classList.add('hidden');
@@ -1182,6 +1271,7 @@
 
         // ====== מחיקה ======
         function handleDeleteTask(id){
+            if (guardRO()) return; 
             const modal = document.getElementById('delete-confirm-modal');
             modal.classList.remove('hidden');
             document.getElementById('btn-delete-confirm').onclick = function(){
@@ -1222,12 +1312,13 @@
 
         // ====== סגירת יום ======
         function triggerEndDay(){
+            if (guardRO()) return; 
             if (dayClosed) { showNotification('היום כבר נסגר. אפשר לערוך אותו דרך ההיסטוריה.', true); return; }
             if (attendanceIntervals.length === 0) { showNotification('אנא הוסף לפחות סבב נוכחות אחד.', true); return; }
             if (attendanceIntervals.some(i => !i.start)) { showNotification('יש סבב נוכחות ללא שעת התחלה.', true); return; }
             // אם חסרה שעת סיום - נשאל מתי נסגר במקום להניח שעה שגויה
             if (attendanceIntervals.some(i => i.start && !i.end)) { askEndTime(); return; }
-            doCloseDay();
+            showClosePreview();
         }
 
         function askEndTime(){
@@ -1240,15 +1331,54 @@
         function confirmEndTimeAndClose(){
             const t = document.getElementById('endtime-input').value;
             if (!t) { showNotification('נא להזין שעת סיום.', true); return; }
-            // ממלא את השעה בכל סבב שאין לו שעת סיום (בדרך כלל האחרון)
             attendanceIntervals.forEach(iv => { if (iv.start && !iv.end) iv.end = t; });
             renderAttendance();
             syncAttendanceWithSheets();
             document.getElementById('endtime-modal').classList.add('hidden');
-            doCloseDay();
+            showClosePreview();
+        }
+
+        function showClosePreview(){
+            const bd = boardDate();
+            const tomKey = addDaysISO(bd, 1);
+            const board = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bd);
+            const done = board.filter(t => t.done);
+            const notDone = board.filter(t => !t.done);
+            // תוכנית מחר: נדחו (לא יומיות) + מתוזמנות למחר (רוטינות יומיות ייווצרו אוטומטית)
+            const tomorrow = [];
+            const seen = {};
+            notDone.forEach(t => { if (!isDaily(t.type)) { tomorrow.push({name:t.name, reason:'נדחתה'}); seen[t.name]=true; } });
+            tasks.filter(t => t.status==='seed' && !isDaily(t.type)).forEach(t => {
+                if (routineWouldFall(t.type, t.dayOfMonth, t.monthOfYear, t.dueDate, tomKey) && !seen[t.name]) { tomorrow.push({name:t.name, reason:'רוטינה'}); seen[t.name]=true; }
+            });
+            tasks.filter(t => t.status==='dated' && t.dueDate===tomKey).forEach(t => { if(!seen[t.name]){ tomorrow.push({name:t.name, reason:'מתוזמנת'}); seen[t.name]=true; } });
+
+            const li = (arr, empty, fmt) => arr.length ? arr.map(fmt).join('') : `<span class="text-xs text-slate-400 italic">${empty}</span>`;
+            const html = `
+                <div class="bg-slate-50 rounded-xl p-3 flex justify-between text-sm">
+                    <span class="text-slate-500">נוכחות מדווחת:</span>
+                    <span class="font-bold text-slate-800">${calcHours(attendanceIntervals)} שעות</span>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-emerald-700 mb-1.5">✅ בוצעו (${done.length})</div>
+                    <div class="bg-emerald-50/50 border border-emerald-100 rounded-lg px-3 py-2">
+                        ${li(done, 'לא סומנו משימות שבוצעו.', t => `<div class="text-xs py-0.5 flex justify-between gap-2"><span class="text-slate-800">${escapeHtml(t.name)}</span><span class="text-slate-500 italic max-w-[45%] text-left">${t.notes?escapeHtml(t.notes):''}</span></div>`)}
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-indigo-700 mb-1.5">➡️ לביצוע מחר (${tomorrow.length})</div>
+                    <div class="bg-indigo-50/40 border border-indigo-100 rounded-lg px-3 py-2">
+                        ${li(tomorrow, 'אין.', t => `<div class="text-xs py-0.5 flex justify-between gap-2"><span class="text-slate-700">${escapeHtml(t.name)}</span><span class="text-[10px] text-slate-400">${t.reason}</span></div>`)}
+                    </div>
+                </div>
+                <div class="text-[11px] text-slate-400">⬜ לא בוצעו היום: ${notDone.length ? notDone.map(t=>escapeHtml(t.name)).join(' · ') : '—'}</div>
+            `;
+            document.getElementById('close-preview-content').innerHTML = html;
+            document.getElementById('close-preview-modal').classList.remove('hidden');
         }
 
         function doCloseDay(){
+            document.getElementById('close-preview-modal').classList.add('hidden');
             showLoader("סוגר יום עבודה ושומר דוח…");
             fetchJSONP(gasUrl, { action: 'closeDay', intervals: JSON.stringify(attendanceIntervals) }, 'cb_close')
                 .then(data => {
@@ -1270,6 +1400,7 @@
         function returnToToday(){ openDayForDate(todayReal || todayISO()); }
 
         function openDayForDate(dateKey){
+            if (guardRO()) return; 
             const params = { action: 'openDay' };
             if (dateKey) params.date = dateKey;
             const isToday = (dateKey === (todayReal || todayISO()));
@@ -1435,6 +1566,7 @@
         function historyEditToggleDone(idx){ historyEditState.tasks[idx].done = !historyEditState.tasks[idx].done; renderHistoryEditTasks(); }
         function closeHistoryEdit(){ document.getElementById('history-edit-modal').classList.add('hidden'); historyEditState = null; }
         function saveHistoryEdit(){
+            if (guardRO()) return; 
             if (!historyEditState) return;
             const st = historyEditState;
             showLoader("שומר את הדוח…");
@@ -1526,23 +1658,19 @@
 
         // ====== הגדרות ======
         function toggleSettings(){ document.getElementById('settings-panel').classList.toggle('hidden'); }
-        function toggleAddTask(){
-            const b = document.getElementById('addtask-body');
-            const ch = document.getElementById('addtask-chevron');
-            const hidden = b.classList.toggle('hidden');
-            if (ch) ch.textContent = hidden ? '▼' : '▲';
-        }
         function refreshData(){ loadDataFromSheets(true); }
         function saveGasUrl(){
             const val = document.getElementById('gas-url-input').value.trim();
             if (val) { gasUrl = val; localStorage.setItem('gas_url', val); showNotification('כתובת הסנכרון עודכנה!'); loadDataFromSheets(true); }
         }
         function updateConnectionStatus(status){
-            const badge = document.getElementById('connection-status-badge');
-            if (status === 'syncing') { badge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200"; badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> שומר… 💾`; }
-            else if (status === 'loading') { badge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200"; badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> טוען… ⏳`; }
-            else if (status === 'connected') { badge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200"; badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> מסונכרן ☁️`; }
-            else { badge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200"; badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> שגיאת חיבור 🔌`; }
+            const b = document.getElementById('refresh-btn');
+            if (!b) return;
+            const base = "inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition ";
+            if (status === 'syncing') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "שומר…"; b.innerHTML = "💾 שומר"; }
+            else if (status === 'loading') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "טוען…"; b.innerHTML = "⏳ טוען"; }
+            else if (status === 'connected') { b.className = base + "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"; b.title = "מסונכרן — לחץ לרענון"; b.innerHTML = "🔄 מסונכרן"; }
+            else { b.className = base + "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"; b.title = "שגיאת חיבור — לחץ לניסיון חוזר"; b.innerHTML = "🔌 שגיאה"; }
         }
 
         // ====== עזרים ======
