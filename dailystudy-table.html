@@ -376,7 +376,9 @@ async function fetchMitzvosText(date){
       return null;
     }
     const description = (item.querySelector('description')||{}).textContent || '';
-    return description.replace(/^Today's Lesson:\s*/i,'').trim() || null;
+    const cleaned = description.replace(/^Today's Lesson:\s*/i,'').trim();
+    if(!cleaned) console.warn('Sefer HaMitzvot: item matched but description was empty. Raw description:', JSON.stringify(description));
+    return cleaned || null;
   }catch(e){
     console.warn('Sefer HaMitzvot RSS fetch failed:', e.message);
     return null;
