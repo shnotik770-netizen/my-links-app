@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>שיעורי לימוד יומיים - טבלה</title>
+<style>
+    body { font-family: Arial, Helvetica, sans-serif; direction: rtl; max-width: 720px; margin: 20px auto; padding: 0 12px; color: #222; }
+    h1 { font-size: 1.3rem; margin-bottom: 4px; }
+    #date-label { color: #555; margin-bottom: 12px; }
+    .controls { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+    .controls button, .controls input { font-size: 0.95rem; padding: 6px 10px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: right; vertical-align: top; }
+    th { background: #f0f0f0; }
+    td a { color: #1a4fa0; text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+    .note { color: #999; font-size: 0.85rem; }
+    #error-box { display: none; background: #fdecea; border: 1px solid #f5c2c0; color: #a33; padding: 8px 10px; margin-bottom: 12px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h1>שיעורי לימוד יומיים</h1>
+<div id="date-label"></div>
+
+<div class="controls">
+    <button id="prev-btn" type="button">&#8250; יום קודם</button>
+    <button id="today-btn" type="button">היום</button>
+    <button id="next-btn" type="button">יום הבא &#8249;</button>
+    <input id="date-input" type="date">
+</div>
+
+<div id="error-box"></div>
+
+<table>
+    <thead>
+        <tr><th>מסלול</th><th>פרטים</th><th>קישור</th></tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+</table>
+
+<p class="note">מקור הנתונים: <a href="https://www.sefaria.org/calendars" target="_blank">Sefaria</a> (לוח הלימוד היומי, מותאם לישראל). "ספר המצוות" נשלף מפיד ה-RSS של chabad.org (דרך proxy) רק כשהתאריך בפיד תואם בדיוק לתאריך המבוקש - אחרת מוצג קישור בלבד.</p>
+
+<script>
+    const SEFARIA_CALENDARS_URL = 'https://www.sefaria.org/api/calendars';
+
+    // Fixed 30-day Tehillim cycle (Hebrew day of month -> chapter range). Verified against
+    // chabad.org for 23 Tammuz 5786 -> chapters 108-112.
+    const TEHILLIM_TABLE = {
+        1: [1, 9], 2: [10, 17], 3: [18, 22], 4: [23, 28], 5: [29, 34],
+        6: [35, 38], 7: [39, 43], 8: [44, 48], 9: [49, 54], 10: [55, 59],
+        11: [60, 65], 12: [66, 68], 13: [69, 71], 14: [72, 76], 15: [77, 78],
+        16: [79, 82], 17: [83, 87], 18: [88, 89], 19: [90, 96], 20: [97, 103],
+        21: [104, 105], 22: [106, 107], 23: [108, 112], 24: [113, 118],
+        27: [120, 134], 28: [135, 139], 29: [140, 144], 30: [145, 150],
+    };
+    // Day 25-26 split Psalm 119 by its own internal verse-letter sections rather than by
+    // chapter number, so they're handled separately from the table above.
+
+    const TANYA_SECTION_HE = {
+        'Likutei Amarim': 'ליקוטי אמרים',
+        "Sha'ar HaYichud VehaEmunah": 'שער היחוד והאמונה',
+        'Iggeret HaTeshuvah': 'אגרת התשובה',
+        'Iggeret HaKodesh': 'אגרת הקודש',
+        'Kuntres Acharon': 'קונטרס אחרון',
+    };
+
+    const BOOK_HE = { Genesis: 'בראשית', Exodus: 'שמות', Leviticus: 'ויקרא', Numbers: 'במדבר', Deuteronomy: 'דברים' };
+
+    // Converts an integer (1-999) to a Hebrew gematria numeral string with geresh/gershayim,
+    // e.g. 108 -> "ק״ח", 15 -> "ט״ו" (avoiding the God-name-like יה/יו forms for 15/16).
+    function toHebrewNumeral(num) {
+        let n = Math.round(num);
+        if (!Number.isFinite(n) || n <= 0) return String(num);
+        const HUNDREDS = ['', 'ק', 'ר', 'ש', 'ת'];
+        const TENS = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ'];
+        const ONES = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
+        let letters = '';
+        while (n >= 400) { letters += 'ת'; n -= 400; }
+        if (n >= 100) { letters += HUNDREDS[Math.floor(n / 100)]; n %= 100; }
+        if (n === 15) { letters += 'טו'; n = 0; }
+        else if (n === 16) { letters += 'טז'; n = 0; }
+        else { letters += TENS[Math.floor(n / 10)] + ONES[n % 10]; }
+        if (letters.length === 0) return '';
+        if (letters.length === 1) return letters + '׳';
+        return letters.slice(0, -1) + '״' + letters.slice(-1);
+    }
+
+    function findCalItem(items, titleEn) { return items.find((i) => i.title && i.title.en === titleEn); }
+    function findCalItems(items, titleEn) { return items.filter((i) => i.title && i.title.en === titleEn); }
+    function sefariaUrl(relPath) { return 'https://www.sefaria.org/' + relPath; }
+
+    // "Numbers 32:20-33:49" -> "פרק ל״ב פסוק כ׳ עד פרק ל״ג פסוק מ״ט"
+    // (same chapter on both sides is shortened to "פרק X פסוק Y עד פסוק Z")
+    function formatVerseRefHebrew(ref) {
+        const m = ref && ref.match(/^([A-Za-z]+)\s+(\d+):(\d+)-(\d+):(\d+)$/);
+        if (!m) return ref;
+        const [, book, c1, v1, c2, v2] = m;
+        const bookHe = BOOK_HE[book] || book;
+        const c1he = toHebrewNumeral(Number(c1));
+        const v1he = toHebrewNumeral(Number(v1));
+        const v2he = toHebrewNumeral(Number(v2));
+        if (c1 === c2) return `${bookHe}, פרק ${c1he} פסוק ${v1he} עד פסוק ${v2he}`;
+        const c2he = toHebrewNumeral(Number(c2));
+        return `${bookHe}, פרק ${c1he} פסוק ${v1he} עד פרק ${c2he} פסוק ${v2he}`;
+    }
+
+    function formatTehillimRangeHebrew(hebrewDay) {
+        if (hebrewDay === 25) return 'תהלים קי״ט (חלק א׳, אות א׳-ל׳)';
+        if (hebrewDay === 26) return 'תהלים קי״ט (חלק ב׳, אות ל׳-ת׳)';
+        const range = TEHILLIM_TABLE[hebrewDay];
+        if (!range) return null;
+        const [start, end] = range;
+        if (start === end) return `פרק ${toHebrewNumeral(start)}`;
+        return `פרק ${toHebrewNumeral(start)} עד פרק ${toHebrewNumeral(end)}`;
+    }
+
+    function parseTanyaRef(ref) {
+        const m = ref && ref.match(/;\s*(.+?)\s+(\d+):(\d+)$/);
+        return m ? { section: m[1].trim(), chapter: Number(m[2]), segment: Number(m[3]) } : null;
+    }
+
+    async function fetchSefariaCalendar(date) {
+        // diaspora=0 -> Israel reading schedule (matters mainly for the weekly Torah portion,
+        // which can differ from the Diaspora schedule around some holidays/leap years).
+        const url = `${SEFARIA_CALENDARS_URL}?year=${date.getFullYear()}&month=${date.getMonth() + 1}&day=${date.getDate()}&diaspora=0`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Sefaria HTTP ' + res.status);
+        return res.json();
+    }
+
+    function buildRows(cal, date) {
+        const items = cal.calendar_items || [];
+        const rows = [];
+
+        // חומש - today's aliyah of the weekly parasha (Sunday=1st aliyah ... matches chabad's
+        // day-by-day Chitas custom): JS getDay() 0=Sunday.
+        const parasha = findCalItem(items, 'Parashat Hashavua');
+        const aliyot = parasha && parasha.extraDetails && parasha.extraDetails.aliyot;
+        const aliyah = aliyot && aliyot[date.getDay()];
+        if (parasha && aliyah) {
+            rows.push({
+                track: 'חומש עם רש"י',
+                detail: `פרשת ${parasha.displayValue.he} - ${formatVerseRefHebrew(aliyah)}`,
+                url: sefariaUrl(aliyah.replace(/ /g, '_').replace(/:/g, '.')),
+            });
+        }
+
+        // תהילים - Hebrew day of month comes from the Tanya Yomi item's English display value
+        // (e.g. "23 Tammuz"), since Sefaria doesn't expose a plain Hebrew-day field directly.
+        const tanyaItem = findCalItem(items, 'Tanya Yomi');
+        const hebDayMatch = tanyaItem && tanyaItem.displayValue.en.match(/^(\d+)/);
+        const hebDay = hebDayMatch ? Number(hebDayMatch[1]) : null;
+        const tehillimDetail = hebDay ? formatTehillimRangeHebrew(hebDay) : null;
+        if (tehillimDetail) {
+            rows.push({ track: 'תהילים', detail: tehillimDetail, url: sefariaUrl('Psalms') });
+        }
+
+        // תניא
+        if (tanyaItem) {
+            const parsed = parseTanyaRef(tanyaItem.ref);
+            const detail = parsed
+                ? `${TANYA_SECTION_HE[parsed.section] || parsed.section}, פרק ${toHebrewNumeral(parsed.chapter)}`
+                : tanyaItem.ref;
+            rows.push({ track: 'תניא', detail, url: sefariaUrl(tanyaItem.url) });
+        }
+
+        // רמב"ם - פרק אחד
+        const rambam1 = findCalItem(items, 'Daily Rambam');
+        if (rambam1) {
+            rows.push({ track: 'רמב"ם - פרק אחד', detail: rambam1.displayValue.he, url: sefariaUrl(rambam1.url) });
+        }
+
+        // רמב"ם - 3 פרקים
+        const rambam3 = findCalItems(items, 'Daily Rambam (3 Chapters)');
+        if (rambam3.length) {
+            rows.push({
+                track: 'רמב"ם - 3 פרקים',
+                detail: rambam3.map((i) => i.displayValue.he).join(', '),
+                url: sefariaUrl(rambam3[0].url),
+            });
+        }
+
+        return rows;
+    }
+
+    // ---- Tanya opening/closing words: the calendar API only gives a single ref marking
+    // where today's reading STARTS (e.g. "...Iggeret HaTeshuvah 8:1") - never where it ends,
+    // since chabad's Tanya-yomi day boundaries don't line up with Sefaria's own segment
+    // numbering. The fix: tomorrow's calendar ref marks exactly where today's reading has to
+    // stop, so fetching [today's ref, tomorrow's ref) as a Sefaria range and dropping the
+    // last (tomorrow's) segment gives the real boundary - not just Sefaria's segment 8:1.
+    function stripHtml(s) {
+        return (s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function firstLastWords(text, n) {
+        const words = stripHtml(text).split(' ').filter(Boolean);
+        if (!words.length) return null;
+        return { first: words.slice(0, n).join(' '), last: words.slice(-n).join(' ') };
+    }
+
+    async function fetchTanyaText(url) {
+        const res = await fetch(`https://www.sefaria.org/api/texts/${url}?lang=he&context=0`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Sefaria texts HTTP ' + res.status);
+        const data = await res.json();
+        return Array.isArray(data.he) ? data.he : [data.he];
+    }
+
+    async function fetchTanyaSnippet(tanyaItem, tomorrowTanyaItem) {
+        try {
+            const todayParsed = parseTanyaRef(tanyaItem.ref);
+            const tomorrowParsed = tomorrowTanyaItem && parseTanyaRef(tomorrowTanyaItem.ref);
+
+            let heSegments;
+            if (todayParsed && tomorrowParsed && todayParsed.section === tomorrowParsed.section) {
+                // Range from today's start through tomorrow's start (inclusive); the last
+                // fetched segment belongs to tomorrow's reading, so it gets dropped below.
+                const rangeUrl = `${tanyaItem.url}-${tomorrowParsed.chapter}.${tomorrowParsed.segment}`;
+                heSegments = await fetchTanyaText(rangeUrl);
+                if (heSegments.length > 1) heSegments = heSegments.slice(0, -1);
+            } else {
+                // Section changes overnight (rare, a few times a year) - no clean way to build
+                // a same-section range, so fall back to just today's single starting segment.
+                heSegments = await fetchTanyaText(tanyaItem.url);
+            }
+
+            const words = firstLastWords(heSegments.flat(Infinity).join(' '), 2);
+            return words ? `'${words.first}' עד '${words.last}'` : null;
+        } catch (e) {
+            console.warn('Tanya snippet fetch failed:', e.message);
+            return null;
+        }
+    }
+
+    function toTdate(date) {
+        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+    }
+
+    // date.toISOString() converts to UTC first, which silently shifts the displayed date by
+    // a day for any timezone ahead of UTC (e.g. Israel) - this builds the yyyy-mm-dd string
+    // straight from local date components instead, matching what <input type="date"> expects.
+    function toDateInputValue(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    // ---- ספר המצוות: not in Sefaria's calendar. Chabad's own RSS feed
+    // (he.chabad.org/tools/rss/dailystudy_rss.xml) carries it, but the feed runs on New York
+    // time - roughly midnight to 7am Israel time, it still shows the previous Israeli day.
+    // Each <item>'s own <link> embeds the tdate it's actually for, so we only trust the item
+    // if that tdate matches the date we asked for; otherwise we treat it as stale and fall
+    // back to a plain chabad.org link.
+    //
+    // Two things block a plain fetch() here: our own Worker gets a 403 bot-protection
+    // challenge from he.chabad.org (datacenter-origin requests), and a direct browser
+    // fetch() gets blocked by CORS (he.chabad.org sends no Access-Control-Allow-Origin on
+    // this feed) even though a real browser navigating to the URL works fine. Routing
+    // through allorigins.win - a public CORS-adding proxy, different infrastructure/IP
+    // range than our own Worker - sidesteps the CORS block; it may or may not also dodge
+    // the bot wall. This is only fetching a short one-line description, not full text, so
+    // depending on a third-party proxy for it is a reasonable trade.
+    const RSS_FEED_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://he.chabad.org/tools/rss/dailystudy_rss.xml');
+
+    function chabadOnlyRow(date, reason) {
+        return {
+            track: 'ספר המצוות',
+            detail: `לא זמין (${reason}) - לחצו על "טקסט" לצפייה ישירה ב-chabad.org`,
+            url: `https://he.chabad.org/dailystudy/seferHamitzvos.asp?tdate=${toTdate(date)}`,
+        };
+    }
+
+    async function fetchSeferHaMitzvotRow(date) {
+        try {
+            const res = await fetch(RSS_FEED_URL, { cache: 'no-store' });
+            if (!res.ok) throw new Error('RSS HTTP ' + res.status);
+            const xmlText = await res.text();
+            const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+            if (doc.querySelector('parsererror')) throw new Error('XML לא תקין');
+
+            const item = Array.from(doc.querySelectorAll('item')).find((it) => {
+                const link = it.querySelector('link');
+                return link && /seferHamitzvos\.asp/.test(link.textContent);
+            });
+            if (!item) throw new Error('לא נמצא פריט ספר המצוות בפיד');
+
+            const link = item.querySelector('link').textContent.trim();
+            const m = link.match(/tdate=(\d+\/\d+\/\d+)/);
+            const itemTdate = m ? m[1] : null;
+
+            if (itemTdate !== toTdate(date)) {
+                // The feed hasn't rolled over to this Israeli day yet (NY-time lag) - don't
+                // show mismatched-date content, just link out like the no-proxy fallback.
+                return chabadOnlyRow(date, `הפיד עדיין מציג ${itemTdate}, לא ${toTdate(date)}`);
+            }
+
+            const description = (item.querySelector('description') || {}).textContent || '';
+            const text = description.replace(/^Today's Lesson:\s*/i, '').trim();
+            return { track: 'ספר המצוות', detail: text || 'לא נמצא טקסט', url: link };
+        } catch (e) {
+            console.warn('Sefer HaMitzvot RSS fetch failed:', e.message);
+            return chabadOnlyRow(date, 'שגיאה בשליפה: ' + e.message);
+        }
+    }
+
+    function render(rows, date) {
+        document.getElementById('date-label').textContent =
+            date.toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('table-body').innerHTML = rows.map((r) => `
+            <tr>
+                <td>${r.track}</td>
+                <td>${r.detail}</td>
+                <td><a href="${r.url}" target="_blank" rel="noopener">טקסט</a></td>
+            </tr>
+        `).join('');
+    }
+
+    function setError(msg) {
+        const box = document.getElementById('error-box');
+        box.textContent = msg;
+        box.style.display = msg ? 'block' : 'none';
+    }
+
+    let currentDate = new Date();
+
+    async function loadDate(date) {
+        setError('');
+        try {
+            const cal = await fetchSefariaCalendar(date);
+            const rows = buildRows(cal, date);
+
+            const tanyaItem = findCalItem(cal.calendar_items || [], 'Tanya Yomi');
+            const tanyaRow = rows.find((r) => r.track === 'תניא');
+            if (tanyaItem && tanyaRow) {
+                let tomorrowTanyaItem = null;
+                try {
+                    const tomorrowCal = await fetchSefariaCalendar(addDays(date, 1));
+                    tomorrowTanyaItem = findCalItem(tomorrowCal.calendar_items || [], 'Tanya Yomi');
+                } catch (e) {
+                    console.warn('Could not fetch tomorrow\'s calendar for Tanya boundary:', e.message);
+                }
+                const snippet = await fetchTanyaSnippet(tanyaItem, tomorrowTanyaItem);
+                if (snippet) tanyaRow.detail += `, ${snippet}`;
+            }
+
+            rows.push(await fetchSeferHaMitzvotRow(date));
+            if (!rows.length) throw new Error('לא נמצאו נתונים לתאריך הזה');
+            currentDate = date;
+            document.getElementById('date-input').value = toDateInputValue(date);
+            render(rows, date);
+        } catch (e) {
+            console.error(e);
+            setError('שגיאה בשליפת נתונים מ-Sefaria: ' + e.message);
+        }
+    }
+
+    function addDays(date, delta) {
+        const d = new Date(date);
+        d.setDate(d.getDate() + delta);
+        return d;
+    }
+
+    document.getElementById('prev-btn').addEventListener('click', () => loadDate(addDays(currentDate, -1)));
+    document.getElementById('next-btn').addEventListener('click', () => loadDate(addDays(currentDate, 1)));
+    document.getElementById('today-btn').addEventListener('click', () => loadDate(new Date()));
+    document.getElementById('date-input').addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        const [y, m, d] = e.target.value.split('-').map(Number);
+        loadDate(new Date(y, m - 1, d));
+    });
+
+    loadDate(new Date());
+</script>
+
+</body>
+</html>
