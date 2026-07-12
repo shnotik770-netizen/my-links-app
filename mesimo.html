@@ -494,6 +494,7 @@
         let currentTab = 'today';
         let selectedDate = '';        // טאב "משימות לתאריך"
         let editingNameId = null;     // עריכת שם משימה אינלייןֿ
+        let expandedTaskIds = new Set(); // משימות שפתחו את שורת הניהול
         let historyEditState = null;  // עריכת דוח יום
 
         // ====== עזרי תאריך (לפי שעון מקומי) ======
@@ -823,7 +824,8 @@
             const isDone = task.done;
             const containerBg = isDone ? 'bg-emerald-50/40 border-r-emerald-500' : 'bg-white border-r-transparent';
             const canReorder = (context === 'today' && !isDone && total > 0);
-            const ed = !readOnly; // עורך
+            const ed = !readOnly;
+            const id = task.id;
 
             let dateNote = '';
             const today = boardDate();
@@ -833,81 +835,90 @@
                 dateNote = `<span class="text-[10px] text-purple-600 font-medium shrink-0">📅${heDateShort(task.dueDate)}</span>`;
             }
 
-            // סדר עדיפויות: מדרג צבעים על הפס (ראש = כהה) + פקד קליל בצד עם גרירה
-            let priorityColor = '';
-            let reorderCtrl = '';
+            // מספר סדר + מדרג צבעים; המספר משמש גם כידית גרירה
+            let priorityColor = '', numBadge = '';
             if (canReorder) {
                 const frac = total > 1 ? (idx / (total - 1)) : 0;
-                const light = 58 + Math.round(frac * 30);
+                const light = 55 + Math.round(frac * 30);
                 priorityColor = `hsl(243 75% ${light}%)`;
-                reorderCtrl = `
-                    <div class="flex items-center gap-0.5 shrink-0" title="גרור לסידור עדיפויות">
-                        <span draggable="true" ondragstart="taskDragStart(event, ${task.id})" ondragend="taskDragEnd(event)" class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 select-none text-xs leading-none">⠿</span>
-                        <div class="flex flex-col leading-none">
-                            <button onclick="moveTask(${task.id}, -1)" ${idx === 0 ? 'disabled' : ''} title="למעלה" class="text-slate-300 hover:text-indigo-600 disabled:opacity-20 text-[10px]">▲</button>
-                            <button onclick="moveTask(${task.id}, 1)" ${idx === total - 1 ? 'disabled' : ''} title="למטה" class="text-slate-300 hover:text-indigo-600 disabled:opacity-20 text-[10px]">▼</button>
-                        </div>
-                    </div>`;
+                numBadge = `<span draggable="true" ondragstart="taskDragStart(event, ${id})" ondragend="taskDragEnd(event)" title="גרור לסידור" class="shrink-0 cursor-grab active:cursor-grabbing text-[10px] font-bold text-white rounded-md w-5 h-5 flex items-center justify-center" style="background:${priorityColor}">${idx + 1}</span>`;
+            } else {
+                numBadge = `<span class="shrink-0 w-5 h-5 flex items-center justify-center text-[10px] text-slate-300">${isDone ? '✓' : '•'}</span>`;
             }
 
-            // תיבת סימון בוצע (עורך בלבד; בצפייה - חיווי סטטי)
             const doneBox = ed
-                ? `<button onclick="toggleDone(${task.id})" class="shrink-0 w-4 h-4 rounded border-2 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-emerald-400'} flex items-center justify-center transition">${isDone ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}</button>`
+                ? `<button onclick="toggleDone(${id})" class="shrink-0 w-4 h-4 rounded border-2 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-emerald-400'} flex items-center justify-center transition">${isDone ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}</button>`
                 : `<span class="shrink-0 w-4 h-4 rounded border-2 ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'} flex items-center justify-center">${isDone ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}</span>`;
 
             let nameBlock;
-            if (ed && editingNameId === task.id) {
-                nameBlock = `<input id="name-input-${task.id}" type="text" value="${escapeAttr(task.name)}"
-                    onkeydown="if(event.key==='Enter'){saveTaskName(${task.id}, this.value)} if(event.key==='Escape'){cancelEditName()}"
-                    onblur="saveTaskName(${task.id}, this.value)"
-                    class="font-medium text-slate-900 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-40">`;
+            if (ed && editingNameId === id) {
+                nameBlock = `<input id="name-input-${id}" type="text" value="${escapeAttr(task.name)}"
+                    onkeydown="if(event.key==='Enter'){saveTaskName(${id}, this.value)} if(event.key==='Escape'){cancelEditName()}"
+                    onblur="saveTaskName(${id}, this.value)"
+                    class="font-medium text-slate-900 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-32 shrink-0">`;
             } else {
-                nameBlock = `<span class="font-medium text-slate-900 text-sm truncate ${isDone ? 'line-through text-slate-400' : ''}" title="${escapeAttr(task.name)}">${escapeHtml(task.name)}</span>
-                    ${ed ? `<button onclick="startEditName(${task.id})" title="ערוך שם" class="text-slate-300 hover:text-indigo-600 transition shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>` : ''}`;
+                nameBlock = `<span class="font-medium text-slate-900 text-sm truncate shrink-0 max-w-[38%] ${isDone ? 'line-through text-slate-400' : ''}" title="${escapeAttr(task.name)}">${escapeHtml(task.name)}</span>`;
             }
 
-            const rescheduleSelect = ed ? `
-                <select onchange="onRescheduleSelect(${task.id}, this.value); this.value='';" class="text-[11px] bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 shrink-0">
+            // "הערת בוצע" מיד אחרי השם (עורך: שדה; צפייה: טקסט)
+            const doneNoteInline = ed
+                ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" class="flex-1 min-w-0 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
+                : (task.notes ? `<span class="flex-1 min-w-0 text-xs text-slate-500 truncate">${escapeHtml(task.notes)}</span>` : `<span class="flex-1"></span>`);
+
+            // שורת ניהול מתקפלת - פתוחה אם יש הערת ביצוע
+            const todo = task.todoNotes || '';
+            const expanded = expandedTaskIds.has(id) || todo.trim() !== '';
+
+            const reorderCtrl = canReorder ? `
+                <div class="flex items-center gap-1 shrink-0">
+                    <span class="text-[10px] text-slate-400">סדר:</span>
+                    <button onclick="moveTask(${id}, -1)" ${idx === 0 ? 'disabled' : ''} class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs px-1">▲</button>
+                    <button onclick="moveTask(${id}, 1)" ${idx === total - 1 ? 'disabled' : ''} class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs px-1">▼</button>
+                </div>` : '';
+            const editorCtrls = ed ? `
+                <button onclick="startEditName(${id})" title="ערוך שם" class="text-slate-400 hover:text-indigo-600 transition text-xs px-1">✏️ שם</button>
+                <select onchange="onRescheduleSelect(${id}, this.value); this.value='';" class="text-[11px] bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <option value="" selected>תזמון…</option>
                     <option value="today">להיום</option>
                     <option value="tomorrow">למחר</option>
                     <option value="pick">לתאריך…</option>
                     <option value="general">לרשימה הכללית</option>
-                </select>` : '';
-            const deleteBtn = ed ? `<button onclick="handleDeleteTask(${task.id})" class="text-slate-300 hover:text-rose-600 transition shrink-0 p-0.5"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>` : '';
+                </select>
+                <button onclick="handleDeleteTask(${id})" title="מחק" class="text-slate-400 hover:text-rose-600 transition text-xs px-1">🗑️</button>` : '';
 
-            // הערות לביצוע (מתוכננות) - תמיד ניתנות לעריכה
-            const todoRow = `
-                <div class="flex items-center gap-1.5 mt-1.5">
-                    <span class="text-[10px] text-indigo-500 shrink-0" title="הערות לביצוע (מה לעשות)">🎯 לביצוע:</span>
-                    <input type="text" placeholder="מה צריך לעשות במשימה…" value="${escapeAttr(task.todoNotes || '')}" onchange="updateTodoNotes(${task.id}, this.value)"
-                        class="flex-1 min-w-0 text-xs bg-indigo-50/40 border border-indigo-100 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            const details = `
+                <div id="details-${id}" class="${expanded ? '' : 'hidden'} mt-2 pt-2 border-t border-slate-100 space-y-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] text-indigo-500 shrink-0" title="הערות לביצוע (מה לעשות)">🎯 לביצוע:</span>
+                        <input type="text" placeholder="מה צריך לעשות במשימה…" value="${escapeAttr(todo)}" onchange="updateTodoNotes(${id}, this.value)"
+                            class="flex-1 min-w-0 text-xs bg-indigo-50/40 border border-indigo-100 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    ${(reorderCtrl || editorCtrls) ? `<div class="flex items-center gap-2 flex-wrap">${reorderCtrl}${editorCtrls}</div>` : ''}
                 </div>`;
-            // הערות על ביצוע (מה בוצע) - עורך בלבד
-            const doneNotesRow = ed ? `
-                <div class="flex items-center gap-1.5 mt-1.5">
-                    <span class="text-[10px] text-slate-400 shrink-0" title="הערות על הביצוע (לדוח)">📝 בוצע:</span>
-                    <input type="text" placeholder="הערה על מה שבוצע (לדוח)…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${task.id}, this.value)"
-                        class="flex-1 min-w-0 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                </div>` : (task.notes ? `<div class="text-[11px] text-slate-400 mt-1.5">📝 בוצע: ${escapeHtml(task.notes)}</div>` : '');
 
             return `
                 <div class="px-3 py-2 border-r-4 transition-all duration-150 ${containerBg}" ${priorityColor ? `style="border-right-color:${priorityColor}"` : ''}
-                    ${canReorder ? `ondragover="taskDragOver(event, this)" ondragleave="taskDragLeave(event, this)" ondrop="taskDrop(event, ${task.id}, this)"` : ''}>
-                    <div class="flex items-center gap-2 flex-wrap">
+                    ${canReorder ? `ondragover="taskDragOver(event, this)" ondragleave="taskDragLeave(event, this)" ondrop="taskDrop(event, ${id}, this)"` : ''}>
+                    <div class="flex items-center gap-2">
+                        ${numBadge}
                         ${doneBox}
-                        <div class="flex items-center gap-1 min-w-[7rem] flex-1">
-                            ${nameBlock}
-                            ${dateNote}
-                            <span class="text-[9px] px-1 py-0.5 rounded ${badge} shrink-0 hidden sm:inline">${task.type}</span>
-                        </div>
-                        ${rescheduleSelect}
-                        ${deleteBtn}
-                        ${reorderCtrl}
+                        ${nameBlock}
+                        ${dateNote}
+                        ${doneNoteInline}
+                        <span class="text-[9px] px-1 py-0.5 rounded ${badge} shrink-0 hidden sm:inline">${task.type}</span>
+                        <button onclick="toggleTaskDetails(${id})" title="ניהול משימה" class="shrink-0 text-slate-300 hover:text-slate-600 transition">
+                            <svg id="arrow-${id}" class="h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
                     </div>
-                    ${todoRow}
-                    ${doneNotesRow}
+                    ${details}
                 </div>`;
+        }
+        function toggleTaskDetails(id){
+            if (expandedTaskIds.has(id)) expandedTaskIds.delete(id); else expandedTaskIds.add(id);
+            const d = document.getElementById('details-' + id);
+            const a = document.getElementById('arrow-' + id);
+            if (d) d.classList.toggle('hidden');
+            if (a) a.classList.toggle('rotate-180');
         }
 
         function renderTodayTab() {
