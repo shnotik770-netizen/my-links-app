@@ -54,7 +54,7 @@
     </header>
 
     <div id="readonly-banner" class="hidden bg-slate-800 text-white text-center text-xs font-semibold py-2">
-        🔒 מצב צפייה — אפשר לסדר עדיפויות ולכתוב "הערות לביצוע"; שאר פעולות העריכה חסומות. להזדהות כעורך לחץ "כניסה כעורך".
+        🔒 מצב צפייה — אפשר לסדר עדיפויות ולכתוב "הערות לביצוע"; שאר פעולות העריכה חסומות. להזדהות כעובד לחץ "כניסה כעובד".
     </div>
 
     <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -92,7 +92,7 @@
                 </div>
 
                 <!-- כניסה/יציאה כעורך -->
-                <button id="editor-login-btn" onclick="editorLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">🔑 כניסה כעורך</button>
+                <button id="editor-login-btn" onclick="editorLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">🔑 כניסה כעובד</button>
                 <button id="editor-logout-btn" onclick="editorLogout()" class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold py-2 rounded-xl transition">🔒 חזרה למצב צפייה</button>
 
                 <!-- סטטוס מאוחד -->
@@ -197,10 +197,10 @@
             <div id="share-card" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 order-4">
                 <h3 class="font-bold text-slate-950 text-sm">שיתוף וסיכום</h3>
                 <button onclick="copyDetailedSummaryToClipboard()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
-                    📱 שלח סיכום יום לווצאפ
+                    📋 העתק סיכום יום (לווצאפ)
                 </button>
                 <p class="text-[11px] text-slate-400 text-center leading-relaxed">
-                    פותח וואטסאפ עם סיכום מסודר (וגם מעתיק ללוח): מה שבוצע היום עם ההערות, מה שפתוח למחר, ופירוט שעות הנוכחות והערותיהן.
+                    מעתיק ללוח סיכום מסודר של מה שבוצע היום ומה שנשאר למחר, כולל שעות הנוכחות — מוכן להדבקה בווצאפ.
                 </p>
             </div>
 
@@ -221,7 +221,7 @@
                         <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
                     </div>
                     <div class="pt-3 border-t border-slate-200">
-                        <label class="block font-semibold text-slate-600 mb-1">שינוי סיסמת עורך:</label>
+                        <label class="block font-semibold text-slate-600 mb-1">שינוי סיסמת עובד:</label>
                         <input type="text" id="editor-pw-input" placeholder="סיסמה חדשה" onchange="saveEditorPw()" class="w-full px-3 py-2 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
                         <p class="text-[11px] text-slate-400 mt-1.5">הסיסמה נשמרת בגיליון (Config) ותקפה בכל המכשירים. ברירת מחדל: 1234.</p>
                     </div>
@@ -452,16 +452,20 @@
         }
 
         function editorLogin(){
-            const pw = prompt('הזן סיסמת עורך:');
+            const pw = prompt('הזן סיסמת עובד (ברירת מחדל: 1234):');
             if (pw === null) return;
             fetchJSONP(gasUrl, { action: 'login', pw: pw }, 'cb_login')
                 .then(data => {
-                    if (data && data.ok) {
+                    if (data && data.ok === true) {
                         readOnly = false;
                         localStorage.setItem('is_editor', '1');
                         applyReadOnlyUI(); renderTasks();
-                        showNotification('🔓 נכנסת כעורך.');
-                    } else { showNotification('סיסמה שגויה.', true); }
+                        showNotification('🔓 נכנסת כעובד.');
+                    } else if (data && data.status === 'success') {
+                        showNotification('סיסמה שגויה.', true);
+                    } else {
+                        showNotification('הכניסה נכשלה. ודא שעדכנת ופרסמת את Code.gs (גרסה חדשה).', true);
+                    }
                 })
                 .catch(() => showNotification('שגיאת חיבור בהתחברות.', true));
         }
@@ -828,11 +832,22 @@
                 dateNote = `<span class="text-[10px] text-purple-600 font-medium shrink-0">📅${heDateShort(task.dueDate)}</span>`;
             }
 
-            // כפתורי סדר עדיפות (מותר גם בצפייה)
+            // סדר עדיפויות: מדרג צבעים (ראש = כהה/חשוב) + מספר דירוג + כפתורי סידור
+            let priorityColor = '';
+            let rankBadge = '';
+            if (canReorder) {
+                const frac = total > 1 ? (idx / (total - 1)) : 0;
+                const light = 58 + Math.round(frac * 30); // ראש כהה יותר -> תחתית בהיר יותר
+                priorityColor = `hsl(243 75% ${light}%)`;
+                rankBadge = `<span class="text-[9px] font-bold text-white rounded px-1 leading-tight" style="background:${priorityColor}">${idx + 1}</span>`;
+            }
             const reorderCol = canReorder ? `
-                <div class="flex flex-col shrink-0 -my-1">
-                    <button onclick="moveTask(${task.id}, -1)" ${idx === 0 ? 'disabled' : ''} class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 leading-none text-xs">▲</button>
-                    <button onclick="moveTask(${task.id}, 1)" ${idx === total - 1 ? 'disabled' : ''} class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 leading-none text-xs">▼</button>
+                <div class="flex flex-col items-center shrink-0 -my-1 leading-none">
+                    <button onclick="moveTaskEdge(${task.id}, 'top')" ${idx === 0 ? 'disabled' : ''} title="הקפץ לראש" class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-[10px]">⏫</button>
+                    <button onclick="moveTask(${task.id}, -1)" ${idx === 0 ? 'disabled' : ''} title="למעלה" class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs">▲</button>
+                    ${rankBadge}
+                    <button onclick="moveTask(${task.id}, 1)" ${idx === total - 1 ? 'disabled' : ''} title="למטה" class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs">▼</button>
+                    <button onclick="moveTaskEdge(${task.id}, 'bottom')" ${idx === total - 1 ? 'disabled' : ''} title="הקפץ לתחתית" class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-[10px]">⏬</button>
                 </div>` : '';
 
             // תיבת סימון בוצע (עורך בלבד; בצפייה - חיווי סטטי)
@@ -877,7 +892,7 @@
                 </div>` : (task.notes ? `<div class="text-[11px] text-slate-400 mt-1.5">📝 בוצע: ${escapeHtml(task.notes)}</div>` : '');
 
             return `
-                <div class="px-3 py-2 border-r-4 transition-all duration-150 ${containerBg}">
+                <div class="px-3 py-2 border-r-4 transition-all duration-150 ${containerBg}" ${priorityColor ? `style="border-right-color:${priorityColor}"` : ''}>
                     <div class="flex items-center gap-2 flex-wrap">
                         ${reorderCol}
                         ${doneBox}
@@ -912,7 +927,10 @@
             let hint = '';
             if (showingTomorrow) hint = `<div class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] text-indigo-700">🔮 היום כבר נסגר — מוצגת כאן תוכנית ל${heDate(viewDay)} (אפשר לסדר עדיפויות והערות מראש).</div>`;
             else if (!dayOpen) hint = `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 יום העבודה עדיין לא נפתח רשמית — זו תצוגה חיה של משימות היום. אפשר לסדר עדיפויות והערות; "פתיחת יום" (בצד ימין) תתחיל את היום רשמית.</div>`;
-            const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500">${dayLabel} · ${pending.length} משימות פתוחות</div>`;
+            const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500 flex items-center justify-between gap-2">
+                <span>${dayLabel} · ${pending.length} משימות פתוחות</span>
+                ${pending.length > 1 ? '<span class="text-[10px] text-indigo-500">↕ סדרו עדיפויות עם החצים (ראש = דחוף)</span>' : ''}
+            </div>`;
             c.insertAdjacentHTML('beforeend', hint + titleBar);
 
             if (pending.length === 0 && doneToday.length === 0) {
@@ -1226,6 +1244,19 @@
             const swap = idx + dir;
             if (swap < 0 || swap >= pending.length) return;
             const tmp = pending[idx]; pending[idx] = pending[swap]; pending[swap] = tmp;
+            commitOrder(pending);
+        }
+        function moveTaskEdge(id, edge){
+            const bDate = boardDate();
+            let pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
+                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+            const idx = pending.findIndex(t => t.id === id);
+            if (idx < 0) return;
+            const [item] = pending.splice(idx, 1);
+            if (edge === 'top') pending.unshift(item); else pending.push(item);
+            commitOrder(pending);
+        }
+        function commitOrder(pending){
             const updates = [];
             pending.forEach((t, i) => { t.priority = i; updates.push({ id: t.id, priority: i }); });
             renderTasks();
@@ -1396,7 +1427,6 @@
                         ${li(tomorrow, 'אין.', t => `<div class="text-xs py-0.5 flex justify-between gap-2"><span class="text-slate-700">${escapeHtml(t.name)}</span><span class="text-[10px] text-slate-400">${t.reason}</span></div>`)}
                     </div>
                 </div>
-                <div class="text-[11px] text-slate-400">⬜ לא בוצעו היום: ${notDone.length ? notDone.map(t=>escapeHtml(t.name)).join(' · ') : '—'}</div>
             `;
             document.getElementById('close-preview-content').innerHTML = html;
             document.getElementById('close-preview-modal').classList.remove('hidden');
@@ -1506,10 +1536,7 @@
                         <span class="text-[10px] ${reasonColor[t.reason] || 'text-slate-400'} shrink-0">${t.reason}</span>
                     </div>`).join('') : '<span class="text-xs text-slate-400 italic">אין משימות מתוכננות למחר.</span>';
 
-                // 3) לא בוצעו היום (בקטן)
-                const notDoneHtml = notDone.length
-                    ? `<div class="text-[11px] text-slate-400 leading-relaxed">⬜ לא בוצעו היום: ${notDone.map(t => escapeHtml(t.name)).join(' · ')}</div>`
-                    : '';
+                // (הדוח מציג רק מה שבוצע ומה שנשאר למחר)
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
@@ -1517,7 +1544,7 @@
                             <span class="font-bold text-slate-900 text-sm">📄 דוח יום ${heDate(dayLog.date)}</span>
                             <div class="flex items-center gap-2 text-xs">
                                 <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-mono font-medium">${intervalsDisplay} (${dayLog.totalHours} שעות)</span>
-                                <button onclick="shareHistoryToWhatsApp('${dayLog.date}')" class="bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-medium px-2.5 py-1 rounded-lg transition">📱 ווצאפ</button>
+                                <button onclick="shareHistoryToWhatsApp('${dayLog.date}')" class="bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-medium px-2.5 py-1 rounded-lg transition">📋 העתק</button>
                                 <button onclick="openHistoryEdit('${dayLog.date}')" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg transition">✏️ ערוך</button>
                             </div>
                         </div>
@@ -1531,8 +1558,6 @@
                             <div class="text-xs font-bold text-indigo-700 mb-1.5">לביצוע מחר</div>
                             <div class="bg-indigo-50/40 border border-indigo-100 rounded-lg px-3 py-2">${tomorrowHtml}</div>
                         </div>
-
-                        ${notDoneHtml ? `<div class="pt-1 border-t border-slate-100">${notDoneHtml}</div>` : ''}
                     </div>`);
             });
         }
@@ -1620,8 +1645,7 @@
             document.body.removeChild(tmp);
         }
         function shareWhatsApp(text){
-            copyTextToClipboard(text); // גיבוי ללוח
-            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+            copyTextToClipboard(text); // העתקה בלבד - המשתמש מדביק בווצאפ
         }
 
         function copyDetailedSummaryToClipboard(){
@@ -1648,7 +1672,7 @@
                 future.forEach(t => { text += `   • ${t.name} ← ${heDateShort(t.dueDate)}\n`; });
             }
             shareWhatsApp(text);
-            showNotification('📱 נפתח וואטסאפ (והסיכום הועתק ללוח).');
+            showNotification('📋 הסיכום הועתק — אפשר להדביק בווצאפ.');
         }
 
         // בניית טקסט סיכום מיום היסטורי + שיתוף לווצאפ
@@ -1673,12 +1697,8 @@
                 text += `\n➡️ למחר:\n`;
                 snap.tomorrow.forEach(t => { text += `   • ${t.name} [${t.reason}]\n`; });
             }
-            if (notDone.length) {
-                text += `\n⬜ לא בוצעו:\n`;
-                notDone.forEach(t => { text += `   • ${t.name}\n`; });
-            }
-            shareWhatsApp(text);
-            showNotification('📱 נפתח וואטסאפ (והסיכום הועתק ללוח).');
+            copyTextToClipboard(text);
+            showNotification('📋 הסיכום הועתק — אפשר להדביק בווצאפ.');
         }
 
         // ====== הגדרות ======
