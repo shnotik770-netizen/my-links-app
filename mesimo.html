@@ -14,6 +14,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .drag-over { background: #eef2ff; box-shadow: inset 0 0 0 2px #6366f1; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
@@ -832,23 +833,22 @@
                 dateNote = `<span class="text-[10px] text-purple-600 font-medium shrink-0">📅${heDateShort(task.dueDate)}</span>`;
             }
 
-            // סדר עדיפויות: מדרג צבעים (ראש = כהה/חשוב) + מספר דירוג + כפתורי סידור
+            // סדר עדיפויות: מדרג צבעים על הפס (ראש = כהה) + פקד קליל בצד עם גרירה
             let priorityColor = '';
-            let rankBadge = '';
+            let reorderCtrl = '';
             if (canReorder) {
                 const frac = total > 1 ? (idx / (total - 1)) : 0;
-                const light = 58 + Math.round(frac * 30); // ראש כהה יותר -> תחתית בהיר יותר
+                const light = 58 + Math.round(frac * 30);
                 priorityColor = `hsl(243 75% ${light}%)`;
-                rankBadge = `<span class="text-[9px] font-bold text-white rounded px-1 leading-tight" style="background:${priorityColor}">${idx + 1}</span>`;
+                reorderCtrl = `
+                    <div class="flex items-center gap-0.5 shrink-0" title="גרור לסידור עדיפויות">
+                        <span draggable="true" ondragstart="taskDragStart(event, ${task.id})" ondragend="taskDragEnd(event)" class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 select-none text-xs leading-none">⠿</span>
+                        <div class="flex flex-col leading-none">
+                            <button onclick="moveTask(${task.id}, -1)" ${idx === 0 ? 'disabled' : ''} title="למעלה" class="text-slate-300 hover:text-indigo-600 disabled:opacity-20 text-[10px]">▲</button>
+                            <button onclick="moveTask(${task.id}, 1)" ${idx === total - 1 ? 'disabled' : ''} title="למטה" class="text-slate-300 hover:text-indigo-600 disabled:opacity-20 text-[10px]">▼</button>
+                        </div>
+                    </div>`;
             }
-            const reorderCol = canReorder ? `
-                <div class="flex flex-col items-center shrink-0 -my-1 leading-none">
-                    <button onclick="moveTaskEdge(${task.id}, 'top')" ${idx === 0 ? 'disabled' : ''} title="הקפץ לראש" class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-[10px]">⏫</button>
-                    <button onclick="moveTask(${task.id}, -1)" ${idx === 0 ? 'disabled' : ''} title="למעלה" class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs">▲</button>
-                    ${rankBadge}
-                    <button onclick="moveTask(${task.id}, 1)" ${idx === total - 1 ? 'disabled' : ''} title="למטה" class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs">▼</button>
-                    <button onclick="moveTaskEdge(${task.id}, 'bottom')" ${idx === total - 1 ? 'disabled' : ''} title="הקפץ לתחתית" class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-[10px]">⏬</button>
-                </div>` : '';
 
             // תיבת סימון בוצע (עורך בלבד; בצפייה - חיווי סטטי)
             const doneBox = ed
@@ -892,9 +892,9 @@
                 </div>` : (task.notes ? `<div class="text-[11px] text-slate-400 mt-1.5">📝 בוצע: ${escapeHtml(task.notes)}</div>` : '');
 
             return `
-                <div class="px-3 py-2 border-r-4 transition-all duration-150 ${containerBg}" ${priorityColor ? `style="border-right-color:${priorityColor}"` : ''}>
+                <div class="px-3 py-2 border-r-4 transition-all duration-150 ${containerBg}" ${priorityColor ? `style="border-right-color:${priorityColor}"` : ''}
+                    ${canReorder ? `ondragover="taskDragOver(event, this)" ondragleave="taskDragLeave(event, this)" ondrop="taskDrop(event, ${task.id}, this)"` : ''}>
                     <div class="flex items-center gap-2 flex-wrap">
-                        ${reorderCol}
                         ${doneBox}
                         <div class="flex items-center gap-1 min-w-[7rem] flex-1">
                             ${nameBlock}
@@ -903,6 +903,7 @@
                         </div>
                         ${rescheduleSelect}
                         ${deleteBtn}
+                        ${reorderCtrl}
                     </div>
                     ${todoRow}
                     ${doneNotesRow}
@@ -929,7 +930,7 @@
             else if (!dayOpen) hint = `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 יום העבודה עדיין לא נפתח רשמית — זו תצוגה חיה של משימות היום. אפשר לסדר עדיפויות והערות; "פתיחת יום" (בצד ימין) תתחיל את היום רשמית.</div>`;
             const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500 flex items-center justify-between gap-2">
                 <span>${dayLabel} · ${pending.length} משימות פתוחות</span>
-                ${pending.length > 1 ? '<span class="text-[10px] text-indigo-500">↕ סדרו עדיפויות עם החצים (ראש = דחוף)</span>' : ''}
+                ${pending.length > 1 ? '<span class="text-[10px] text-indigo-500">↕ גררו ⠿ או חצים לסידור עדיפויות (ראש = דחוף)</span>' : ''}
             </div>`;
             c.insertAdjacentHTML('beforeend', hint + titleBar);
 
@@ -1246,14 +1247,25 @@
             const tmp = pending[idx]; pending[idx] = pending[swap]; pending[swap] = tmp;
             commitOrder(pending);
         }
-        function moveTaskEdge(id, edge){
+        // גרירת משימה לסידור עדיפויות
+        let dragTaskId = null;
+        function taskDragStart(ev, id){ dragTaskId = id; ev.dataTransfer.effectAllowed = 'move'; try { ev.dataTransfer.setData('text/plain', String(id)); } catch(e){} }
+        function taskDragEnd(ev){ dragTaskId = null; document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); }
+        function taskDragOver(ev, el){ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; if (el) el.classList.add('drag-over'); }
+        function taskDragLeave(ev, el){ if (el) el.classList.remove('drag-over'); }
+        function taskDrop(ev, targetId, el){
+            ev.preventDefault();
+            if (el) el.classList.remove('drag-over');
+            const src = dragTaskId; dragTaskId = null;
+            if (src == null || src === targetId) return;
             const bDate = boardDate();
             let pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
                                .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
-            const idx = pending.findIndex(t => t.id === id);
-            if (idx < 0) return;
-            const [item] = pending.splice(idx, 1);
-            if (edge === 'top') pending.unshift(item); else pending.push(item);
+            const from = pending.findIndex(t => t.id === src);
+            const to = pending.findIndex(t => t.id === targetId);
+            if (from < 0 || to < 0) return;
+            const [item] = pending.splice(from, 1);
+            pending.splice(to, 0, item);
             commitOrder(pending);
         }
         function commitOrder(pending){
