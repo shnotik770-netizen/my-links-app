@@ -927,9 +927,10 @@
             const bDate = boardDate();
             const reporting = (workDate && todayReal && workDate !== todayReal);
             const showingTomorrow = (viewDay && workDate && viewDay !== workDate);
-            let dayLabel = 'היום';
-            if (reporting) dayLabel = `דוח יום ${heDate(workDate)}`;
-            else if (showingTomorrow) dayLabel = `תוכנית ל${heDate(viewDay)}`;
+            let dayLabel;
+            if (reporting) dayLabel = `📄 דוח יום ${heDate(workDate)}`;
+            else if (showingTomorrow) dayLabel = `📋 משימות של יום העבודה הבא · ${heDateShort(viewDay)}`;
+            else dayLabel = dayOpen ? '📋 משימות של היום · יום עבודה פתוח' : '📋 משימות של היום';
 
             const pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
                                  .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
@@ -937,8 +938,8 @@
 
             // באנר מצב (הלוח מוצג תמיד - סימולציה חיה של יום התצוגה)
             let hint = '';
-            if (showingTomorrow) hint = `<div class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] text-indigo-700">🔮 היום כבר נסגר — מוצגת כאן תוכנית ל${heDate(viewDay)} (אפשר לסדר עדיפויות והערות מראש).</div>`;
-            else if (!dayOpen) hint = `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 יום העבודה עדיין לא נפתח רשמית — זו תצוגה חיה של משימות היום. אפשר לסדר עדיפויות והערות; "פתיחת יום" (בצד ימין) תתחיל את היום רשמית.</div>`;
+            if (showingTomorrow) hint = `<div class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] text-indigo-700">🔮 היום נסגר — אלו משימות <b>יום העבודה הבא</b> (${heDate(viewDay)}). אפשר לתעדף כבר עכשיו; הסדר יישמר גם אם היום ייפתח מאוחר יותר.</div>`;
+            else if (!dayOpen) hint = `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 יום העבודה עדיין לא נפתח רשמית — זו תצוגה חיה של משימות היום. אפשר לתעדף ולהוסיף הערות; "פתיחת יום" (בצד ימין) תתחיל את היום רשמית.</div>`;
             const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500 flex items-center justify-between gap-2">
                 <span>${dayLabel} · ${pending.length} משימות פתוחות</span>
                 ${pending.length > 1 ? '<span class="text-[10px] text-indigo-500">↕ גררו ⠿ או חצים לסידור עדיפויות (ראש = דחוף)</span>' : ''}
