@@ -550,6 +550,7 @@
             initReadOnlyFromUrl();
             applyReadOnlyUI();
             loadDataFromSheets(true);
+            window.addEventListener('online', () => { if (pendingWrites.length > 0) flushPending(); });
         };
 
         // ====== תקשורת JSONP (עוקף CORS) ======
@@ -588,23 +589,29 @@
         }
 
         function loadDataFromSheets(isInitial = false) {
-            if (isInitial) showLoader("מסתנכרן מול גוגל שיטס...");
-            else updateConnectionStatus('loading');
-
-            fetchJSONP(gasUrl, { action: 'loadAll' }, 'cb_loadAll')
-                .then(data => {
-                    applyLoadedData(data);
-                    updateConnectionStatus('connected');
-                    renderAttendance();
-                    renderTasks();
-                    if (isInitial) hideLoader();
-                })
-                .catch(err => {
-                    console.error("Error fetching data:", err);
-                    updateConnectionStatus('error');
-                    showNotification("שגיאה בחיבור לשרת גוגל. בדוק את הקישור בהגדרות.", true);
-                    if (isInitial) hideLoader();
-                });
+            // קודם דוחפים שינויים ממתינים (שלא נשמרו בגלל נתק), ורק אז טוענים - כדי לא לדרוס אותם
+            const proceed = () => {
+                if (isInitial) showLoader("מסתנכרן מול גוגל שיטס...");
+                else updateConnectionStatus('loading');
+                fetchJSONP(gasUrl, { action: 'loadAll' }, 'cb_loadAll')
+                    .then(data => {
+                        applyLoadedData(data);
+                        updateConnectionStatus('connected');
+                        renderAttendance();
+                        renderTasks();
+                        if (isInitial) hideLoader();
+                    })
+                    .catch(err => {
+                        console.error("Error fetching data:", err);
+                        updateConnectionStatus('error');
+                        showNotification("שגיאה בחיבור לשרת. השינויים המקומיים נשמרו ולא נמחקו.", true);
+                        if (isInitial) hideLoader();
+                    });
+            };
+            if (pendingWrites.length > 0) {
+                updateConnectionStatus('syncing');
+                flushPending().then(proceed);
+            } else proceed();
         }
 
         function loadHistoryFromSheets() {
@@ -614,24 +621,49 @@
                 .catch(err => { console.error(err); showNotification("שגיאה בטעינת היסטוריה.", true); hideLoader(); });
         }
 
-        // שליחת שינוי לשרת. מחזיר true/false אמיתי כדי שנדע אם באמת הצליח.
+        // ====== תור שמירה אופליין ======
+        let pendingWrites = [];
+        try { pendingWrites = JSON.parse(localStorage.getItem('pending_writes') || '[]'); } catch(e) { pendingWrites = []; }
+        function savePending(){ try { localStorage.setItem('pending_writes', JSON.stringify(pendingWrites)); } catch(e){} }
+        function rawSend(payload){
+            const p = { action: payload.action, ...payload };
+            if (payload.task) p.task = JSON.stringify(payload.task);
+            if (payload.updates) p.updates = JSON.stringify(payload.updates);
+            return fetchJSONP(gasUrl, p, 'cb_sync');
+        }
+        function queueWrite(payload){ pendingWrites.push(payload); savePending(); updateConnectionStatus('error'); }
+        function flushPending(){
+            if (pendingWrites.length === 0) return Promise.resolve(true);
+            updateConnectionStatus('syncing');
+            const queue = pendingWrites.slice();
+            pendingWrites = []; savePending();
+            const failed = [];
+            let chain = Promise.resolve();
+            queue.forEach(p => { chain = chain.then(() => rawSend(p).then(()=>{}).catch(()=> { failed.push(p); })); });
+            return chain.then(() => {
+                pendingWrites = failed.concat(pendingWrites); savePending();
+                updateConnectionStatus(failed.length ? 'error' : 'connected');
+                if (failed.length) showNotification('חלק מהשינויים עדיין ממתינים (אין חיבור).', true);
+                else showNotification('כל השינויים נשמרו ✅');
+                return failed.length === 0;
+            });
+        }
+
+        // שליחת שינוי לשרת. נכשל ברשת -> נכנס לתור השמירה המקומי.
         function sendPostToSheets(payload, silent = true) {
             if (!silent) showLoader("שומר שינויים בענן...");
             else updateConnectionStatus('syncing');
-
-            const jsonpParams = { action: payload.action, ...payload };
-            if (payload.task) jsonpParams.task = JSON.stringify(payload.task);
-            if (payload.updates) jsonpParams.updates = JSON.stringify(payload.updates);
-
-            return fetchJSONP(gasUrl, jsonpParams, 'cb_sync')
+            return rawSend(payload)
                 .then(data => {
-                    if (data.status === 'success') { updateConnectionStatus('connected'); if (!silent) hideLoader(); return true; }
-                    throw new Error(data.message || 'שגיאת שרת לא ידועה');
+                    if (data && data.status === 'success') { updateConnectionStatus('connected'); if (!silent) hideLoader(); return true; }
+                    updateConnectionStatus('error');
+                    showNotification((data && data.message) || "שגיאת שרת.", true);
+                    if (!silent) hideLoader();
+                    return false;
                 })
                 .catch(err => {
-                    console.error("Sync error:", err);
-                    updateConnectionStatus('error');
-                    showNotification(err.message || "נכשל בחיבור לסנכרון. הנתונים לא נשמרו.", true);
+                    // נתק רשת -> שומרים מקומית ומסמנים "ממתין"
+                    queueWrite(payload);
                     if (!silent) hideLoader();
                     return false;
                 });
@@ -659,7 +691,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </div>
-                    <input type="text" value="${escapeAttr(interval.note || '')}" placeholder="הערה לסבב זה (למשל: פגישה בחוץ)…" onchange="updateIntervalNote(${index}, this.value)" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 outline-none">`;
+                    <input type="text" value="${escapeAttr(interval.note || '')}" placeholder="הערה לסבב זה (למשל: פגישה בחוץ)…" onchange="updateIntervalNote(${index}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 outline-none">`;
                 container.appendChild(div);
             });
             calculateAndDisplayTotalHours();
@@ -862,7 +894,7 @@
 
             // "הערת בוצע" מיד אחרי השם (עורך: שדה; צפייה: טקסט)
             const doneNoteInline = ed
-                ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" class="flex-1 min-w-0 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
+                ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="flex-1 min-w-0 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
                 : (task.notes ? `<span class="flex-1 min-w-0 text-xs text-slate-500 truncate">${escapeHtml(task.notes)}</span>` : `<span class="flex-1"></span>`);
 
             // שורת ניהול מתקפלת - פתוחה אם יש הערת ביצוע
@@ -890,7 +922,7 @@
                 <div id="details-${id}" class="${expanded ? '' : 'hidden'} mt-2 pt-2 border-t border-slate-100 space-y-2">
                     <div class="flex items-center gap-1.5">
                         <span class="text-[10px] text-indigo-500 shrink-0" title="הערות לביצוע (מה לעשות)">🎯 לביצוע:</span>
-                        <input type="text" placeholder="מה צריך לעשות במשימה…" value="${escapeAttr(todo)}" onchange="updateTodoNotes(${id}, this.value)"
+                        <input type="text" placeholder="מה צריך לעשות במשימה…" value="${escapeAttr(todo)}" onchange="updateTodoNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}"
                             class="flex-1 min-w-0 text-xs bg-indigo-50/40 border border-indigo-100 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     </div>
                     ${(reorderCtrl || editorCtrls) ? `<div class="flex items-center gap-2 flex-wrap">${reorderCtrl}${editorCtrls}</div>` : ''}
@@ -1284,7 +1316,7 @@
             const updates = [];
             pending.forEach((t, i) => { t.priority = i; updates.push({ id: t.id, priority: i }); });
             renderTasks();
-            fetchJSONP(gasUrl, { action: 'reorderTasks', list: JSON.stringify(updates) }, 'cb_reorder').catch(()=>{});
+            sendPostToSheets({ action: 'reorderTasks', list: JSON.stringify(updates) }, true);
         }
 
         // ====== תזמון מחדש (העברה / שכפול) ======
@@ -1736,6 +1768,13 @@
             const b = document.getElementById('refresh-btn');
             if (!b) return;
             const base = "inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition ";
+            // אם יש שינויים שלא נשמרו - זה גובר על החיווי הרגיל (חוץ מבזמן שמירה/טעינה)
+            if (pendingWrites.length > 0 && status !== 'syncing' && status !== 'loading') {
+                b.className = base + "bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300";
+                b.title = "יש שינויים שלא נשמרו — לחץ כדי לשמור אותם בשרת";
+                b.innerHTML = "⚠️ שמור (" + pendingWrites.length + ")";
+                return;
+            }
             if (status === 'syncing') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "שומר…"; b.innerHTML = "💾 שומר"; }
             else if (status === 'loading') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "טוען…"; b.innerHTML = "⏳ טוען"; }
             else if (status === 'connected') { b.className = base + "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"; b.title = "מסונכרן — לחץ לרענון"; b.innerHTML = "🔄 מסונכרן"; }
