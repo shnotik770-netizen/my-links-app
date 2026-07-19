@@ -293,9 +293,12 @@
             <h3 class="font-bold text-lg text-slate-900 mb-1">תצוגה מקדימה של דוח היום</h3>
             <p class="text-xs text-slate-500 mb-4">כך ייראה הדוח שיישמר. אשר כדי לסגור את היום ולנקות את הלוח, או חזור לעריכה.</p>
             <div id="close-preview-content" class="space-y-4 mb-6"></div>
-            <div class="flex gap-3">
-                <button onclick="doCloseDay()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">אשר וסגור את היום 💾</button>
-                <button onclick="document.getElementById('close-preview-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-xl text-sm transition">חזור לעריכה</button>
+            <div class="space-y-2">
+                <div class="flex gap-2">
+                    <button onclick="doCloseDay()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">סגור בלבד 💾</button>
+                    <button onclick="closeAndCopy()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">📋 סגור + העתק לווצאפ</button>
+                </div>
+                <button onclick="document.getElementById('close-preview-modal').classList.add('hidden')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-xl text-sm transition">חזור לעריכה</button>
             </div>
         </div>
     </div>
@@ -1555,7 +1558,31 @@
                 </div>
             `;
             document.getElementById('close-preview-content').innerHTML = html;
+            lastCloseData = { done, tomorrow };
             document.getElementById('close-preview-modal').classList.remove('hidden');
+        }
+
+        // בניית טקסט סיכום לסגירה - אותו פורמט כמו בהיסטוריה
+        let lastCloseData = null;
+        function buildCloseSummaryText(){
+            const bd = boardDate();
+            const d = lastCloseData || { done: [], tomorrow: [] };
+            let text = `📄 סיכום יום ${heDate(bd)}\n`;
+            text += `⏱️ שעות: ${calcHours(attendanceIntervals)}\n`;
+            attendanceIntervals.forEach((iv, i) => { text += `   • סבב ${i+1}: ${iv.start || '--:--'} עד ${iv.end || '--:--'}${iv.note ? ` — ${iv.note}` : ''}\n`; });
+            text += `\n✅ בוצעו:\n`;
+            if (d.done.length) d.done.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}\n`; });
+            else text += `   —\n`;
+            if (d.tomorrow && d.tomorrow.length) {
+                text += `\n➡️ למחר:\n`;
+                d.tomorrow.forEach(t => { text += `   • ${t.name} [${t.reason}]\n`; });
+            }
+            return text;
+        }
+        function closeAndCopy(){
+            copyTextToClipboard(buildCloseSummaryText());
+            showNotification('📋 הסיכום הועתק — היום נסגר.');
+            doCloseDay();
         }
 
         function doCloseDay(){
