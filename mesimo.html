@@ -338,6 +338,13 @@
     </div>
 
     <!-- מודל תזמון מחדש: העברה או שכפול -->
+    <!-- סרגל בחירה מרובה -->
+    <div id="selection-bar" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white rounded-2xl shadow-xl px-4 py-2.5 flex items-center gap-3">
+        <span class="text-sm font-medium"><span id="selection-count">0</span> נבחרו</span>
+        <button onclick="startBulkReschedule()" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-3 py-1.5 rounded-xl transition">📅 תזמון ליום אחר</button>
+        <button onclick="toggleSelectionMode()" class="text-slate-300 hover:text-white text-sm">ביטול</button>
+    </div>
+
     <div id="reschedule-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
             <h3 class="font-bold text-base text-slate-900 mb-1">תזמון מחדש</h3>
@@ -494,7 +501,9 @@
         let currentTab = 'today';
         let selectedDate = '';        // טאב "משימות לתאריך"
         let editingNameId = null;     // עריכת שם משימה אינלייןֿ
-        let expandedTaskIds = new Set(); // משימות שפתחו את שורת הניהול
+        let expandedTaskId = null;    // רק שורת ניהול אחת פתוחה בכל רגע
+        let selectionMode = false;    // מצב בחירה מרובה
+        let selectedIds = new Set();  // משימות שנבחרו לפעולה קבוצתית
         let historyEditState = null;  // עריכת דוח יום
 
         // ====== עזרי תאריך (לפי שעון מקומי) ======
@@ -856,14 +865,15 @@
             const isDone = task.done;
             const containerBg = isDone ? 'bg-emerald-50/40 border-r-emerald-500' : 'bg-white border-r-transparent';
             const canReorder = (context === 'today' && !isDone && total > 0);
+            const selectable = (context === 'today' && !isDone);
             const ed = !readOnly;
             const id = task.id;
+            const todo = task.todoNotes || '';
+            const expanded = (expandedTaskId === id);
 
+            // תאריך: רק בתצוגת "לפי תאריך". בלוח היום אין הצגת תאריך מקורי (לא רלוונטי).
             let dateNote = '';
-            const today = boardDate();
-            if (context === 'today' && task.dueDate && task.dueDate < today) {
-                dateNote = `<span class="text-[10px] text-rose-600 font-medium shrink-0" title="באיחור">⏰${heDateShort(task.dueDate)}</span>`;
-            } else if (context === 'bydate' && task.dueDate) {
+            if (context === 'bydate' && task.dueDate) {
                 dateNote = `<span class="text-[10px] text-purple-600 font-medium shrink-0">📅${heDateShort(task.dueDate)}</span>`;
             }
 
@@ -877,6 +887,11 @@
             } else {
                 numBadge = `<span class="shrink-0 w-5 h-5 flex items-center justify-center text-[10px] text-slate-300">${isDone ? '✓' : '•'}</span>`;
             }
+
+            // צ'קבוקס בחירה מרובה
+            const selBox = (selectionMode && selectable)
+                ? `<input type="checkbox" ${selectedIds.has(id) ? 'checked' : ''} onchange="toggleSelectTask(${id}, this.checked)" class="shrink-0 w-4 h-4 accent-indigo-600">`
+                : '';
 
             const doneBox = ed
                 ? `<button onclick="toggleDone(${id})" class="shrink-0 w-4 h-4 rounded border-2 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-emerald-400'} flex items-center justify-center transition">${isDone ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}</button>`
@@ -892,14 +907,14 @@
                 nameBlock = `<span class="font-medium text-slate-900 text-sm truncate shrink-0 max-w-[38%] ${isDone ? 'line-through text-slate-400' : ''}" title="${escapeAttr(task.name)}">${escapeHtml(task.name)}</span>`;
             }
 
-            // "הערת בוצע" מיד אחרי השם (עורך: שדה; צפייה: טקסט)
             const doneNoteInline = ed
                 ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="flex-1 min-w-0 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
                 : (task.notes ? `<span class="flex-1 min-w-0 text-xs text-slate-500 truncate">${escapeHtml(task.notes)}</span>` : `<span class="flex-1"></span>`);
 
-            // שורת ניהול מתקפלת - פתוחה אם יש הערת ביצוע
-            const todo = task.todoNotes || '';
-            const expanded = expandedTaskIds.has(id) || todo.trim() !== '';
+            // הערת "לביצוע" מוצגת בשורה עצמה כשהיא מלאה (לא מוסתרת מאחורי החץ)
+            const todoLine = todo.trim()
+                ? `<div class="flex items-start gap-1 mt-1 pr-1 text-[11px] text-indigo-600"><span class="shrink-0">🎯</span><span class="min-w-0">${escapeHtml(todo)}</span></div>`
+                : '';
 
             const reorderCtrl = canReorder ? `
                 <div class="flex items-center gap-1 shrink-0">
@@ -932,6 +947,7 @@
                 <div class="px-3 py-2 border-r-4 transition-all duration-150 ${containerBg}" ${priorityColor ? `style="border-right-color:${priorityColor}"` : ''}
                     ${canReorder ? `ondragover="taskDragOver(event, this)" ondragleave="taskDragLeave(event, this)" ondrop="taskDrop(event, ${id}, this)"` : ''}>
                     <div class="flex items-center gap-2">
+                        ${selBox}
                         ${numBadge}
                         ${doneBox}
                         ${nameBlock}
@@ -942,15 +958,55 @@
                             <svg id="arrow-${id}" class="h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                     </div>
+                    ${todoLine}
                     ${details}
                 </div>`;
         }
+        // פתיחה יחידה: פתיחת שורת ניהול סוגרת את הקודמת
+        function collapseDetails(id){ const d=document.getElementById('details-'+id), a=document.getElementById('arrow-'+id); if(d)d.classList.add('hidden'); if(a)a.classList.remove('rotate-180'); }
+        function expandDetails(id){ const d=document.getElementById('details-'+id), a=document.getElementById('arrow-'+id); if(d)d.classList.remove('hidden'); if(a)a.classList.add('rotate-180'); }
         function toggleTaskDetails(id){
-            if (expandedTaskIds.has(id)) expandedTaskIds.delete(id); else expandedTaskIds.add(id);
-            const d = document.getElementById('details-' + id);
-            const a = document.getElementById('arrow-' + id);
-            if (d) d.classList.toggle('hidden');
-            if (a) a.classList.toggle('rotate-180');
+            if (expandedTaskId === id){ collapseDetails(id); expandedTaskId = null; return; }
+            if (expandedTaskId != null) collapseDetails(expandedTaskId);
+            expandDetails(id); expandedTaskId = id;
+        }
+
+        // ====== בחירה מרובה + תזמון קבוצתי ======
+        function toggleSelectionMode(){
+            selectionMode = !selectionMode;
+            if (!selectionMode) selectedIds.clear();
+            renderTasks(); updateSelectionBar();
+        }
+        function toggleSelectTask(id, checked){
+            if (checked) selectedIds.add(id); else selectedIds.delete(id);
+            updateSelectionBar();
+        }
+        function updateSelectionBar(){
+            const bar = document.getElementById('selection-bar');
+            const cnt = document.getElementById('selection-count');
+            if (!bar) return;
+            if (selectionMode && selectedIds.size > 0) { bar.classList.remove('hidden'); if (cnt) cnt.innerText = selectedIds.size; }
+            else bar.classList.add('hidden');
+        }
+        // תזמון קבוצתי: פותח חלון תזמון לכל משימה בזה אחר זה
+        let bulkQueue = [];
+        function startBulkReschedule(){
+            bulkQueue = [...selectedIds];
+            bulkTotal = bulkQueue.length;
+            if (bulkQueue.length === 0) return;
+            nextBulkReschedule();
+        }
+        function nextBulkReschedule(){
+            if (bulkQueue.length === 0){
+                rescheduleBulk = false;
+                document.getElementById('reschedule-modal').classList.add('hidden');
+                selectionMode = false; selectedIds.clear();
+                renderTasks(); updateSelectionBar();
+                showNotification('תזמון קבוצתי הושלם ✅');
+                return;
+            }
+            const id = bulkQueue.shift();
+            openReschedule(id, 'tomorrow', true);
         }
 
         function renderTodayTab() {
@@ -972,9 +1028,12 @@
             let hint = '';
             if (showingTomorrow) hint = `<div class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] text-indigo-700">🔮 היום נסגר — אלו משימות <b>יום העבודה הבא</b> (${heDate(viewDay)}). אפשר לתעדף כבר עכשיו; הסדר יישמר גם אם היום ייפתח מאוחר יותר.</div>`;
             else if (!dayOpen) hint = `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 יום העבודה עדיין לא נפתח רשמית — זו תצוגה חיה של משימות היום. אפשר לתעדף ולהוסיף הערות; "פתיחת יום" (בצד ימין) תתחיל את היום רשמית.</div>`;
-            const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500 flex items-center justify-between gap-2">
+            const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500 flex items-center justify-between gap-2 flex-wrap">
                 <span>${dayLabel} · ${pending.length} משימות פתוחות</span>
-                ${pending.length > 1 ? '<span class="text-[10px] text-indigo-500">↕ גררו ⠿ או חצים לסידור עדיפויות (ראש = דחוף)</span>' : ''}
+                <div class="flex items-center gap-2">
+                    ${(!readOnly && pending.length > 0) ? `<button onclick="toggleSelectionMode()" class="text-[10px] font-semibold ${selectionMode ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 border border-indigo-200'} px-2 py-0.5 rounded-md transition">${selectionMode ? '✕ בטל בחירה' : '☑️ בחירה מרובה'}</button>` : ''}
+                    ${pending.length > 1 ? '<span class="text-[10px] text-indigo-500">↕ גררו לסידור</span>' : ''}
+                </div>
             </div>`;
             c.insertAdjacentHTML('beforeend', hint + titleBar);
 
@@ -1321,6 +1380,8 @@
 
         // ====== תזמון מחדש (העברה / שכפול) ======
         let reschedulePendingId = null;
+        let rescheduleBulk = false;
+        let bulkTotal = 0;
         function onRescheduleSelect(id, mode){
             if (guardRO()) return; 
             if (!mode) return;
@@ -1331,19 +1392,30 @@
                     .then(ok => { if (ok) showNotification('המשימה הועברה לרשימה הכללית.'); });
                 return;
             }
-            openReschedule(id, mode);
+            openReschedule(id, mode, false);
         }
-        function openReschedule(id, mode){
+        function openReschedule(id, mode, bulk){
             reschedulePendingId = id;
+            rescheduleBulk = !!bulk;
             const t = tasks.find(x => x.id === id);
-            document.getElementById('reschedule-task-name').innerText = t ? t.name : '';
+            let label = t ? t.name : '';
+            if (bulk) { const done = bulkTotal - bulkQueue.length; label = `(${done}/${bulkTotal}) ${label}`; }
+            document.getElementById('reschedule-task-name').innerText = label;
             let d = tomorrowISO();
             if (mode === 'today') d = todayISO();
-            else if (mode === 'tomorrow') d = tomorrowISO();
             document.getElementById('reschedule-date-input').value = d;
             document.getElementById('reschedule-modal').classList.remove('hidden');
         }
-        function closeReschedule(){ document.getElementById('reschedule-modal').classList.add('hidden'); reschedulePendingId = null; renderTasks(); }
+        function afterRescheduleStep(){
+            if (rescheduleBulk) { nextBulkReschedule(); }
+            else { reschedulePendingId = null; document.getElementById('reschedule-modal').classList.add('hidden'); }
+        }
+        function closeReschedule(){
+            document.getElementById('reschedule-modal').classList.add('hidden');
+            reschedulePendingId = null;
+            if (rescheduleBulk) { rescheduleBulk = false; bulkQueue = []; selectionMode = false; selectedIds.clear(); updateSelectionBar(); }
+            renderTasks();
+        }
 
         function quickSchedule(id, mode){
             if (guardRO()) return; 
@@ -1358,26 +1430,24 @@
             if (guardRO()) return;
             const d = document.getElementById('reschedule-date-input').value;
             const t = tasks.find(x => x.id === reschedulePendingId);
-            document.getElementById('reschedule-modal').classList.add('hidden');
             if (t && d) {
-                t.status = 'dated'; t.dueDate = d; renderTasks();
-                sendPostToSheets({ action:'updateTask', taskId:t.id, updates:{ status:'dated', dueDate:d } }, true)
-                    .then(ok => { if (ok) showNotification('המשימה הועברה ל-' + heDate(d)); });
+                t.status = 'dated'; t.dueDate = d;
+                sendPostToSheets({ action:'updateTask', taskId:t.id, updates:{ status:'dated', dueDate:d } }, true);
             }
-            reschedulePendingId = null;
+            afterRescheduleStep();
+            renderTasks();
         };
         document.getElementById('reschedule-copy-btn').onclick = function(){
             if (guardRO()) return;
             const d = document.getElementById('reschedule-date-input').value;
             const t = tasks.find(x => x.id === reschedulePendingId);
-            document.getElementById('reschedule-modal').classList.add('hidden');
             if (t && d) {
                 const copy = { id: Date.now(), name: t.name, type: t.type, status:'dated', dueDate:d, dayOfMonth:'', monthOfYear:'', done:false, notes:t.notes, priority: 500, todoNotes: t.todoNotes || '' };
-                tasks.push(copy); renderTasks();
-                sendPostToSheets({ action:'addTask', task:copy }, true)
-                    .then(ok => { if (ok) showNotification('נוצר עותק ל-' + heDate(d) + '. המשימה נשארה גם במקום הנוכחי.'); });
+                tasks.push(copy);
+                sendPostToSheets({ action:'addTask', task:copy }, true);
             }
-            reschedulePendingId = null;
+            afterRescheduleStep();
+            renderTasks();
         };
         document.getElementById('reschedule-cancel-btn').onclick = closeReschedule;
 
