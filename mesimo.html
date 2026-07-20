@@ -1,554 +1,2064 @@
-// ===== משימות משרד נוטיק - שרת Apps Script (מודל תאריכים + פתיחת/סגירת יום) =====
-// Active_Tasks: ID, Name, Type, Status, DueDate, DayOfMonth, MonthOfYear, Done, Notes
-// Status: 'dated' (משימה עם תאריך) | 'general' (רשימה כללית) | 'seed' (תבנית משימה חוזרת)
-// Config: activeWorkDay = היום הפעיל האחרון שנפתח
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משימות משרד נוטיק - ניהול משימות ונוכחות</title>
+    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'&gt;&lt;text y='14' font-size='14'&gt;📋&lt;/text&gt;&lt;/svg&gt;">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;950&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Rubik', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .drag-over { background: #eef2ff; box-shadow: inset 0 0 0 2px #6366f1; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
 
-function doGet(e) {
-  var action = e.parameter.action;
-  var callback = e.parameter.callback;
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var result = { status: 'success' };
+    <!-- מסך טעינה גלובלי -->
+    <div id="global-loader" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white transition-opacity duration-300">
+        <div class="bg-white text-slate-900 px-8 py-6 rounded-2xl shadow-xl flex flex-col items-center gap-4">
+            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="font-bold text-sm text-slate-800" id="loader-text">מתחבר לגוגל שיטס ומסתנכרן...</p>
+        </div>
+    </div>
 
-  setupSheets(ss);
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-600 text-white rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900">משימות משרד נוטיק</h1>
+                    <p class="text-xs text-slate-500">ניהול משימות ונוכחות בזמן אמת</p>
+                </div>
+            </div>
 
-  try {
-    if (action === 'loadAll') {
-      ensureRoutinesForView_(ss);
-      result = stateResult_(ss);
-    } else if (action === 'loadHistory') {
-      result = { status: 'success', history: loadHistory(ss) };
-    } else if (action === 'saveAttendance') {
-      saveAttendanceData(ss, e.parameter.intervals);
-    } else if (action === 'addTask') {
-      addTaskData(ss, JSON.parse(e.parameter.task));
-    } else if (action === 'updateTask') {
-      updateTaskData(ss, e.parameter.taskId, JSON.parse(e.parameter.updates));
-    } else if (action === 'reorderTasks') {
-      reorderTasksData(ss, e.parameter.list);
-    } else if (action === 'deleteTask') {
-      deleteTaskData(ss, e.parameter.taskId);
-    } else if (action === 'closeDay') {
-      closeDayWorkflow(ss, e.parameter.intervals);
-      result = stateResult_(ss);
-    } else if (action === 'openDay') {
-      openDayWorkflow(ss, e.parameter.date);
-      result = stateResult_(ss);
-    } else if (action === 'updateHistory') {
-      updateHistoryData(ss, e.parameter.date, e.parameter.intervals, e.parameter.tasks);
-    } else if (action === 'login') {
-      var pw = getConfig_(ss, 'editor_pw');
-      if (pw === '' || pw === null || pw === undefined) pw = '1234';
-      result = { status: 'success', ok: (String(e.parameter.pw) === String(pw)) };
-    } else if (action === 'setEditorPw') {
-      setConfig_(ss, 'editor_pw', e.parameter.pw);
-    }
-  } catch (err) {
-    result = { status: 'error', message: err.toString() };
-  }
+            <div class="flex items-center gap-3">
+                <div class="text-left hidden md:block">
+                    <p class="text-sm font-medium text-slate-900" id="current-date-display">טוען תאריך...</p>
+                    <p class="text-[11px] text-slate-400">התאריך של היום</p>
+                </div>
+            </div>
+        </div>
+    </header>
 
-  var jsonString = JSON.stringify(result);
-  if (callback) {
-    return ContentService.createTextOutput(callback + '(' + jsonString + ')').setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-  return ContentService.createTextOutput(jsonString).setMimeType(ContentService.MimeType.JSON);
-}
+    <div id="readonly-banner" class="hidden bg-slate-800 text-white text-center text-xs font-semibold py-2">
+        🕊️ מצב הרב סגל (צפייה ותיעדוף משימות) — ניתן לתעדף משימות ולצפות בהיסטוריה; שאר פעולות העריכה חסומות. להזדהות כעובד (נוטיק) לחץ "כניסה כעובד".
+    </div>
 
-function doPost(e) { return doGet(e); }
+    <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-// ===== עזרי תאריך =====
-function tz_() { return Session.getScriptTimeZone(); }
-function todayStr_() { return Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd'); }
-function addDaysKey_(key, n) {
-  var p = key.split('-');
-  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-  d.setDate(d.getDate() + n);
-  return Utilities.formatDate(d, tz_(), 'yyyy-MM-dd');
-}
-function dateCellKey_(v) {
-  if (v instanceof Date) return Utilities.formatDate(v, tz_(), 'yyyy-MM-dd');
-  var s = v.toString().trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  var m = s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
-  if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
-  return s;
-}
-function heDate_(key) {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(key)) { var p = key.split('-'); return Number(p[2]) + '/' + Number(p[1]) + '/' + p[0]; }
-  return key;
-}
+        <!-- צד ימין -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
 
-// ===== עזרי סוג משימה (תומך בשמות ישנים וחדשים) =====
-function isDaily_(t)   { return t === 'משימה יומית' || t === 'רוטינה יומית'; }
-function isMonthly_(t) { return t === 'משימה חודשית' || t === 'רוטינה חודשית'; }
-function isYearly_(t)  { return t === 'משימה שנתית' || t === 'רוטינה שנתית'; }
+            <!-- בקרת יום עבודה -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5 order-1">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="font-bold text-slate-950 text-sm">בקרת יום עבודה</h2>
+                    <button id="refresh-btn" onclick="refreshData()" title="רענן נתונים" class="inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition bg-amber-50 text-amber-700 border-amber-200">🔄 רענן</button>
+                </div>
 
-// ===== Config =====
-function getConfig_(ss, key) {
-  var sheet = ss.getSheetByName('Config');
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) { if (data[i][0] === key) return data[i][1]; }
-  return '';
-}
-function setConfig_(ss, key, value) {
-  var sheet = ss.getSheetByName('Config');
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) { if (data[i][0] === key) { sheet.getRange(i + 1, 2).setValue(value); return; } }
-  sheet.appendRow([key, value]);
-}
-function activeWorkDay_(ss) { var v = getConfig_(ss, 'activeWorkDay'); return v ? dateCellKey_(v) : ''; }
-// יום העבודה = היום הפעיל רק אם הוא עדיין פתוח (דיווח יום עבר); אחרת - היום.
-function workingDay_(ss) { var a = activeWorkDay_(ss); return (a && !isDayClosed(ss, a)) ? a : todayStr_(); }
-function closedDatesInfo_(ss) {
-  var sheet = ss.getSheetByName('History_Log');
-  var data = sheet.getDataRange().getValues();
-  var set = {}, last = '';
-  for (var i = 1; i < data.length; i++) { var k = dateCellKey_(data[i][0]); set[k] = true; if (k > last) last = k; }
-  return { set: set, last: last };
-}
-function stateResult_(ss) {
-  var today = todayStr_();
-  var a = activeWorkDay_(ss);
-  var info = closedDatesInfo_(ss);
-  var aClosed = a ? (info.set[a] === true) : false;
-  var wd = (a && !aClosed) ? a : today;            // יום העבודה מתגלגל להיום כשהפעיל נסגר
-  var wdClosed = info.set[wd] === true;
-  var viewDay = wdClosed ? addDaysKey_(wd, 1) : wd; // אם היום נסגר -> מציגים את המחר
-  return {
-    status: 'success',
-    tasks: getActiveTasks(ss),
-    attendance: getWorkingAttendance_(ss),
-    workDate: wd,
-    viewDay: viewDay,
-    today: today,
-    dayClosed: wdClosed,
-    dayOpen: (a && !aClosed) ? true : false,
-    prevUnclosed: (a && a < today && !aClosed) ? true : false,
-    lastClosed: info.last
-  };
-}
+                <!-- פעולות עורך (מוסתרות במצב צפייה) -->
+                <div id="day-action-controls" class="space-y-2.5">
+                    <!-- כפתורי פתיחה (מוסתרים כשיום פתוח) -->
+                    <div id="open-buttons" class="grid grid-cols-2 gap-2">
+                        <button onclick="triggerOpenDay()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                            פתיחה רגילה
+                        </button>
+                        <button onclick="openReportDayModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5">
+                            📅 פתיחה ישנה
+                        </button>
+                    </div>
+                    <!-- כפתור סגירה (מוצג רק כשיום פתוח) -->
+                    <button id="close-button" onclick="triggerEndDay()" class="hidden w-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                        סגירת יום
+                    </button>
+                    <div id="return-today-wrap" class="hidden">
+                        <button onclick="returnToToday()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold py-2 rounded-xl transition">↩️ חזרה להיום</button>
+                    </div>
+                </div>
 
-// ===== יצירת גיליונות + מיגרציה =====
-var ACTIVE_HEADER = ['ID', 'Name', 'Type', 'Status', 'DueDate', 'DayOfMonth', 'MonthOfYear', 'Done', 'Notes', 'Priority', 'TodoNotes'];
+                <!-- כניסה/יציאה כעורך -->
+                <button id="editor-login-btn" onclick="editorLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">🔑 כניסה כעובד</button>
+                <button id="editor-logout-btn" onclick="editorLogout()" class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold py-2 rounded-xl transition">🕊️ כניסה כהרב סגל</button>
 
-function setupSheets(ss) {
-  if (!ss.getSheetByName('Active_Tasks')) ss.insertSheet('Active_Tasks').appendRow(ACTIVE_HEADER);
-  if (!ss.getSheetByName('Attendance_Today')) ss.insertSheet('Attendance_Today').appendRow(['Date', 'Intervals']);
-  if (!ss.getSheetByName('History_Log')) ss.insertSheet('History_Log').appendRow(['Date', 'Intervals', 'TotalHours', 'Tasks_JSON']);
-  if (!ss.getSheetByName('Config')) ss.insertSheet('Config').appendRow(['Key', 'Value']);
-  if (getConfig_(ss, 'editor_pw') === '') setConfig_(ss, 'editor_pw', '1234');
-  if (getConfig_(ss, 'cols_v2') !== '1') { ensureColumns_(ss); setConfig_(ss, 'cols_v2', '1'); }
-  if (getConfig_(ss, 'migrated') !== '1') { migrateActiveSheet_(ss); setConfig_(ss, 'migrated', '1'); }
-}
+                <!-- סטטוס מאוחד -->
+                <div class="pt-2.5 border-t border-slate-100">
+                    <span id="day-status-text" class="text-xs font-semibold text-slate-500">—</span>
+                </div>
+            </div>
 
-// הוספת עמודות Priority + TodoNotes לגיליונות ישנים (חד-פעמי)
-function ensureColumns_(ss) {
-  var sheet = ss.getSheetByName('Active_Tasks');
-  var data = sheet.getDataRange().getValues();
-  if (data[0].length >= ACTIVE_HEADER.length) return;
-  var out = [ACTIVE_HEADER];
-  for (var i = 1; i < data.length; i++) {
-    var r = data[i].slice();
-    while (r.length < ACTIVE_HEADER.length) r.push(r.length === 9 ? 500 : '');
-    out.push(r);
-  }
-  sheet.clearContents();
-  sheet.getRange(1, 1, out.length, ACTIVE_HEADER.length).setValues(out);
-}
+            <!-- נוכחות -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 order-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold text-slate-950 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        סבבי נוכחות היום
+                    </h2>
+                    <button onclick="addAttendanceInterval()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-1 px-3 rounded-lg transition">
+                        ➕ סבב חדש
+                    </button>
+                </div>
+                <div id="intervals-container" class="space-y-3"></div>
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span>סה"כ שעות עבודה היום:</span>
+                    <span class="font-bold text-slate-800 text-sm" id="attendance-total-hours">0.0 שעות</span>
+                </div>
+            </div>
 
-function migrateActiveSheet_(ss) {
-  var sheet = ss.getSheetByName('Active_Tasks');
-  var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return;
-  var changed = false;
-  var todayKey = todayStr_();
-  var tomKey = addDaysKey_(todayKey, 1);
-  var yesterdayKey = addDaysKey_(todayKey, -1);
-  var typeMap = { 'רוטינה יומית': 'משימה יומית', 'רוטינה חודשית': 'משימה חודשית', 'רוטינה שנתית': 'משימה שנתית', 'מזדמנת': 'משימה מזדמנת' };
+            <!-- הוספת משימה (גלוי תמיד, מעל הנוכחות) -->
+            <div id="addtask-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm order-2 space-y-3">
+                <h2 class="font-bold text-slate-950 text-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    הוספת משימה
+                </h2>
 
-  for (var i = 1; i < data.length; i++) {
-    // סטטוסים ישנים
-    var status = data[i][3];
-    if (status === 'Today') { data[i][3] = 'dated'; if (!data[i][4]) data[i][4] = "'" + todayKey; changed = true; }
-    else if (status === 'Tomorrow') { data[i][3] = 'dated'; data[i][4] = "'" + tomKey; changed = true; }
-    else if (status === 'Backlog') { data[i][3] = 'general'; data[i][4] = ''; changed = true; }
-    else if (status === 'Custom') {
-      if (data[i][4]) data[i][3] = 'dated';
-      else if (data[i][5] || data[i][6]) data[i][3] = 'seed';
-      else data[i][3] = 'general';
-      changed = true;
-    }
-    // שמות סוגים ישנים
-    if (typeMap[data[i][2]]) { data[i][2] = typeMap[data[i][2]]; changed = true; }
-    // אתחול lastGen לזרעים ישנים
-    if (data[i][3] === 'seed' && data[i][4] === '') { data[i][4] = "'" + yesterdayKey; changed = true; }
-  }
-  if (changed) sheet.getRange(2, 1, data.length - 1, data[0].length).setValues(data.slice(1));
-}
+                <select id="add-mode" onchange="handleAddModeChange()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                    <option value="new">➕ משימה חדשה</option>
+                    <option value="routine">🔄 משימה מהמערכת (רוטינה קבועה)</option>
+                    <option value="general">📋 משימה מהרשימה הכללית</option>
+                </select>
 
-// ===== קריאת משימות =====
-function getActiveTasks(ss) {
-  var sheet = ss.getSheetByName('Active_Tasks');
-  var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return [];
-  var tasks = [];
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === '' && data[i][1] === '') continue;
-    tasks.push({
-      id: Number(data[i][0]), name: data[i][1], type: data[i][2], status: data[i][3],
-      dueDate: data[i][4] !== '' ? dateCellKey_(data[i][4]) : '',
-      dayOfMonth: data[i][5] !== '' ? data[i][5].toString() : '',
-      monthOfYear: data[i][6] !== '' ? data[i][6].toString() : '',
-      done: data[i][7] === true || data[i][7] === 'TRUE' || data[i][7] === 'true',
-      notes: data[i][8] || '',
-      priority: (data[i][9] !== '' && data[i][9] !== undefined) ? Number(data[i][9]) : 500,
-      todoNotes: data[i][10] || ''
-    });
-  }
-  return tasks;
-}
+                <!-- מצב: משימה חדשה -->
+                <div id="mode-new">
+                    <form id="add-task-form" onsubmit="handleAddTask(event)" class="space-y-2.5">
+                        <input type="text" id="task-name" placeholder="שם המשימה / נושא" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                        <div class="flex items-stretch gap-2">
+                            <select id="task-type" onchange="handleTaskTypeChange()" class="flex-1 min-w-0 px-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                                <option value="משימה יומית">יומית 🔄</option>
+                                <option value="משימה שבועית">שבועית (יום קבוע) 🗓️</option>
+                                <option value="משימה חודשית">חודשית 📅</option>
+                                <option value="משימה שנתית">שנתית 🗓️</option>
+                                <option value="משימה מזדמנת" selected>מזדמנת ⚡</option>
+                            </select>
+                            <div id="routing-selector-container" class="flex-1 min-w-0">
+                                <select id="task-when" onchange="handleWhenChange()" class="w-full px-2 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                                    <option value="today">היום</option>
+                                    <option value="tomorrow">מחר</option>
+                                    <option value="pick">בתאריך אחר</option>
+                                    <option value="general">לרשימה הכללית</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 rounded-xl transition shadow-sm">הוסף</button>
+                        </div>
 
-// ===== נוכחות (מפתח לפי יום העבודה הפעיל) =====
-function getWorkingAttendance_(ss) {
-  var sheet = ss.getSheetByName('Attendance_Today');
-  var wd = workingDay_(ss);
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) { if (dateCellKey_(data[i][0]) === wd) return { intervals: data[i][1] }; }
-  return { intervals: JSON.stringify([{ start: '10:00', end: '', note: '' }]) };
-}
-function getAttendanceRawFor_(ss, dayKey) {
-  var sheet = ss.getSheetByName('Attendance_Today');
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) { if (dateCellKey_(data[i][0]) === dayKey) return data[i][1]; }
-  return '[]';
-}
-function saveAttendanceData(ss, intervalsJson) {
-  var sheet = ss.getSheetByName('Attendance_Today');
-  var wd = workingDay_(ss);
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) { if (dateCellKey_(data[i][0]) === wd) { sheet.getRange(i + 1, 2).setValue(intervalsJson); return; } }
-  sheet.appendRow([wd, intervalsJson]);
-}
+                        <p id="type-hint" class="text-[11px] text-slate-400 leading-snug"></p>
 
-// ===== הוספה / עדכון / מחיקה =====
-function addTaskData(ss, task) {
-  var sheet = ss.getSheetByName('Active_Tasks');
-  var priority = (task.priority !== undefined && task.priority !== '') ? task.priority : 500;
-  sheet.appendRow([task.id, task.name, task.type, task.status, task.dueDate ? "'" + task.dueDate : '', task.dayOfMonth || '', task.monthOfYear || '', task.done === true, task.notes || '', priority, task.todoNotes || '']);
-}
-function updateTaskData(ss, taskId, updates) {
-  var sheet = ss.getSheetByName('Active_Tasks');
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (Number(data[i][0]) === Number(taskId)) {
-      var row = i + 1;
-      if (updates.name !== undefined) sheet.getRange(row, 2).setValue(updates.name);
-      if (updates.status !== undefined) sheet.getRange(row, 4).setValue(updates.status);
-      if (updates.dueDate !== undefined) sheet.getRange(row, 5).setValue(updates.dueDate ? "'" + updates.dueDate : '');
-      if (updates.done !== undefined) sheet.getRange(row, 8).setValue(updates.done);
-      if (updates.notes !== undefined) sheet.getRange(row, 9).setValue(updates.notes);
-      if (updates.priority !== undefined) sheet.getRange(row, 10).setValue(updates.priority);
-      if (updates.todoNotes !== undefined) sheet.getRange(row, 11).setValue(updates.todoNotes);
-      return;
-    }
-  }
-}
-// עדכון סדר עדיפויות בכמות (מערך של {id, priority})
-function reorderTasksData(ss, listJson) {
-  var list = JSON.parse(listJson);
-  var byId = {};
-  list.forEach(function (x) { byId[Number(x.id)] = x.priority; });
-  var sheet = ss.getSheetByName('Active_Tasks');
-  var data = sheet.getDataRange().getValues();
-  var changed = false;
-  for (var i = 1; i < data.length; i++) {
-    var id = Number(data[i][0]);
-    if (byId[id] !== undefined) { data[i][9] = byId[id]; changed = true; }
-  }
-  if (changed) sheet.getRange(2, 1, data.length - 1, data[0].length).setValues(data.slice(1));
-}
-function deleteTaskData(ss, taskId) {
-  var sheet = ss.getSheetByName('Active_Tasks');
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) { if (Number(data[i][0]) === Number(taskId)) { sheet.deleteRow(i + 1); return; } }
-}
+                        <div id="initial-due-date-container" class="hidden">
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">תאריך ביצוע מבוקש</label>
+                            <input type="date" id="task-due-date" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                        </div>
+                        <div id="weekly-day-container" class="hidden">
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">באיזה יום בשבוע?</label>
+                            <select id="task-weekly-day" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                                <option value="0">ראשון</option><option value="1">שני</option>
+                                <option value="2">שלישי</option><option value="3">רביעי</option>
+                                <option value="4">חמישי</option><option value="5">שישי</option>
+                            </select>
+                        </div>
+                        <div id="monthly-day-container" class="hidden">
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">באיזה יום בחודש? (1-31)</label>
+                            <input type="number" id="task-monthly-day" min="1" max="31" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition" placeholder="לדוגמה: 15">
+                        </div>
+                        <div id="annual-month-container" class="hidden">
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">באיזה חודש בשנה?</label>
+                            <select id="task-annual-month" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                                <option value="1">ינואר (01)</option><option value="2">פברואר (02)</option>
+                                <option value="3">מרץ (03)</option><option value="4">אפריל (04)</option>
+                                <option value="5">מאי (05)</option><option value="6">יוני (06)</option>
+                                <option value="7">יולי (07)</option><option value="8">אוגוסט (08)</option>
+                                <option value="9">ספטמבר (09)</option><option value="10">אוקטובר (10)</option>
+                                <option value="11">נובמבר (11)</option><option value="12">דצמבר (12)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
 
-// ===== יום סגור =====
-function isDayClosed(ss, dayKey) {
-  var sheet = ss.getSheetByName('History_Log');
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) { if (dateCellKey_(data[i][0]) === dayKey) return true; }
-  return false;
-}
-function deleteHistoryRow_(ss, dayKey) {
-  var sheet = ss.getSheetByName('History_Log');
-  var data = sheet.getDataRange().getValues();
-  for (var i = data.length - 1; i >= 1; i--) { if (dateCellKey_(data[i][0]) === dayKey) sheet.deleteRow(i + 1); }
-}
+                <!-- מצב: רוטינה קבועה מהמערכת -->
+                <div id="mode-routine" class="hidden">
+                    <button onclick="openRoutinePicker()" class="w-full bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-sm font-semibold py-2.5 rounded-xl transition">🔍 חפש רוטינה קבועה במערכת</button>
+                    <p class="text-[11px] text-slate-400 mt-1.5 text-center">בחר רוטינה מוגדרת כדי לבצע אותה ביום העבודה הנוכחי.</p>
+                </div>
 
-// ===== סגירת יום = דוח בלבד (בלי הזזת משימות) =====
-// הטיפול "מה עובר / מה נדחה" נעשה ידנית מראש. הסגירה רק שומרת תמונת מצב.
-function closeDayInternal_(ss, dayKey, intervalsJson) {
-  if (isDayClosed(ss, dayKey)) return;
-  var activeSheet = ss.getSheetByName('Active_Tasks');
-  var historySheet = ss.getSheetByName('History_Log');
-  var tasks = getActiveTasks(ss);
-  var board = tasks.filter(function (t) { return t.status === 'dated' && t.dueDate && t.dueDate <= dayKey; });
-  var snapshot = board.map(function (t) { return { id: t.id, name: t.name, type: t.type, done: t.done, notes: t.notes, dueDate: t.dueDate }; });
-  var tomorrow = buildTomorrowPlan_(tasks, board, dayKey);
-  var iv = intervalsJson || '[]';
-  var hours = calculateTotalHours(JSON.parse(iv));
-  historySheet.appendRow([dayKey, iv, hours, JSON.stringify({ tasks: snapshot, tomorrow: tomorrow })]);
+                <!-- מצב: משיכה מהרשימה הכללית -->
+                <div id="mode-general" class="hidden">
+                    <button onclick="openGeneralPicker()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-sm font-semibold py-2.5 rounded-xl transition">🔍 חפש משימה ברשימה הכללית</button>
+                    <p class="text-[11px] text-slate-400 mt-1.5 text-center">בחר משימה קיימת מהרשימה הכללית ומשוך אותה ליום העבודה.</p>
+                </div>
+            </div>
 
-  // ניקוי הלוח: כל משימות היום יורדות מהטבלה הפעילה (הן תועדו בדוח).
-  // בוצעו ורוטינות יומיות - נמחקות. משאר שלא בוצעו - עוברות ליום הבא (נטו, בלי הערות ישנות).
-  var nextKey = addDaysKey_(dayKey, 1);
-  var data = activeSheet.getDataRange().getValues();
-  var header = data[0];
-  var keep = [header];
-  for (var i = 1; i < data.length; i++) {
-    var status = data[i][3];
-    var due = data[i][4] !== '' ? dateCellKey_(data[i][4]) : '';
-    var done = data[i][7] === true || data[i][7] === 'TRUE' || data[i][7] === 'true';
-    var isTodayBoard = (status === 'dated' && due && due <= dayKey);
-    if (isTodayBoard) {
-      if (done || isDaily_(data[i][2])) continue; // נמחק לגמרי
-      data[i][4] = "'" + nextKey; // עובר ליום הבא
-      data[i][8] = '';            // איפוס הערות ישנות
-    }
-    keep.push(data[i]);
-  }
-  activeSheet.clearContents();
-  activeSheet.getRange(1, 1, keep.length, header.length).setValues(keep);
-}
+            <!-- שיתוף -->
+            <div id="share-card" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 order-4">
+                <h3 class="font-bold text-slate-950 text-sm">שיתוף וסיכום</h3>
+                <button onclick="copyDetailedSummaryToClipboard()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    📋 העתק סיכום יום (לווצאפ)
+                </button>
+                <p class="text-[11px] text-slate-400 text-center leading-relaxed">
+                    מעתיק ללוח סיכום מסודר של מה שבוצע היום ומה שנשאר למחר, כולל שעות הנוכחות — מוכן להדבקה בווצאפ.
+                </p>
+            </div>
 
-// ===== לוגיקת מועד רוטינה (כולל השלמה וחודשים קצרים) =====
-function pad2_(n) { return ('0' + n).slice(-2); }
-function daysInMonth_(y, m) { return new Date(y, m, 0).getDate(); } // m 1-based
+            <!-- הגדרות -->
+            <div id="settings-card" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden order-5">
+                <button onclick="toggleSettings()" class="w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        </svg>
+                        הגדרות
+                    </h3>
+                    <span class="text-slate-400">▼</span>
+                </button>
+                <div id="settings-panel" class="hidden p-5 border-t border-slate-200 bg-slate-50/50 space-y-4 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">קישור ליישום האינטרנט (Web App URL):</label>
+                        <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
+                    </div>
+                    <div class="pt-3 border-t border-slate-200">
+                        <label class="block font-semibold text-slate-600 mb-1">שינוי סיסמת עובד:</label>
+                        <input type="text" id="editor-pw-input" placeholder="סיסמה חדשה" onchange="saveEditorPw()" class="w-full px-3 py-2 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
+                        <p class="text-[11px] text-slate-400 mt-1.5">הסיסמה נשמרת בגיליון (Config) ותקפה בכל המכשירים. ברירת מחדל: 1234.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-// מחזיר { create, occ } עבור זרע בתאריך יעד. lastGen = התאריך האחרון שנוצר לו מופע.
-// חודשית: המועד החודשי הוא min(יום-בחודש, מספר הימים בחודש). אם עבר/הגיע ולא נוצר החודש -> יצירה (השלמה).
-// שנתית: המועד הוא ה-1 בחודש שהוגדר. אם עבר/הגיע ולא נוצר השנה -> יצירה.
-function routineWouldFall_(type, dayOfMonth, monthOfYear, lastGen, targetKey) {
-  var p = targetKey.split('-');
-  var y = Number(p[0]), m = Number(p[1]);
-  lastGen = lastGen || '';
+        <!-- צד שמאל -->
+        <div class="lg:col-span-8 space-y-6">
 
-  if (isDaily_(type)) {
-    if (!lastGen || lastGen < targetKey) return { create: true, occ: targetKey };
-    return { create: false, occ: '' };
-  }
-  if (isMonthly_(type)) {
-    var sd = Number(dayOfMonth); if (!sd) return { create: false, occ: '' };
-    var eff = Math.min(sd, daysInMonth_(y, m));
-    var occ = y + '-' + pad2_(m) + '-' + pad2_(eff);
-    if (targetKey >= occ && (!lastGen || lastGen < occ)) return { create: true, occ: occ };
-    return { create: false, occ: '' };
-  }
-  if (isYearly_(type)) {
-    var my = Number(monthOfYear); if (!my) return { create: false, occ: '' };
-    var occ2 = y + '-' + pad2_(my) + '-01';
-    if (targetKey >= occ2 && (!lastGen || lastGen < occ2)) return { create: true, occ: occ2 };
-    return { create: false, occ: '' };
-  }
-  return { create: false, occ: '' };
-}
+            <!-- חיווי בולט: יום פעיל מול תכנון יום הבא -->
+            <div id="board-mode-banner" class="hidden"></div>
 
-// בניית "תוכנית מחר" לדוח: נדחו (לא בוצעו) + רוטינות שנופלות/הושלמו למחר + מתוזמנות למחר
-function buildTomorrowPlan_(tasks, board, dayKey) {
-  var tomKey = addDaysKey_(dayKey, 1);
-  var plan = [], seen = {};
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 flex flex-wrap gap-x-6 px-6">
+                    <button id="tab-today-btn" onclick="switchTab('today')" class="py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm transition">
+                        משימות היום
+                        <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full mr-1.5" id="today-tasks-count">0</span>
+                    </button>
+                    <button id="tab-bydate-btn" onclick="switchTab('bydate')" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium text-sm transition">
+                        משימות לתאריך
+                        <span class="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full mr-1.5" id="bydate-tasks-count">0</span>
+                    </button>
+                    <button id="tab-general-btn" onclick="switchTab('general')" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium text-sm transition">
+                        רשימה כללית
+                        <span class="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full mr-1.5" id="general-tasks-count">0</span>
+                    </button>
+                    <button id="tab-history-btn" onclick="switchTab('history')" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium text-sm transition">
+                        היסטוריית ימים
+                    </button>
+                </div>
 
-  board.forEach(function (t) {
-    if (!t.done && !isDaily_(t.type)) { plan.push({ name: t.name, type: t.type, reason: 'נדחתה מהיום' }); seen[t.name] = true; }
-  });
-  tasks.forEach(function (t) {
-    if (t.status !== 'seed') return;
-    if (isDaily_(t.type)) return; // רוטינה יומית תיווצר אוטומטית - אין צורך להציגה בתוכנית מחר
-    var r = routineWouldFall_(t.type, t.dayOfMonth, t.monthOfYear, t.dueDate, tomKey);
-    if (r.create && !seen[t.name]) { plan.push({ name: t.name, type: t.type, reason: 'רוטינה' }); seen[t.name] = true; }
-  });
-  tasks.forEach(function (t) {
-    if (t.status === 'dated' && t.dueDate === tomKey && !seen[t.name]) { plan.push({ name: t.name, type: t.type, reason: 'מתוזמנת' }); seen[t.name] = true; }
-  });
-  return plan;
-}
+                <!-- טאב: משימות היום -->
+                <div id="tab-today-content" class="divide-y divide-slate-100"></div>
 
-function closeDayWorkflow(ss, intervalsJson) {
-  var day = workingDay_(ss);
-  if (isDayClosed(ss, day)) throw new Error('היום (' + heDate_(day) + ') כבר נסגר. אפשר לערוך אותו דרך ההיסטוריה.');
-  closeDayInternal_(ss, day, intervalsJson);
-  setConfig_(ss, 'activeWorkDay', day);
-}
+                <!-- טאב: משימות לתאריך -->
+                <div id="tab-bydate-content" class="hidden">
+                    <div class="px-6 py-4 bg-slate-50/60 border-b border-slate-100 space-y-3">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <label class="text-xs font-semibold text-slate-600">הצג משימות לתאריך:</label>
+                            <input type="date" id="bydate-picker" onchange="onByDateChange(this.value)" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <div class="flex gap-1.5">
+                                <button onclick="quickByDate('tomorrow')" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1.5 rounded-lg transition">מחר</button>
+                                <button onclick="quickByDate('week')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-2.5 py-1.5 rounded-lg transition">בעוד שבוע</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-[11px] text-slate-500">🔮 זו הדמיה בלבד — מציגה מה צפוי באותו יום (רוטינות + מתוזמנות + מה שעשוי להיגרר). המשימות נוצרות בפועל רק ב"פתיחת יום עבודה".</span>
+                        </div>
+                    </div>
+                    <div id="bydate-list" class="divide-y divide-slate-100"></div>
+                </div>
 
-// ===== פתיחת יום = בניית דף נקי =====
-// מנקה בוצעו ישנים, מוחק רוטינות יומיות שלא בוצעו (הן ייווצרו מחדש),
-// גורר משימות אחרות שלא בוצעו אל היום כטריות (בלי תאריך ישן ובלי הערות ישנות),
-// ומייצר את מופעי הרוטינות של היום (כולל השלמה).
-function openDayWorkflow(ss, targetKey) {
-  var target = targetKey ? dateCellKey_(targetKey) : todayStr_();
-  var activeSheet = ss.getSheetByName('Active_Tasks');
+                <!-- טאב: רשימה כללית -->
+                <div id="tab-general-content" class="hidden max-h-[640px] overflow-y-auto custom-scrollbar"></div>
 
-  // 1) סגירה אוטומטית של יום קודם שנפתח ולא נסגר (סוגר עם התאריך שלו ומנקה אותו)
-  var prev = activeWorkDay_(ss);
-  if (prev && prev < target && !isDayClosed(ss, prev)) {
-    closeDayInternal_(ss, prev, getAttendanceRawFor_(ss, prev));
-  }
+                <!-- טאב: היסטוריה -->
+                <div id="tab-history-content" class="hidden p-6 space-y-6">
+                    <div class="text-center py-8 text-slate-400 text-sm hidden" id="history-empty-state">
+                        טרם נרשמה היסטוריית ימים קודמים בגיליון.
+                    </div>
+                    <div id="history-list" class="space-y-6"></div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-  // חסימה: לא ניתן לפתוח יום שכבר נסגר (עריכה רק דרך ההיסטוריה)
-  if (isDayClosed(ss, target)) throw new Error('התאריך ' + heDate_(target) + ' כבר נסגר. לא ניתן לפתוח אותו מחדש — ניתן לתקן ולערוך אותו דרך מסך ההיסטוריה בלבד.');
+    <!-- מודל תצוגה מקדימה לפני סגירה -->
+    <div id="close-preview-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <h3 class="font-bold text-lg text-slate-900 mb-1">תצוגה מקדימה של דוח היום</h3>
+            <p class="text-xs text-slate-500 mb-4">כך ייראה הדוח שיישמר. אשר כדי לסגור את היום ולנקות את הלוח, או חזור לעריכה.</p>
+            <div id="close-preview-content" class="space-y-4 mb-6"></div>
+            <div class="space-y-2">
+                <div class="flex gap-2">
+                    <button onclick="doCloseDay()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">סגור בלבד 💾</button>
+                    <button onclick="closeAndCopy()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">📋 סגור + העתק לווצאפ</button>
+                </div>
+                <button onclick="document.getElementById('close-preview-modal').classList.add('hidden')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-xl text-sm transition">חזור לעריכה</button>
+            </div>
+        </div>
+    </div>
 
-  var data = activeSheet.getDataRange().getValues();
-  var header = data[0];
-  var existing = {};
-  for (var j = 1; j < data.length; j++) {
-    if (data[j][3] === 'dated' && data[j][4] !== '') {
-      var dd = dateCellKey_(data[j][4]);
-      if (dd === target) existing[data[j][1] + '|' + target] = true;
-    }
-  }
+    <!-- מודל שעת סיום היום -->
+    <div id="endtime-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="font-bold text-base text-slate-900 mb-1">מתי הסתיים יום העבודה?</h3>
+            <p class="text-xs text-slate-500 mb-4">לא נרשמה שעת סיום לסבב הנוכחות האחרון. הזן את השעה המדויקת שבה סיימת, כדי שהדיווח יהיה נכון.</p>
+            <input type="time" id="endtime-input" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <div class="flex gap-2">
+                <button onclick="confirmEndTimeAndClose()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">שמור וסגור יום</button>
+                <button onclick="document.getElementById('endtime-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
+            </div>
+        </div>
+    </div>
 
-  var keep = [header];
-  var newInstances = [];
-  var idCounter = Date.now();
+    <!-- מודל דיווח יום קודם -->
+    <div id="report-day-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="font-bold text-base text-slate-900 mb-1">דיווח יום קודם</h3>
+            <p class="text-xs text-slate-500 mb-4">בחר תאריך של יום עבר שברצונך לפתוח ולדווח. המערכת תבנה את לוח אותו יום (רוטינות + משימות פתוחות), ותאפשר לך למלא נוכחות ולסגור אותו כדוח נפרד.</p>
+            <input type="date" id="report-day-input" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <div class="flex gap-2">
+                <button onclick="confirmReportDay()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">פתח יום זה</button>
+                <button onclick="document.getElementById('report-day-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
+            </div>
+        </div>
+    </div>
 
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    var status = row[3];
-    var name = row[1];
-    var type = row[2];
+    <!-- מודל בורר להוספת משימה להיום (רוטינות / רשימה כללית) -->
+    <div id="routine-picker-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 max-h-[80vh] overflow-y-auto">
+            <h3 id="picker-title" class="font-bold text-base text-slate-900 mb-1">הוספת משימה להיום</h3>
+            <p id="picker-subtitle" class="text-xs text-slate-500 mb-3">בחר משימה כדי להוסיף אותה ללוח היום.</p>
+            <input type="text" id="picker-search" oninput="renderPickerList(this.value)" placeholder="🔍 חיפוש משימה…" class="w-full px-3 py-2 mb-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <div id="routine-picker-list" class="space-y-2"></div>
+            <button onclick="closeRoutinePicker()" class="w-full mt-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">סגור</button>
+        </div>
+    </div>
 
-    if (status === 'dated') {
-      var due = row[4] !== '' ? dateCellKey_(row[4]) : '';
-      var done = row[7] === true || row[7] === 'TRUE' || row[7] === 'true';
-      if (due && due < target) {
-        if (done) continue;                 // ניקוי בוצעו ישנים
-        if (isDaily_(type)) continue;        // רוטינה יומית שלא בוצעה - נמחקת, תיווצר מחדש
-        // גרירה טרייה: תאריך היום + איפוס הערות ישנות
-        row[4] = "'" + target;
-        row[8] = '';
-        existing[name + '|' + target] = true;
-        keep.push(row);
-      } else {
-        if (due === target) existing[name + '|' + target] = true;
-        keep.push(row);                      // משימות היום / עתידיות - נשארות
-      }
-    } else if (status === 'seed') {
-      var lastGen = row[4] !== '' ? dateCellKey_(row[4]) : '';
-      var r = routineWouldFall_(type, row[5], row[6], lastGen, target);
-      if (r.create) {
-        if (!existing[name + '|' + target]) {
-          idCounter += 1;
-          newInstances.push([idCounter, name, type, 'dated', "'" + target, '', '', false, '', 500, '']);
-          existing[name + '|' + target] = true;
+    <!-- מודל תזמון מחדש: העברה או שכפול -->
+    <!-- סרגל בחירה מרובה -->
+    <div id="selection-bar" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white rounded-2xl shadow-xl px-4 py-2.5 flex items-center gap-3">
+        <span class="text-sm font-medium"><span id="selection-count">0</span> נבחרו</span>
+        <button onclick="startBulkReschedule()" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-3 py-1.5 rounded-xl transition">📅 תזמון ליום אחר</button>
+        <button onclick="toggleSelectionMode()" class="text-slate-300 hover:text-white text-sm">ביטול</button>
+    </div>
+
+    <div id="reschedule-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="font-bold text-base text-slate-900 mb-1">תזמון מחדש</h3>
+            <p class="text-xs text-slate-500 mb-4" id="reschedule-task-name">—</p>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">לאיזה תאריך?</label>
+            <input type="date" id="reschedule-date-input" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <div class="space-y-2">
+                <button id="reschedule-move-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">
+                    ➡️ העבר לתאריך זה
+                    <span class="block text-[10px] font-normal opacity-80">המשימה תעבור. לא תישאר במקום הנוכחי.</span>
+                </button>
+                <button id="reschedule-copy-btn" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-sm font-semibold py-2.5 rounded-xl transition">
+                    📑 שכפל לתאריך זה
+                    <span class="block text-[10px] font-normal opacity-80">יווצר עותק בתאריך החדש, והמשימה תישאר גם היום (להמשך טיפול).</span>
+                </button>
+                <button id="reschedule-cancel-btn" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודל עריכת דוח יום (היסטוריה) -->
+    <div id="history-edit-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <h3 class="font-bold text-lg text-slate-900 mb-1">עריכת דוח יום</h3>
+            <p class="text-xs text-slate-500 mb-4" id="history-edit-date">—</p>
+            <div class="mb-5">
+                <span class="block font-semibold text-slate-700 text-sm mb-2">סבבי נוכחות:</span>
+                <div id="history-edit-intervals" class="space-y-2"></div>
+                <button onclick="historyEditAddInterval()" class="mt-2 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-1 px-3 rounded-lg transition">➕ סבב</button>
+            </div>
+            <div class="mb-6">
+                <span class="block font-semibold text-slate-700 text-sm mb-2">משימות היום:</span>
+                <div id="history-edit-tasks" class="space-y-2"></div>
+                <div class="flex gap-2 mt-2">
+                    <input type="text" id="history-add-task-name" placeholder="הוסף משימה מזדמנת ליום זה…" class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <button onclick="historyEditAddTask()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold px-3 rounded-lg transition">➕ הוסף</button>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1">ניתן להוסיף כאן רק משימות מזדמנות (חד-פעמיות); רוטינות קבועות מתווספות דרך מסך המשימות.</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="saveHistoryEdit()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">שמור שינויים 💾</button>
+                <button onclick="closeHistoryEdit()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-xl text-sm transition">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- מודל מחיקה -->
+    <div id="delete-confirm-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+            <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </div>
+            <h3 class="font-bold text-base text-slate-900 mb-1">מחיקת משימה</h3>
+            <p class="text-xs text-slate-500 mb-6 leading-relaxed">למחוק את המשימה לחלוטין מהמערכת? פעולה זו אינה ניתנת לביטול.</p>
+            <div class="flex gap-2">
+                <button id="btn-delete-confirm" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold py-2.5 rounded-xl transition">מחק לצמיתות</button>
+                <button id="btn-delete-cancel" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2.5 rounded-xl transition">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+    <script>
+        // ====== מצב גלובלי ======
+        let gasUrl = "https://script.google.com/macros/s/AKfycbxrEsThj4OYQdR_1rxIWZhCN-FbylcjKaeK31kJ8VXcUeMT34SL-C8r2sXqWZV8iS03_A/exec";
+        let tasks = [];
+        let history = [];
+        let attendanceIntervals = [];
+        let dayClosed = false;
+        let dayOpen = false;
+        let prevUnclosed = false;
+        let workDate = '';       // היום שמדווחים כרגע (ברירת מחדל: היום)
+        let viewDay = '';        // יום התצוגה של הלוח (היום, או מחר אם היום נסגר)
+        let todayReal = '';      // התאריך הקלנדרי האמיתי
+        let lastClosed = '';     // התאריך האחרון שנסגר
+
+        function boardDate(){ return viewDay || workDate || todayISO(); }
+
+        function updateDayStatus(){
+            const wd = workDate || todayReal;
+            const isPast = wd && todayReal && wd !== todayReal;
+            let label, color;
+            if (dayClosed) { label = 'יום נסגר'; color = 'text-slate-500'; }
+            else if (dayOpen) { label = 'יום עבודה פתוח'; color = 'text-emerald-600'; }
+            else if (prevUnclosed) { label = 'טרם נסגר יום קודם'; color = 'text-rose-600'; }
+            else { label = 'יום טרם נפתח'; color = 'text-amber-600'; }
+            const txt = document.getElementById('day-status-text');
+            if (txt) {
+                txt.className = 'text-xs font-semibold ' + color;
+                txt.innerText = wd ? (label + ' · ' + heDate(wd) + (isPast ? ' (לא היום)' : '')) : label;
+            }
+            const ob = document.getElementById('open-buttons');
+            const cb = document.getElementById('close-button');
+            if (ob) ob.classList.toggle('hidden', dayOpen);
+            if (cb) cb.classList.toggle('hidden', !dayOpen);
+            const wrap = document.getElementById('return-today-wrap');
+            if (wrap) wrap.classList.toggle('hidden', !isPast);
         }
-        row[4] = "'" + r.occ; // עדכון lastGen
-      }
-      keep.push(row);
-    } else {
-      keep.push(row); // רשימה כללית
-    }
-  }
 
-  var all = keep.concat(newInstances);
-  activeSheet.clearContents();
-  activeSheet.getRange(1, 1, all.length, header.length).setValues(all);
+        // ====== הרשאות: צפייה כברירת מחדל, כניסת עורך בסיסמה ======
+        let readOnly = true; // ברירת מחדל: צפייה בלבד
+        // חוסם פעולות עריכה מלאות. הערות-לביצוע וסדר-עדיפות מותרים גם בצפייה (לכן לא עוברים דרך guardRO).
+        function guardRO(){ if (readOnly) { showNotification('🕊️ מצב הרב סגל — נדרש להיכנס כעובד לעריכה מלאה.', true); return true; } return false; }
 
-  setConfig_(ss, 'activeWorkDay', target);
-}
+        function applyReadOnlyUI(){
+            const banner = document.getElementById('readonly-banner');
+            if (banner) banner.classList.toggle('hidden', !readOnly);
+            const addCard = document.getElementById('addtask-card'); if (addCard) addCard.classList.toggle('hidden', readOnly);
+            const shareCard = document.getElementById('share-card'); if (shareCard) shareCard.classList.toggle('hidden', readOnly);
+            const settingsCard = document.getElementById('settings-card'); if (settingsCard) settingsCard.classList.toggle('hidden', readOnly);
+            const dayControls = document.getElementById('day-action-controls'); if (dayControls) dayControls.classList.toggle('hidden', readOnly);
+            const loginBtn = document.getElementById('editor-login-btn'); if (loginBtn) loginBtn.classList.toggle('hidden', !readOnly);
+            const logoutBtn = document.getElementById('editor-logout-btn'); if (logoutBtn) logoutBtn.classList.toggle('hidden', readOnly);
+            if (!readOnly) updateDayStatus();
+        }
 
-// ===== הכנת יום התצוגה: ניקוי רוטינות יומיות ישנות + יצירת רוטינות היום =====
-// כך הלוח מאוכלס תמיד גם ללא "פתיחת יום", ולעולם בלי כפילויות:
-// רוטינה יומית ישנה (מיום קודם) נמחקת כי היא נוצרת מחדש; dedup+lastGen מונעים כפל.
-function ensureRoutinesForView_(ss) {
-  var wd = workingDay_(ss);
-  var viewDay = isDayClosed(ss, wd) ? addDaysKey_(wd, 1) : wd;
-  var activeSheet = ss.getSheetByName('Active_Tasks');
-  var data = activeSheet.getDataRange().getValues();
-  var header = data[0];
-  var existing = {};
-  var keep = [header];
-  var changed = false;
-  var inheritedPriority = {}; // שם רוטינה יומית -> העדיפות מהיום הקודם (לשימור התיעדוף)
+        function editorLogin(){
+            const pw = prompt('הזן סיסמת עובד (ברירת מחדל: 1234):');
+            if (pw === null) return;
+            fetchJSONP(gasUrl, { action: 'login', pw: pw }, 'cb_login')
+                .then(data => {
+                    if (data && data.ok === true) {
+                        readOnly = false;
+                        localStorage.setItem('is_editor', '1');
+                        applyReadOnlyUI(); renderTasks();
+                        showNotification('🔓 נכנסת כעובד.');
+                    } else if (data && data.status === 'success') {
+                        showNotification('סיסמה שגויה.', true);
+                    } else {
+                        showNotification('הכניסה נכשלה. ודא שעדכנת ופרסמת את Code.gs (גרסה חדשה).', true);
+                    }
+                })
+                .catch(() => showNotification('שגיאת חיבור בהתחברות.', true));
+        }
+        function editorLogout(){
+            readOnly = true;
+            localStorage.removeItem('is_editor');
+            applyReadOnlyUI(); renderTasks();
+            showNotification('🕊️ עברת למצב הרב סגל (צפייה ותיעדוף משימות).');
+        }
+        function initReadOnlyFromUrl(){
+            if (localStorage.getItem('is_editor') === '1') { readOnly = false; return; }
+            try {
+                const q = new URLSearchParams(window.location.search);
+                if (q.get('edit') === '1') { readOnly = false; localStorage.setItem('is_editor','1'); }
+            } catch(e) {}
+        }
+        function saveEditorPw(){
+            if (readOnly) return;
+            const v = document.getElementById('editor-pw-input').value.trim();
+            if (!v) return;
+            fetchJSONP(gasUrl, { action: 'setEditorPw', pw: v }, 'cb_setpw')
+                .then(() => showNotification('סיסמת העורך עודכנה.'))
+                .catch(() => showNotification('שגיאה בעדכון הסיסמה.', true));
+        }
+        let currentTab = 'today';
+        let selectedDate = '';        // טאב "משימות לתאריך"
+        let editingNameId = null;     // עריכת שם משימה אינלייןֿ
+        let expandedTaskId = null;    // רק שורת ניהול אחת פתוחה בכל רגע
+        let selectionMode = false;    // מצב בחירה מרובה
+        let selectedIds = new Set();  // משימות שנבחרו לפעולה קבוצתית
+        let historyEditState = null;  // עריכת דוח יום
 
-  // מעבר 1: בונים keep, מסירים מופעי רוטינה יומית מתאריך קודם (הם יתחדשו) ושומרים עדיפות
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    if (row[3] === 'dated' && row[4] !== '') {
-      var due = dateCellKey_(row[4]);
-      if (due < viewDay && isDaily_(row[2])) {
-        var nm = row[1];
-        var pr = (row[9] !== '' && row[9] !== undefined) ? Number(row[9]) : 500;
-        if (!inheritedPriority[nm] || due > inheritedPriority[nm].date) inheritedPriority[nm] = { date: due, priority: pr };
-        changed = true; continue; // מוסר - יתחדש עם אותה עדיפות
-      }
-      existing[row[1] + '|' + due] = true;
-    }
-    keep.push(row);
-  }
+        // ====== עזרי תאריך (לפי שעון מקומי) ======
+        function localISO(d){
+            const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+            return `${y}-${m}-${day}`;
+        }
+        function todayISO(){ return localISO(new Date()); }
+        function tomorrowISO(){ const d=new Date(); d.setDate(d.getDate()+1); return localISO(d); }
+        function addDaysISO(iso, n){
+            const p=iso.split('-'); const d=new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+            d.setDate(d.getDate()+n); return localISO(d);
+        }
+        function heDate(iso){ if(!iso) return ''; const p=iso.split('-'); if(p.length!==3) return iso; return `${Number(p[2])}/${Number(p[1])}/${p[0]}`; }
+        function heDateShort(iso){ if(!iso) return ''; const p=iso.split('-'); if(p.length!==3) return iso; return `${Number(p[2])}/${Number(p[1])}`; }
+        function dayOfWeekOf(iso){ const p=iso.split('-'); return new Date(Number(p[0]), Number(p[1])-1, Number(p[2])).getDay(); }
+        function heDateWithWeekday(iso){ if(!iso) return ''; return `${heDate(iso)} יום ${WEEKDAY_NAMES[dayOfWeekOf(iso)]}`; }
+        const MONTHS_HE = ['','ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
-  // מעבר 2: יצירת מופעי הרוטינות של יום התצוגה מתוך הזרעים
-  var newInstances = [];
-  var idCounter = Date.now();
-  for (var k = 1; k < keep.length; k++) {
-    if (keep[k][3] !== 'seed') continue;
-    var lastGen = keep[k][4] !== '' ? dateCellKey_(keep[k][4]) : '';
-    var r = routineWouldFall_(keep[k][2], keep[k][5], keep[k][6], lastGen, viewDay);
-    if (r.create) {
-      if (!existing[keep[k][1] + '|' + viewDay]) {
-        idCounter += 1;
-        var prio = inheritedPriority[keep[k][1]] !== undefined ? inheritedPriority[keep[k][1]].priority : 500;
-        newInstances.push([idCounter, keep[k][1], keep[k][2], 'dated', "'" + viewDay, '', '', false, '', prio, '']);
-        existing[keep[k][1] + '|' + viewDay] = true;
-      }
-      keep[k][4] = "'" + r.occ;
-      changed = true;
-    }
-  }
+        // לוגיקת מועד רוטינה (כולל השלמה וחודשים קצרים) — תואם לשרת
+        function pad2(n){ return ('0'+n).slice(-2); }
+        function daysInMonthJS(y,m){ return new Date(y,m,0).getDate(); } // m 1-based
+        function occOfWeekdayJS(targetKey, weekDay){
+            const p = targetKey.split('-'); const d = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+            const dow = d.getDay();
+            const diff = (dow - weekDay + 7) % 7;
+            d.setDate(d.getDate() - diff);
+            return localISO(d);
+        }
+        function routineWouldFall(type, dayOfMonth, monthOfYear, lastGen, targetKey, weekDay){
+            const p = targetKey.split('-'); const y = Number(p[0]), m = Number(p[1]);
+            lastGen = lastGen || '';
+            if (isDaily(type)) return (!lastGen || lastGen < targetKey);
+            if (isWeekly(type)) {
+                const wd = Number(weekDay);
+                if (weekDay === '' || weekDay === undefined || weekDay === null || isNaN(wd)) return false;
+                const occ = occOfWeekdayJS(targetKey, wd);
+                return (targetKey >= occ && (!lastGen || lastGen < occ));
+            }
+            if (isMonthly(type)) {
+                const sd = Number(dayOfMonth); if (!sd) return false;
+                const eff = Math.min(sd, daysInMonthJS(y, m));
+                const occ = y + '-' + pad2(m) + '-' + pad2(eff);
+                return (targetKey >= occ && (!lastGen || lastGen < occ));
+            }
+            if (isYearly(type)) {
+                const my = Number(monthOfYear); if (!my) return false;
+                const occ2 = y + '-' + pad2(my) + '-01';
+                return (targetKey >= occ2 && (!lastGen || lastGen < occ2));
+            }
+            return false;
+        }
 
-  if (changed) {
-    var all = keep.concat(newInstances);
-    activeSheet.clearContents();
-    activeSheet.getRange(1, 1, all.length, header.length).setValues(all);
-  }
-}
+        // ====== אתחול ======
+        window.onload = function() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('he-IL', options);
 
-// ===== עריכת דוח יום =====
-function updateHistoryData(ss, dayKey, intervalsJson, tasksJson) {
-  var sheet = ss.getSheetByName('History_Log');
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (dateCellKey_(data[i][0]) === dayKey) {
-      var row = i + 1;
-      if (intervalsJson) { sheet.getRange(row, 2).setValue(intervalsJson); sheet.getRange(row, 3).setValue(calculateTotalHours(JSON.parse(intervalsJson))); }
-      if (tasksJson) sheet.getRange(row, 4).setValue(tasksJson);
-      return;
-    }
-  }
-  throw new Error('לא נמצא דוח לתאריך ' + heDate_(dayKey));
-}
+            const savedUrl = localStorage.getItem('gas_url');
+            if (savedUrl) gasUrl = savedUrl;
+            document.getElementById('gas-url-input').value = gasUrl;
 
-// ===== חישוב שעות =====
-function calculateTotalHours(intervals) {
-  var total = 0;
-  intervals.forEach(function (iv) {
-    if (!iv.start || !iv.end) return;
-    var s = iv.start.split(':').map(Number), e = iv.end.split(':').map(Number);
-    var sm = s[0] * 60 + s[1], em = e[0] * 60 + e[1];
-    if (em > sm) total += (em - sm);
-  });
-  return (total / 60).toFixed(1);
-}
+            selectedDate = tomorrowISO();
+            document.getElementById('bydate-picker').value = selectedDate;
 
-// ===== היסטוריה =====
-function loadHistory(ss) {
-  var sheet = ss.getSheetByName('History_Log');
-  if (!sheet) return [];
-  var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return [];
-  var history = [];
-  var startRow = Math.max(1, data.length - 15);
-  for (var i = data.length - 1; i >= startRow; i--) {
-    history.push({ date: dateCellKey_(data[i][0]), intervals: data[i][1], totalHours: data[i][2], tasks: data[i][3] });
-  }
-  return history;
-}
+            handleTaskTypeChange();
+            handleAddModeChange();
+            initReadOnlyFromUrl();
+            applyReadOnlyUI();
+            loadDataFromSheets(true);
+            window.addEventListener('online', () => { if (pendingWrites.length > 0) flushPending(); });
+            // ניסיון חוזר אוטומטי כל 15 שניות לשינויים שממתינים (ריפוי עצמי אחרי נתק רגעי)
+            setInterval(() => { if (pendingWrites.length > 0 && navigator.onLine !== false && !flushing) flushPending(); }, 15000);
+        };
+
+        // ====== תקשורת JSONP (עוקף CORS) ======
+        function fetchJSONP(url, params, callbackName) {
+            return new Promise((resolve, reject) => {
+                const uniqueCallback = callbackName + '_' + Date.now() + '_' + Math.round(100000 * Math.random());
+                let done = false;
+                const timer = setTimeout(() => { if (!done) { done = true; cleanup(); reject(new Error('JSONP timeout')); } }, 25000);
+                window[uniqueCallback] = function(data){ if (done) return; done = true; clearTimeout(timer); resolve(data); cleanup(); };
+                const queryParams = new URLSearchParams(params);
+                queryParams.set('callback', uniqueCallback);
+                const scriptUrl = url + (url.includes('?') ? '&' : '?') + queryParams.toString();
+                const script = document.createElement('script');
+                script.src = scriptUrl;
+                script.id = uniqueCallback;
+                script.onerror = function(){ if (done) return; done = true; clearTimeout(timer); reject(new Error('JSONP request failed')); cleanup(); };
+                function cleanup(){ delete window[uniqueCallback]; const el=document.getElementById(uniqueCallback); if(el) el.remove(); }
+                document.body.appendChild(script);
+            });
+        }
+
+        function applyLoadedData(data){
+            tasks = data.tasks || [];
+            dayClosed = !!data.dayClosed;
+            dayOpen = !!data.dayOpen;
+            prevUnclosed = !!data.prevUnclosed;
+            workDate = data.workDate || '';
+            viewDay = data.viewDay || data.workDate || '';
+            todayReal = data.today || '';
+            lastClosed = data.lastClosed || '';
+            try {
+                const attData = JSON.parse(data.attendance.intervals);
+                attendanceIntervals = Array.isArray(attData) ? attData : [];
+            } catch(e) {
+                attendanceIntervals = [{ start: "10:00", end: "", note: "" }];
+            }
+            updateDayStatus();
+        }
+
+        function loadDataFromSheets(isInitial = false) {
+            // קודם דוחפים שינויים ממתינים (שלא נשמרו בגלל נתק), ורק אז טוענים - כדי לא לדרוס אותם
+            const proceed = () => {
+                if (isInitial) showLoader("מסתנכרן מול גוגל שיטס...");
+                else updateConnectionStatus('loading');
+                fetchJSONP(gasUrl, { action: 'loadAll' }, 'cb_loadAll')
+                    .then(data => {
+                        applyLoadedData(data);
+                        updateConnectionStatus('connected');
+                        renderAttendance();
+                        renderTasks();
+                        if (isInitial) hideLoader();
+                    })
+                    .catch(err => {
+                        console.error("Error fetching data:", err);
+                        updateConnectionStatus('error');
+                        showNotification("שגיאה בחיבור לשרת. השינויים המקומיים נשמרו ולא נמחקו.", true);
+                        if (isInitial) hideLoader();
+                    });
+            };
+            if (pendingWrites.length > 0) {
+                updateConnectionStatus('syncing');
+                flushPending().then(proceed);
+            } else proceed();
+        }
+
+        function loadHistoryFromSheets() {
+            showLoader("טוען היסטוריה מהענן...");
+            fetchJSONP(gasUrl, { action: 'loadHistory' }, 'cb_loadHistory')
+                .then(data => { history = data.history || []; renderHistory(); hideLoader(); })
+                .catch(err => { console.error(err); showNotification("שגיאה בטעינת היסטוריה.", true); hideLoader(); });
+        }
+
+        // ====== תור שמירה אופליין ======
+        let pendingWrites = [];
+        try { pendingWrites = JSON.parse(localStorage.getItem('pending_writes') || '[]'); } catch(e) { pendingWrites = []; }
+        function savePending(){ try { localStorage.setItem('pending_writes', JSON.stringify(pendingWrites)); } catch(e){} }
+        function rawSend(payload){
+            const p = { action: payload.action, ...payload };
+            if (payload.task) p.task = JSON.stringify(payload.task);
+            if (payload.updates) p.updates = JSON.stringify(payload.updates);
+            return fetchJSONP(gasUrl, p, 'cb_sync');
+        }
+        function queueWrite(payload){ pendingWrites.push(payload); savePending(); updateConnectionStatus('error'); }
+        let flushing = false;
+        let flushFailCount = 0;
+        function flushPending(){
+            if (flushing) return Promise.resolve(false);
+            if (pendingWrites.length === 0) return Promise.resolve(true);
+            flushing = true;
+            updateConnectionStatus('syncing');
+            const queue = pendingWrites.slice();
+            pendingWrites = []; savePending();
+            const failed = [];
+            let chain = Promise.resolve();
+            // הגיע לשרת (גם אם השרת החזיר שגיאה) = טופל, לא מחזירים לתור. רק נתק/timeout חוזר לתור.
+            queue.forEach(p => { chain = chain.then(() => rawSend(p).then(()=>{}).catch(()=> { failed.push(p); })); });
+            return chain.then(() => {
+                flushing = false;
+                if (failed.length) {
+                    flushFailCount++;
+                    if (flushFailCount >= 3) {
+                        // ויתור על שינוי תקוע כדי לא להישאר לנצח ב"ממתין"
+                        flushFailCount = 0;
+                        savePending();
+                        showNotification('שינוי מסוים לא נשמר גם אחרי כמה נסיונות ובוטל. מומלץ לרענן את הדף (🔄).', true);
+                    } else {
+                        pendingWrites = failed.concat(pendingWrites); savePending();
+                    }
+                } else {
+                    flushFailCount = 0;
+                    savePending();
+                    showNotification('כל השינויים נשמרו ✅');
+                }
+                updateConnectionStatus(pendingWrites.length ? 'error' : 'connected');
+                return pendingWrites.length === 0;
+            });
+        }
+
+        // שליחת שינוי לשרת. השמירות רצות בזו אחר זו (למניעת כשלי-מקביליות מול Apps Script).
+        let writeChain = Promise.resolve();
+        function sendPostToSheets(payload, silent = true) {
+            if (!silent) showLoader("שומר שינויים בענן...");
+            else updateConnectionStatus('syncing');
+            const run = () => rawSend(payload)
+                .then(data => {
+                    if (data && data.status === 'success') {
+                        updateConnectionStatus('connected');
+                        if (!silent) hideLoader();
+                        if (pendingWrites.length > 0 && !flushing) flushPending(); // ריפוי עצמי של הצטברות
+                        return true;
+                    }
+                    updateConnectionStatus('error');
+                    showNotification((data && data.message) || "שגיאת שרת.", true);
+                    if (!silent) hideLoader();
+                    return false;
+                })
+                .catch(err => {
+                    // נתק/timeout -> שומרים מקומית ומסמנים "ממתין" (ננסה שוב אוטומטית)
+                    queueWrite(payload);
+                    if (!silent) hideLoader();
+                    return false;
+                });
+            const p = writeChain.then(run, run);
+            writeChain = p.catch(()=>{});
+            return p;
+        }
+
+        // ====== נוכחות ======
+        function renderAttendance() {
+            const container = document.getElementById('intervals-container');
+            container.innerHTML = '';
+            if (attendanceIntervals.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">אין סבבי נוכחות מוגדרים. לחץ "סבב חדש".</p>`;
+                document.getElementById('attendance-total-hours').innerText = '0.0 שעות';
+                return;
+            }
+            attendanceIntervals.forEach((interval, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-2";
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-500 shrink-0">סבב ${index + 1}:</span>
+                        <input type="time" value="${interval.start || ''}" onchange="updateIntervalTime(${index}, 'start', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500 outline-none w-full">
+                        <span class="text-slate-400 text-xs">עד</span>
+                        <input type="time" value="${interval.end || ''}" onchange="updateIntervalTime(${index}, 'end', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-indigo-500 outline-none w-full">
+                        <button onclick="removeInterval(${index})" class="text-slate-300 hover:text-rose-600 transition p-1 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
+                    <input type="text" value="${escapeAttr(interval.note || '')}" placeholder="הערה לסבב זה (למשל: פגישה בחוץ)…" onchange="updateIntervalNote(${index}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:ring-1 focus:ring-indigo-500 outline-none">`;
+                container.appendChild(div);
+            });
+            calculateAndDisplayTotalHours();
+        }
+        function addAttendanceInterval() {
+            if (guardRO()) return; 
+            let lastEnd = "17:30";
+            if (attendanceIntervals.length > 0) lastEnd = attendanceIntervals[attendanceIntervals.length - 1].end || "12:00";
+            attendanceIntervals.push({ start: lastEnd, end: "", note: "" });
+            renderAttendance(); syncAttendanceWithSheets();
+        }
+        function removeInterval(index) { if (guardRO()) return; attendanceIntervals.splice(index, 1); renderAttendance(); syncAttendanceWithSheets(); }
+        function updateIntervalTime(index, field, value) { if (guardRO()) return; attendanceIntervals[index][field] = value; calculateAndDisplayTotalHours(); syncAttendanceWithSheets(); }
+        function updateIntervalNote(index, value) { if (guardRO()) return; attendanceIntervals[index].note = value; syncAttendanceWithSheets(); }
+        function calcHours(list){
+            let total=0;
+            (list||[]).forEach(iv=>{
+                if(!iv.start||!iv.end) return;
+                const s=iv.start.split(':').map(Number), e=iv.end.split(':').map(Number);
+                const sm=s[0]*60+s[1], em=e[0]*60+e[1];
+                if(em>sm) total += (em-sm);
+            });
+            return (total/60).toFixed(1);
+        }
+        function calculateAndDisplayTotalHours() {
+            document.getElementById('attendance-total-hours').innerText = `${calcHours(attendanceIntervals)} שעות`;
+        }
+        function syncAttendanceWithSheets() {
+            sendPostToSheets({ action: 'saveAttendance', intervals: JSON.stringify(attendanceIntervals) }, true);
+        }
+
+        // ====== הוספת משימה ======
+        // עזרי סוג משימה (עברית חדשה, עם תאימות לשמות ישנים)
+        function isDaily(t){ return t === 'משימה יומית' || t === 'רוטינה יומית'; }
+        function isMonthly(t){ return t === 'משימה חודשית' || t === 'רוטינה חודשית'; }
+        function isYearly(t){ return t === 'משימה שנתית' || t === 'רוטינה שנתית'; }
+        function isWeekly(t){ return t === 'משימה שבועית' || t === 'רוטינת יום בשבוע'; }
+        function isRoutine(t){ return isDaily(t) || isMonthly(t) || isYearly(t) || isWeekly(t); }
+        const WEEKDAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+        function handleTaskTypeChange() {
+            const type = document.getElementById('task-type').value;
+            const routing = document.getElementById('routing-selector-container');
+            const monthly = document.getElementById('monthly-day-container');
+            const annual = document.getElementById('annual-month-container');
+            const weekly = document.getElementById('weekly-day-container');
+            const dueWrap = document.getElementById('initial-due-date-container');
+            const hint = document.getElementById('type-hint');
+
+            monthly.classList.add('hidden');
+            annual.classList.add('hidden');
+            weekly.classList.add('hidden');
+            dueWrap.classList.add('hidden');
+            routing.classList.remove('hidden');
+
+            if (isDaily(type)) {
+                routing.classList.add('hidden');
+                hint.innerText = 'משימה שחוזרת כל יום עבודה (נוצרת אוטומטית בכל פתיחת יום).';
+            } else if (isWeekly(type)) {
+                routing.classList.add('hidden'); weekly.classList.remove('hidden');
+                hint.innerText = 'משימה שחוזרת פעם בשבוע, ביום קבוע שתבחר.';
+            } else if (isMonthly(type)) {
+                routing.classList.add('hidden'); monthly.classList.remove('hidden');
+                hint.innerText = 'משימה שחוזרת פעם בחודש, ביום שתבחר.';
+            } else if (isYearly(type)) {
+                routing.classList.add('hidden'); annual.classList.remove('hidden');
+                hint.innerText = 'משימה שחוזרת פעם בשנה, בתחילת החודש שתבחר.';
+            } else {
+                hint.innerText = 'משימה חד-פעמית.';
+                handleWhenChange();
+            }
+        }
+        function handleWhenChange() {
+            const when = document.getElementById('task-when').value;
+            const dueWrap = document.getElementById('initial-due-date-container');
+            if (when === 'pick') {
+                dueWrap.classList.remove('hidden');
+                document.getElementById('task-due-date').value = tomorrowISO();
+            } else {
+                dueWrap.classList.add('hidden');
+            }
+        }
+
+        function handleAddTask(event) {
+            event.preventDefault();
+            if (guardRO()) return;
+            const name = document.getElementById('task-name').value.trim();
+            const type = document.getElementById('task-type').value;
+            if (!name) { showNotification('נא להזין שם משימה.', true); return; }
+
+            const bd = boardDate();               // היום הפעיל שעליו עובדים
+            const bdParts = bd.split('-');
+            const bdDay = Number(bdParts[2]), bdMonth = Number(bdParts[1]);
+            const newTasks = [];
+
+            if (type === 'משימה מזדמנת') {
+                const when = document.getElementById('task-when').value;
+                let task = { id: Date.now(), name, type, status: 'dated', dueDate: '', dayOfMonth: '', monthOfYear: '', done: false, notes: '' };
+                if (when === 'today') task.dueDate = bd;
+                else if (when === 'tomorrow') task.dueDate = addDaysISO(bd, 1);
+                else if (when === 'pick') {
+                    const d = document.getElementById('task-due-date').value;
+                    if (!d) { showNotification('נא לבחור תאריך.', true); return; }
+                    task.dueDate = d;
+                } else if (when === 'general') { task.status = 'general'; task.dueDate = ''; }
+                newTasks.push(task);
+
+            } else if (isDaily(type)) {
+                const seedId = Date.now();
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+
+            } else if (isWeekly(type)) {
+                const wd = document.getElementById('task-weekly-day').value;
+                const seedId = Date.now();
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: bd, dayOfMonth: '', monthOfYear: '', weekDay: String(wd), done: false, notes: '' });
+                if (Number(wd) === dayOfWeekOf(bd)) {
+                    newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                }
+
+            } else if (isMonthly(type)) {
+                const day = document.getElementById('task-monthly-day').value;
+                if (!day || day < 1 || day > 31) { showNotification('נא להזין יום בחודש תקין (1-31).', true); return; }
+                const seedId = Date.now();
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: bd, dayOfMonth: String(day), monthOfYear: '', done: false, notes: '' });
+                if (Number(day) === bdDay) {
+                    newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                }
+
+            } else if (isYearly(type)) {
+                const month = document.getElementById('task-annual-month').value;
+                const seedId = Date.now();
+                newTasks.push({ id: seedId, name, type, status: 'seed', dueDate: bd, dayOfMonth: '', monthOfYear: String(month), done: false, notes: '' });
+                if (Number(month) === bdMonth && bdDay === 1) {
+                    newTasks.push({ id: seedId + 1, name, type, status: 'dated', dueDate: bd, dayOfMonth: '', monthOfYear: '', done: false, notes: '' });
+                }
+            }
+
+            newTasks.forEach(t => { t.priority = 500; t.todoNotes = ''; t.continuous = false; t.prioritizedBy = ''; tasks.push(t); });
+            renderTasks();
+            Promise.all(newTasks.map(t => sendPostToSheets({ action: 'addTask', task: t }, true)))
+                .then(results => { if (results.every(Boolean)) showNotification('המשימה נוספה בהצלחה!'); });
+
+            document.getElementById('add-task-form').reset();
+            handleTaskTypeChange();
+        }
+
+        function handleAddModeChange(){
+            const m = document.getElementById('add-mode').value;
+            document.getElementById('mode-new').classList.toggle('hidden', m !== 'new');
+            document.getElementById('mode-routine').classList.toggle('hidden', m !== 'routine');
+            document.getElementById('mode-general').classList.toggle('hidden', m !== 'general');
+        }
+
+        // ====== רינדור משימות (לפי הטאב הפעיל) ======
+        function renderTasks() {
+            updateCounts();
+            if (currentTab === 'today') renderTodayTab();
+            else if (currentTab === 'bydate') renderByDateTab();
+            else if (currentTab === 'general') renderGeneralTab();
+            focusEditingNameInput();
+        }
+
+        function updateCounts() {
+            const today = boardDate();
+            const todayCount = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today && !t.done).length;
+            const byCount = tasks.filter(t => t.status === 'dated' && t.dueDate === selectedDate && !t.done).length;
+            const generalCount = tasks.filter(t => t.status === 'general').length;
+            document.getElementById('today-tasks-count').innerText = todayClosedSafe(todayCount);
+            document.getElementById('bydate-tasks-count').innerText = byCount;
+            document.getElementById('general-tasks-count').innerText = generalCount;
+        }
+        function todayClosedSafe(n){ return dayClosed ? 0 : n; }
+
+        function taskCardHtml(task, context, idx, total) {
+            const badge = getTypeBadgeStyle(task.type);
+            const isDone = task.done;
+            const containerBg = isDone ? 'bg-emerald-50/40 border-r-emerald-500' : 'bg-white border-r-transparent';
+            const canReorder = (context === 'today' && !isDone && total > 0);
+            const selectable = (context === 'today' && !isDone);
+            const ed = !readOnly;
+            const id = task.id;
+            const todo = task.todoNotes || '';
+            const expanded = (expandedTaskId === id);
+
+            // תאריך: רק בתצוגת "לפי תאריך". בלוח היום אין הצגת תאריך מקורי (לא רלוונטי).
+            let dateNote = '';
+            if (context === 'bydate' && task.dueDate) {
+                dateNote = `<span class="text-[10px] text-purple-600 font-medium shrink-0">📅${heDateShort(task.dueDate)}</span>`;
+            }
+
+            // מספר סדר + מדרג צבעים; המספר משמש גם כידית גרירה
+            let priorityColor = '', numBadge = '';
+            if (canReorder) {
+                const frac = total > 1 ? (idx / (total - 1)) : 0;
+                const light = 55 + Math.round(frac * 30);
+                priorityColor = `hsl(243 75% ${light}%)`;
+                numBadge = `<span draggable="true" ondragstart="taskDragStart(event, ${id})" ondragend="taskDragEnd(event)" title="גרור לסידור" class="shrink-0 cursor-grab active:cursor-grabbing text-[10px] font-bold text-white rounded-md w-5 h-5 flex items-center justify-center" style="background:${priorityColor}">${idx + 1}</span>`;
+            } else {
+                numBadge = `<span class="shrink-0 w-5 h-5 flex items-center justify-center text-[10px] text-slate-300">${isDone ? '✓' : '•'}</span>`;
+            }
+
+            // תיעדוף: מי תעדף לאחרונה (הרב סגל / נוטיק) - חיווי צבע + נקודה
+            const prioBy = task.prioritizedBy || '';
+            let prioDot = '';
+            let borderL = 'border-l-4 border-l-transparent';
+            if (canReorder && prioBy === 'rav_segel') { prioDot = `<span title="תועדף ע״י הרב סגל" class="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>`; borderL = 'border-l-4 border-l-purple-300'; }
+            else if (canReorder && prioBy === 'noteik') { prioDot = `<span title="תועדף ע״י נוטיק" class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>`; borderL = 'border-l-4 border-l-sky-300'; }
+
+            // צ'קבוקס בחירה מרובה
+            const selBox = (selectionMode && selectable)
+                ? `<input type="checkbox" ${selectedIds.has(id) ? 'checked' : ''} onchange="toggleSelectTask(${id}, this.checked)" class="shrink-0 w-4 h-4 accent-indigo-600">`
+                : '';
+
+            const doneBox = ed
+                ? `<button onclick="toggleDone(${id})" class="shrink-0 w-4 h-4 rounded border-2 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-emerald-400'} flex items-center justify-center transition">${isDone ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}</button>`
+                : `<span class="shrink-0 w-4 h-4 rounded border-2 ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'} flex items-center justify-center">${isDone ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}</span>`;
+
+            let nameBlock;
+            if (ed && editingNameId === id) {
+                nameBlock = `<input id="name-input-${id}" type="text" value="${escapeAttr(task.name)}"
+                    onkeydown="if(event.key==='Enter'){saveTaskName(${id}, this.value)} if(event.key==='Escape'){cancelEditName()}"
+                    onblur="saveTaskName(${id}, this.value)"
+                    class="font-medium text-slate-900 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-32 shrink-0">`;
+            } else {
+                nameBlock = `<span class="font-medium text-slate-900 text-sm truncate shrink-0 max-w-[34%] ${isDone ? 'line-through text-slate-400' : ''}" title="${escapeAttr(task.name)}">${escapeHtml(task.name)}</span>`;
+            }
+
+            const continuousBadge = task.continuous ? `<span title="משימה מתמשכת" class="text-[10px] shrink-0">🔁</span>` : '';
+
+            const doneNoteInline = ed
+                ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="flex-1 min-w-0 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
+                : (task.notes ? `<span class="flex-1 min-w-0 text-xs text-slate-500 truncate">${escapeHtml(task.notes)}</span>` : `<span class="flex-1"></span>`);
+
+            // הערת "לביצוע" מוצגת בשורה עצמה כשהיא מלאה (לא מוסתרת מאחורי החץ)
+            const todoLine = todo.trim()
+                ? `<div class="flex items-start gap-1 mt-1 pr-1 text-[11px] text-indigo-600"><span class="shrink-0">🎯</span><span class="min-w-0">${escapeHtml(todo)}</span></div>`
+                : '';
+
+            const reorderCtrl = canReorder ? `
+                <div class="flex items-center gap-1 shrink-0">
+                    <span class="text-[10px] text-slate-400">סדר:</span>
+                    <button onclick="moveTask(${id}, -1)" ${idx === 0 ? 'disabled' : ''} class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs px-1">▲</button>
+                    <button onclick="moveTask(${id}, 1)" ${idx === total - 1 ? 'disabled' : ''} class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs px-1">▼</button>
+                    <input type="number" min="1" max="${total}" value="${idx + 1}" onchange="setPriorityNumber(${id}, this.value)" title="מיקום ידני" class="w-11 text-[11px] bg-white border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                </div>` : '';
+            const editorCtrls = ed ? `
+                <button onclick="startEditName(${id})" title="ערוך שם" class="text-slate-400 hover:text-indigo-600 transition text-xs px-1">✏️ שם</button>
+                <button onclick="toggleContinuous(${id})" title="${task.continuous ? 'בטל סימון מתמשכת' : 'סמן כמשימה מתמשכת'}" class="text-xs px-1 transition ${task.continuous ? 'text-amber-600 font-bold' : 'text-slate-400 hover:text-amber-600'}">🔁 מתמשכת</button>
+                <select onchange="onRescheduleSelect(${id}, this.value); this.value='';" class="text-[11px] bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option value="" selected>תזמון…</option>
+                    <option value="today">להיום</option>
+                    <option value="tomorrow">למחר</option>
+                    <option value="pick">לתאריך…</option>
+                    <option value="general">לרשימה הכללית</option>
+                </select>
+                <button onclick="handleDeleteTask(${id})" title="מחק" class="text-slate-400 hover:text-rose-600 transition text-xs px-1">🗑️</button>` : '';
+
+            const prioLegend = canReorder
+                ? `<div class="text-[10px] text-slate-400 flex items-center gap-2">
+                     ${prioBy === 'rav_segel' ? '<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span>תועדף ע״י הרב סגל</span>' : ''}
+                     ${prioBy === 'noteik' ? '<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500"></span>תועדף ע״י נוטיק</span>' : ''}
+                     ${!prioBy ? '<span>ללא תיעדוף</span>' : ''}
+                   </div>` : '';
+
+            const details = `
+                <div id="details-${id}" class="${expanded ? '' : 'hidden'} mt-2 pt-2 border-t border-slate-100 space-y-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] text-indigo-500 shrink-0" title="הערות לביצוע (מה לעשות)">🎯 לביצוע:</span>
+                        <input type="text" placeholder="מה צריך לעשות במשימה…" value="${escapeAttr(todo)}" onchange="updateTodoNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}"
+                            class="flex-1 min-w-0 text-xs bg-indigo-50/40 border border-indigo-100 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    ${prioLegend}
+                    ${(reorderCtrl || editorCtrls) ? `<div class="flex items-center gap-2 flex-wrap">${reorderCtrl}${editorCtrls}</div>` : ''}
+                </div>`;
+
+            return `
+                <div class="px-3 py-2 border-r-4 ${borderL} transition-all duration-150 ${containerBg}" ${priorityColor ? `style="border-right-color:${priorityColor}"` : ''}
+                    ${canReorder ? `ondragover="taskDragOver(event, this)" ondragleave="taskDragLeave(event, this)" ondrop="taskDrop(event, ${id}, this)"` : ''}>
+                    <div class="flex items-center gap-2">
+                        ${selBox}
+                        ${numBadge}
+                        ${prioDot}
+                        ${doneBox}
+                        ${nameBlock}
+                        ${continuousBadge}
+                        ${dateNote}
+                        ${doneNoteInline}
+                        <span class="text-[9px] px-1 py-0.5 rounded ${badge} shrink-0 hidden sm:inline">${task.type}</span>
+                        <button onclick="toggleTaskDetails(${id})" title="ניהול משימה" class="shrink-0 text-slate-300 hover:text-slate-600 transition">
+                            <svg id="arrow-${id}" class="h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                    </div>
+                    ${todoLine}
+                    ${details}
+                </div>`;
+        }
+        // פתיחה יחידה: פתיחת שורת ניהול סוגרת את הקודמת
+        function collapseDetails(id){ const d=document.getElementById('details-'+id), a=document.getElementById('arrow-'+id); if(d)d.classList.add('hidden'); if(a)a.classList.remove('rotate-180'); }
+        function expandDetails(id){ const d=document.getElementById('details-'+id), a=document.getElementById('arrow-'+id); if(d)d.classList.remove('hidden'); if(a)a.classList.add('rotate-180'); }
+        function toggleTaskDetails(id){
+            if (expandedTaskId === id){ collapseDetails(id); expandedTaskId = null; return; }
+            if (expandedTaskId != null) collapseDetails(expandedTaskId);
+            expandDetails(id); expandedTaskId = id;
+        }
+
+        // ====== בחירה מרובה + תזמון קבוצתי ======
+        function toggleSelectionMode(){
+            selectionMode = !selectionMode;
+            if (!selectionMode) selectedIds.clear();
+            renderTasks(); updateSelectionBar();
+        }
+        function toggleSelectTask(id, checked){
+            if (checked) selectedIds.add(id); else selectedIds.delete(id);
+            updateSelectionBar();
+        }
+        function updateSelectionBar(){
+            const bar = document.getElementById('selection-bar');
+            const cnt = document.getElementById('selection-count');
+            if (!bar) return;
+            if (selectionMode && selectedIds.size > 0) { bar.classList.remove('hidden'); if (cnt) cnt.innerText = selectedIds.size; }
+            else bar.classList.add('hidden');
+        }
+        // תזמון קבוצתי: פותח חלון תזמון לכל משימה בזה אחר זה
+        let bulkQueue = [];
+        function startBulkReschedule(){
+            bulkQueue = [...selectedIds];
+            bulkTotal = bulkQueue.length;
+            if (bulkQueue.length === 0) return;
+            nextBulkReschedule();
+        }
+        function nextBulkReschedule(){
+            if (bulkQueue.length === 0){
+                rescheduleBulk = false;
+                document.getElementById('reschedule-modal').classList.add('hidden');
+                selectionMode = false; selectedIds.clear();
+                renderTasks(); updateSelectionBar();
+                showNotification('תזמון קבוצתי הושלם ✅');
+                return;
+            }
+            const id = bulkQueue.shift();
+            openReschedule(id, 'tomorrow', true);
+        }
+
+        function renderTodayTab() {
+            const c = document.getElementById('tab-today-content');
+            c.innerHTML = '';
+            const bDate = boardDate();
+            const reporting = (workDate && todayReal && workDate !== todayReal);
+            const showingTomorrow = (viewDay && workDate && viewDay !== workDate);
+            let dayLabel;
+            if (reporting) dayLabel = `📄 דוח יום ${heDate(workDate)}`;
+            else if (showingTomorrow) dayLabel = `📋 משימות של יום העבודה הבא · ${heDateShort(viewDay)}`;
+            else dayLabel = dayOpen ? '📋 משימות של היום · יום עבודה פתוח' : '📋 משימות של היום';
+
+            // חיווי גדול ובולט בראש הדף: יום פעיל מול תכנון קדימה
+            const modeBanner = document.getElementById('board-mode-banner');
+            if (modeBanner) {
+                if (!reporting && dayOpen) {
+                    modeBanner.classList.remove('hidden');
+                    modeBanner.innerHTML = `<div class="bg-emerald-600 text-white rounded-2xl px-5 py-3 flex items-center gap-3 shadow-md">
+                        <span class="text-2xl">🟢</span>
+                        <div><div class="font-bold text-base">מסך יום עבודה פעיל (היום פתוח)</div><div class="text-emerald-100 text-xs">${heDate(bDate)} — שינויים כאן משפיעים על היום בפועל.</div></div>
+                    </div>`;
+                } else if (!reporting) {
+                    modeBanner.classList.remove('hidden');
+                    modeBanner.innerHTML = `<div class="bg-indigo-600 text-white rounded-2xl px-5 py-3 flex items-center gap-3 shadow-md">
+                        <span class="text-2xl">🔵</span>
+                        <div><div class="font-bold text-base">מסך תכנון ותעדוף יום עבודה הבא</div><div class="text-indigo-100 text-xs">${heDate(bDate)} — היום עדיין לא נפתח רשמית; אפשר לתעדף מראש.</div></div>
+                    </div>`;
+                } else {
+                    modeBanner.classList.add('hidden'); modeBanner.innerHTML = '';
+                }
+            }
+
+            const pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
+                                 .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+            const doneToday = tasks.filter(t => t.status === 'dated' && t.dueDate === bDate && t.done);
+
+            // באנר מצב (הלוח מוצג תמיד - סימולציה חיה של יום התצוגה)
+            let hint = '';
+            if (showingTomorrow) hint = `<div class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] text-indigo-700">🔮 היום נסגר — אלו משימות <b>יום העבודה הבא</b> (${heDate(viewDay)}). אפשר לתעדף כבר עכשיו; הסדר יישמר גם אם היום ייפתח מאוחר יותר.</div>`;
+            else if (!dayOpen) hint = `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 יום העבודה עדיין לא נפתח רשמית — זו תצוגה חיה של משימות היום. אפשר לתעדף ולהוסיף הערות; "פתיחת יום" (בצד ימין) תתחיל את היום רשמית.</div>`;
+            const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500 flex items-center justify-between gap-2 flex-wrap">
+                <span>${dayLabel} · ${pending.length} משימות פתוחות</span>
+                <div class="flex items-center gap-2">
+                    ${(!readOnly && pending.length > 0) ? `<button onclick="toggleSelectionMode()" class="text-[10px] font-semibold ${selectionMode ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 border border-indigo-200'} px-2 py-0.5 rounded-md transition">${selectionMode ? '✕ בטל בחירה' : '☑️ בחירה מרובה'}</button>` : ''}
+                    ${pending.length > 1 ? '<span class="text-[10px] text-indigo-500">↕ גררו לסידור</span>' : ''}
+                </div>
+            </div>`;
+            c.insertAdjacentHTML('beforeend', hint + titleBar);
+
+            if (pending.length === 0 && doneToday.length === 0) {
+                c.insertAdjacentHTML('beforeend', `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות פתוחות. 🎉</p></div>`);
+                return;
+            }
+
+            pending.forEach((t, i) => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'today', i, pending.length)));
+            if (doneToday.length > 0) {
+                c.insertAdjacentHTML('beforeend', `<div class="px-5 py-2 bg-slate-50/70 text-[11px] font-bold text-slate-400">בוצעו (${doneToday.length})</div>`);
+                doneToday.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'today', 0, 0)));
+            }
+        }
+
+        function renderByDateTab() {
+            const c = document.getElementById('bydate-list');
+            c.innerHTML = '';
+            const d = selectedDate;
+            const real = tasks.filter(t => t.status === 'dated' && t.dueDate === d)
+                              .sort((a,b)=> Number(a.done) - Number(b.done));
+            const sim = simulateDay(d, real);
+
+            if (real.length === 0 && sim.length === 0) {
+                c.innerHTML = `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות צפויות לתאריך ${heDate(d)}.</p></div>`;
+                return;
+            }
+            real.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'bydate')));
+            if (sim.length > 0) {
+                c.insertAdjacentHTML('beforeend', `<div class="px-3 py-1.5 bg-indigo-50/50 text-[11px] font-bold text-indigo-500 border-y border-indigo-100">🔮 צפוי בתוכנית (עדיין לא נוצר — ייווצר ב"פתיחת יום")</div>`);
+                sim.forEach(s => c.insertAdjacentHTML('beforeend', simCardHtml(s)));
+            }
+        }
+
+        // הדמיה: מה צפוי ליפול בתאריך נתון, בלי ליצור כלום בפועל
+        function simulateDay(dateKey, real) {
+            const realNames = {}; real.forEach(t => realNames[t.name] = true);
+            const p = dateKey.split('-'); const dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+            const day = dt.getDate(), month = dt.getMonth() + 1;
+            const out = []; const seen = {};
+            // רוטינות שנופלות בתאריך (כולל השלמה של מועד שעבר)
+            tasks.filter(t => t.status === 'seed').forEach(t => {
+                if (routineWouldFall(t.type, t.dayOfMonth, t.monthOfYear, t.dueDate, dateKey, t.weekDay)
+                    && !realNames[t.name] && !seen[t.name]) {
+                    out.push({ name: t.name, type: t.type, reason: 'רוטינה' }); seen[t.name] = true;
+                }
+            });
+            // משימות שלא בוצעו מתאריך מוקדם - עשויות להיגרר
+            tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate < dateKey && !t.done).forEach(t => {
+                if (!realNames[t.name] && !seen[t.name]) { out.push({ name: t.name, type: t.type, reason: 'תיגרר מ-' + heDateShort(t.dueDate) }); seen[t.name] = true; }
+            });
+            return out;
+        }
+        function simCardHtml(s) {
+            return `<div class="px-3 py-2 flex items-center gap-2 border-r-4 border-r-indigo-200 bg-indigo-50/20">
+                <span class="shrink-0 w-4 h-4 rounded border-2 border-dashed border-indigo-300"></span>
+                <span class="text-sm text-slate-500 flex-1 truncate" title="${escapeAttr(s.name)}">${escapeHtml(s.name)}</span>
+                <span class="text-[9px] px-1 py-0.5 rounded ${getTypeBadgeStyle(s.type)} shrink-0 hidden sm:inline">${s.type}</span>
+                <span class="text-[10px] text-indigo-500 shrink-0">${s.reason}</span>
+            </div>`;
+        }
+
+        // ====== בורר משימות (רוטינות / רשימה כללית) עם חיפוש ======
+        let pickerMode = 'routine'; // 'routine' | 'general'
+
+        function openRoutinePicker(){
+            pickerMode = 'routine';
+            document.getElementById('picker-title').innerText = 'הוספת משימת רוטינה להיום';
+            document.getElementById('picker-subtitle').innerText = 'בחר רוטינה לביצוע היום. "בנוסף" משאיר את המועד הקבוע; "במקום הבא" מדלג על המופע הקרוב.';
+            document.getElementById('picker-search').value = '';
+            renderPickerList('');
+            document.getElementById('routine-picker-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('picker-search').focus(), 0);
+        }
+        function openGeneralPicker(){
+            pickerMode = 'general';
+            document.getElementById('picker-title').innerText = 'הוספה מהרשימה הכללית';
+            document.getElementById('picker-subtitle').innerText = 'בחר משימה. "שכפל" משאיר עותק ברשימה הכללית; "העבר" מסיר אותה משם.';
+            document.getElementById('picker-search').value = '';
+            renderPickerList('');
+            document.getElementById('routine-picker-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('picker-search').focus(), 0);
+        }
+        function closeRoutinePicker(){ document.getElementById('routine-picker-modal').classList.add('hidden'); }
+
+        function renderPickerList(filter){
+            const list = document.getElementById('routine-picker-list');
+            const q = (filter || '').trim().toLowerCase();
+            const today = boardDate();
+            list.innerHTML = '';
+
+            if (pickerMode === 'routine') {
+                let items = tasks.filter(t => t.status === 'seed' &&
+                    !tasks.some(x => x.status === 'dated' && x.name === t.name && x.dueDate === today));
+                if (q) items = items.filter(s => s.name.toLowerCase().includes(q));
+                if (items.length === 0) {
+                    list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">אין רוטינות מתאימות.</p>`;
+                    return;
+                }
+                items.forEach(s => {
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="min-w-0">
+                                    <span class="font-medium text-slate-800 text-sm block truncate">${escapeHtml(s.name)}</span>
+                                    <span class="text-[11px] text-slate-400">${seedScheduleText(s)}</span>
+                                </span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(s.type)} shrink-0">${s.type}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="addRoutineInstanceToday(${s.id}, 'addition')" class="flex-1 text-xs bg-white hover:bg-sky-50 text-sky-700 border border-sky-200 font-semibold py-1.5 rounded-lg transition">➕ בנוסף</button>
+                                <button onclick="addRoutineInstanceToday(${s.id}, 'replace')" class="flex-1 text-xs bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold py-1.5 rounded-lg transition">↪️ במקום הבא</button>
+                            </div>
+                        </div>`);
+                });
+            } else {
+                let items = tasks.filter(t => t.status === 'general');
+                if (q) items = items.filter(g => g.name.toLowerCase().includes(q));
+                if (items.length === 0) {
+                    list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">אין משימות מתאימות ברשימה הכללית.</p>`;
+                    return;
+                }
+                items.forEach(g => {
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="min-w-0">
+                                    <span class="font-medium text-slate-800 text-sm block truncate">${escapeHtml(g.name)}</span>
+                                    ${g.notes ? `<span class="text-[11px] text-slate-400 truncate block">📝 ${escapeHtml(g.notes)}</span>` : ''}
+                                </span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(g.type)} shrink-0">${g.type}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="addGeneralTaskToday(${g.id}, 'copy')" class="flex-1 text-xs bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold py-1.5 rounded-lg transition">📑 שכפל (נשאר)</button>
+                                <button onclick="addGeneralTaskToday(${g.id}, 'move')" class="flex-1 text-xs bg-white hover:bg-amber-50 text-amber-700 border border-amber-200 font-semibold py-1.5 rounded-lg transition">➡️ העבר</button>
+                            </div>
+                        </div>`);
+                });
+            }
+        }
+
+        function currentPeriodOccurrence(seed, todayKey){
+            const p = todayKey.split('-'); const y = Number(p[0]), m = Number(p[1]);
+            if (isDaily(seed.type)) return todayKey;
+            if (isMonthly(seed.type)) { const sd = Number(seed.dayOfMonth); if (!sd) return ''; const eff = Math.min(sd, daysInMonthJS(y, m)); return y + '-' + pad2(m) + '-' + pad2(eff); }
+            if (isYearly(seed.type)) { const my = Number(seed.monthOfYear); if (!my) return ''; return y + '-' + pad2(my) + '-01'; }
+            return '';
+        }
+
+        // mode: 'addition' = בנוסף (הרוטינה עדיין תופיע במועדה) | 'replace' = במקום המופע הקרוב
+        function addRoutineInstanceToday(seedId, mode){
+            if (guardRO()) return; 
+            const seed = tasks.find(t => t.id === seedId && t.status === 'seed');
+            closeRoutinePicker();
+            if (!seed) return;
+            const today = boardDate();
+            const exists = tasks.some(t => t.status === 'dated' && t.name === seed.name && t.dueDate === today);
+            const calls = [];
+            if (!exists) {
+                const instance = { id: Date.now(), name: seed.name, type: seed.type, status: 'dated', dueDate: today, dayOfMonth: '', monthOfYear: '', done: false, notes: '', priority: 500, todoNotes: '', continuous: seed.continuous || false, prioritizedBy: '' };
+                tasks.push(instance);
+                calls.push(sendPostToSheets({ action: 'addTask', task: instance }, true));
+            }
+            if (mode === 'replace') {
+                // קידום lastGen כדי לדלג על המופע הקרוב של אותו מחזור
+                const occ = currentPeriodOccurrence(seed, today);
+                if (occ && (!seed.dueDate || seed.dueDate < occ)) {
+                    seed.dueDate = occ;
+                    calls.push(sendPostToSheets({ action: 'updateTask', taskId: seedId, updates: { dueDate: occ } }, true));
+                }
+            }
+            renderTasks();
+            const msg = mode === 'replace' ? 'הרוטינה נוספה להיום במקום המופע הקרוב ✅' : 'הרוטינה נוספה להיום (בנוסף למועדה הקבוע) ✅';
+            if (calls.length) Promise.all(calls).then(r => { if (r.every(Boolean)) showNotification(msg); });
+            else showNotification('הרוטינה כבר נמצאת בלוח היום.');
+        }
+
+        // mode: 'copy' = שכפול (נשאר ברשימה הכללית) | 'move' = העברה (מוסר מהרשימה)
+        function addGeneralTaskToday(id, mode){
+            if (guardRO()) return; 
+            closeRoutinePicker();
+            const g = tasks.find(t => t.id === id && t.status === 'general');
+            if (!g) return;
+            const today = boardDate();
+            if (mode === 'move') {
+                quickSchedule(id, 'today');
+                return;
+            }
+            // copy
+            const copy = { id: Date.now(), name: g.name, type: g.type, status: 'dated', dueDate: today, dayOfMonth: '', monthOfYear: '', done: false, notes: g.notes, priority: 500, todoNotes: g.todoNotes || '', continuous: g.continuous || false, prioritizedBy: '' };
+            tasks.push(copy);
+            renderTasks();
+            sendPostToSheets({ action: 'addTask', task: copy }, true)
+                .then(ok => { if (ok) showNotification('נוצר עותק להיום. המשימה נשארה ברשימה הכללית.'); });
+        }
+
+        function renderGeneralTab() {
+            const c = document.getElementById('tab-general-content');
+            c.innerHTML = '';
+            const general = tasks.filter(t => t.status === 'general');
+            const seeds = tasks.filter(t => t.status === 'seed');
+
+            if (general.length === 0) {
+                c.insertAdjacentHTML('beforeend', `<div class="p-8 text-center text-slate-400 text-sm">הרשימה הכללית ריקה.</div>`);
+            } else {
+                general.forEach(task => {
+                    c.insertAdjacentHTML('beforeend', `
+                        <div class="p-4 flex items-center justify-between gap-3 border-b border-slate-100 last:border-0">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-medium text-slate-800 text-sm">${escapeHtml(task.name)}</span>
+                                    <button onclick="startEditName(${task.id})" title="ערוך שם" class="text-slate-300 hover:text-indigo-600 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(task.type)}">${task.type}</span>
+                                </div>
+                                ${task.notes ? `<span class="text-[11px] text-slate-400 italic">📝 ${escapeHtml(task.notes)}</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="quickSchedule(${task.id}, 'today')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs py-1.5 px-3 rounded-lg transition">➕ להיום</button>
+                                <button onclick="quickSchedule(${task.id}, 'tomorrow')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs py-1.5 px-2.5 rounded-lg transition">למחר</button>
+                                <button onclick="openReschedule(${task.id}, 'pick')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs py-1.5 px-2.5 rounded-lg transition">תאריך…</button>
+                                <button onclick="handleDeleteTask(${task.id})" class="text-slate-300 hover:text-rose-600 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                            </div>
+                        </div>`);
+                });
+            }
+
+            // רוטינות קבועות (תבניות)
+            c.insertAdjacentHTML('beforeend', `<div class="px-5 py-2 mt-2 bg-slate-50/70 text-[11px] font-bold text-slate-400 border-y border-slate-100">🔁 רוטינות קבועות</div>`);
+            if (seeds.length === 0) {
+                c.insertAdjacentHTML('beforeend', `<div class="p-5 text-center text-slate-400 text-xs">לא הוגדרו רוטינות קבועות.</div>`);
+            } else {
+                seeds.forEach(seed => {
+                    c.insertAdjacentHTML('beforeend', `
+                        <div class="p-4 flex items-center justify-between gap-3 border-b border-slate-100 last:border-0">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="font-medium text-slate-800 text-sm">${escapeHtml(seed.name)}</span>
+                                <button onclick="startEditName(${seed.id})" title="ערוך שם" class="text-slate-300 hover:text-indigo-600 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                                <span class="text-[11px] text-slate-400">— ${seedScheduleText(seed)}</span>
+                            </div>
+                            <button onclick="handleDeleteTask(${seed.id})" class="text-slate-300 hover:text-rose-600 transition p-1 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                        </div>`);
+                });
+            }
+        }
+
+        function seedScheduleText(t){
+            if (isDaily(t.type)) return 'כל יום';
+            if (isMonthly(t.type)) return `כל ${t.dayOfMonth} לחודש`;
+            if (isYearly(t.type)) return `כל שנה בתחילת ${MONTHS_HE[Number(t.monthOfYear)] || ''}`;
+            return '';
+        }
+        function getTypeBadgeStyle(type) {
+            if(isDaily(type)) return 'bg-sky-50 text-sky-700 border border-sky-100';
+            if(isWeekly(type)) return 'bg-teal-50 text-teal-700 border border-teal-100';
+            if(isMonthly(type)) return 'bg-indigo-50 text-indigo-700 border border-indigo-100';
+            if(isYearly(type)) return 'bg-purple-50 text-purple-700 border border-purple-100';
+            return 'bg-amber-50 text-amber-700 border border-amber-100';
+        }
+
+        // ====== עריכת שם משימה ======
+        function startEditName(id){ editingNameId = id; renderTasks(); }
+        function cancelEditName(){ editingNameId = null; renderTasks(); }
+        function saveTaskName(id, value){
+            if (readOnly){ editingNameId=null; renderTasks(); return; }
+            if (editingNameId !== id) return; // נמנע משמירה כפולה (blur אחרי enter)
+            value = (value || '').trim();
+            editingNameId = null;
+            const task = tasks.find(t => t.id === id);
+            if (task && value && value !== task.name) {
+                task.name = value;
+                sendPostToSheets({ action: 'updateTask', taskId: id, updates: { name: value } }, true);
+            }
+            renderTasks();
+        }
+        function focusEditingNameInput(){
+            if (!editingNameId) return;
+            setTimeout(() => {
+                const el = document.getElementById('name-input-' + editingNameId);
+                if (el) { el.focus(); el.select(); }
+            }, 0);
+        }
+
+        // ====== סימון ביצוע / הערות ======
+        function toggleDone(id){
+            if (guardRO()) return; 
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+            t.done = !t.done;
+            renderTasks();
+            sendPostToSheets({ action: 'updateTask', taskId: id, updates: { done: t.done } }, true);
+        }
+        function updateTaskNotes(id, value){
+            if (guardRO()) return; 
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+            t.notes = value;
+            sendPostToSheets({ action: 'updateTask', taskId: id, updates: { notes: value } }, true);
+        }
+
+        // הערות לביצוע + סדר עדיפות - מותרים גם במצב צפייה (לא עוברים דרך guardRO)
+        function updateTodoNotes(id, value){
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+            t.todoNotes = value;
+            sendPostToSheets({ action: 'updateTask', taskId: id, updates: { todoNotes: value } }, true);
+        }
+        function currentActor(){ return readOnly ? 'rav_segel' : 'noteik'; }
+        function moveTask(id, dir){
+            const bDate = boardDate();
+            let pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
+                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+            const idx = pending.findIndex(t => t.id === id);
+            if (idx < 0) return;
+            const swap = idx + dir;
+            if (swap < 0 || swap >= pending.length) return;
+            const tmp = pending[idx]; pending[idx] = pending[swap]; pending[swap] = tmp;
+            commitOrder(pending, id);
+        }
+        function setPriorityNumber(id, valueRaw){
+            const bDate = boardDate();
+            let pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
+                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+            const from = pending.findIndex(t => t.id === id);
+            if (from < 0) return;
+            let to = Math.round(Number(valueRaw)) - 1;
+            if (isNaN(to)) { renderTasks(); return; }
+            to = Math.max(0, Math.min(pending.length - 1, to));
+            const [item] = pending.splice(from, 1);
+            pending.splice(to, 0, item);
+            commitOrder(pending, id);
+        }
+        // גרירת משימה לסידור עדיפויות
+        let dragTaskId = null;
+        function taskDragStart(ev, id){ dragTaskId = id; ev.dataTransfer.effectAllowed = 'move'; try { ev.dataTransfer.setData('text/plain', String(id)); } catch(e){} }
+        function taskDragEnd(ev){ dragTaskId = null; document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); }
+        function taskDragOver(ev, el){ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; if (el) el.classList.add('drag-over'); }
+        function taskDragLeave(ev, el){ if (el) el.classList.remove('drag-over'); }
+        function taskDrop(ev, targetId, el){
+            ev.preventDefault();
+            if (el) el.classList.remove('drag-over');
+            const src = dragTaskId; dragTaskId = null;
+            if (src == null || src === targetId) return;
+            const bDate = boardDate();
+            let pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
+                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+            const from = pending.findIndex(t => t.id === src);
+            const to = pending.findIndex(t => t.id === targetId);
+            if (from < 0 || to < 0) return;
+            const [item] = pending.splice(from, 1);
+            pending.splice(to, 0, item);
+            commitOrder(pending, src);
+        }
+        function commitOrder(pending, touchedId){
+            const updates = [];
+            pending.forEach((t, i) => { t.priority = i; updates.push({ id: t.id, priority: i }); });
+            let actor = null;
+            if (touchedId != null) {
+                actor = currentActor();
+                const t = pending.find(x => x.id === touchedId);
+                if (t) t.prioritizedBy = actor;
+            }
+            renderTasks();
+            sendPostToSheets({ action: 'reorderTasks', list: JSON.stringify(updates) }, true);
+            if (touchedId != null) sendPostToSheets({ action: 'updateTask', taskId: touchedId, updates: { prioritizedBy: actor } }, true);
+        }
+        function toggleContinuous(id){
+            if (guardRO()) return;
+            const t = tasks.find(x => x.id === id); if (!t) return;
+            t.continuous = !t.continuous;
+            renderTasks();
+            sendPostToSheets({ action: 'updateTask', taskId: id, updates: { continuous: t.continuous } }, true)
+                .then(ok => { if (ok) showNotification(t.continuous ? '🔁 סומנה כמשימה מתמשכת.' : 'הוסר סימון מתמשכת.'); });
+        }
+
+        // ====== תזמון מחדש (העברה / שכפול) ======
+        let reschedulePendingId = null;
+        let rescheduleBulk = false;
+        let bulkTotal = 0;
+        function onRescheduleSelect(id, mode){
+            if (guardRO()) return; 
+            if (!mode) return;
+            if (mode === 'general') {
+                const t = tasks.find(x => x.id === id); if (!t) return;
+                t.status = 'general'; t.dueDate = ''; renderTasks();
+                sendPostToSheets({ action:'updateTask', taskId:id, updates:{ status:'general', dueDate:'' } }, true)
+                    .then(ok => { if (ok) showNotification('המשימה הועברה לרשימה הכללית.'); });
+                return;
+            }
+            openReschedule(id, mode, false);
+        }
+        function openReschedule(id, mode, bulk){
+            reschedulePendingId = id;
+            rescheduleBulk = !!bulk;
+            const t = tasks.find(x => x.id === id);
+            let label = t ? t.name : '';
+            if (bulk) { const done = bulkTotal - bulkQueue.length; label = `(${done}/${bulkTotal}) ${label}`; }
+            document.getElementById('reschedule-task-name').innerText = label;
+            let d = tomorrowISO();
+            if (mode === 'today') d = todayISO();
+            document.getElementById('reschedule-date-input').value = d;
+            document.getElementById('reschedule-modal').classList.remove('hidden');
+        }
+        function afterRescheduleStep(){
+            if (rescheduleBulk) { nextBulkReschedule(); }
+            else { reschedulePendingId = null; document.getElementById('reschedule-modal').classList.add('hidden'); }
+        }
+        function closeReschedule(){
+            document.getElementById('reschedule-modal').classList.add('hidden');
+            reschedulePendingId = null;
+            if (rescheduleBulk) { rescheduleBulk = false; bulkQueue = []; selectionMode = false; selectedIds.clear(); updateSelectionBar(); }
+            renderTasks();
+        }
+
+        function quickSchedule(id, mode){
+            if (guardRO()) return; 
+            const t = tasks.find(x => x.id === id); if (!t) return;
+            const d = (mode === 'today') ? todayISO() : tomorrowISO();
+            t.status = 'dated'; t.dueDate = d; renderTasks();
+            sendPostToSheets({ action:'updateTask', taskId:id, updates:{ status:'dated', dueDate:d } }, true)
+                .then(ok => { if (ok) showNotification('נקבע ל-' + heDate(d)); });
+        }
+
+        document.getElementById('reschedule-move-btn').onclick = function(){
+            if (guardRO()) return;
+            const d = document.getElementById('reschedule-date-input').value;
+            const t = tasks.find(x => x.id === reschedulePendingId);
+            if (t && d) {
+                t.status = 'dated'; t.dueDate = d;
+                sendPostToSheets({ action:'updateTask', taskId:t.id, updates:{ status:'dated', dueDate:d } }, true);
+            }
+            afterRescheduleStep();
+            renderTasks();
+        };
+        document.getElementById('reschedule-copy-btn').onclick = function(){
+            if (guardRO()) return;
+            const d = document.getElementById('reschedule-date-input').value;
+            const t = tasks.find(x => x.id === reschedulePendingId);
+            if (t && d) {
+                const copy = { id: Date.now(), name: t.name, type: t.type, status:'dated', dueDate:d, dayOfMonth:'', monthOfYear:'', done:false, notes:t.notes, priority: 500, todoNotes: t.todoNotes || '', continuous: t.continuous || false, prioritizedBy: '' };
+                tasks.push(copy);
+                sendPostToSheets({ action:'addTask', task:copy }, true);
+            }
+            afterRescheduleStep();
+            renderTasks();
+        };
+        document.getElementById('reschedule-cancel-btn').onclick = closeReschedule;
+
+        // ====== מחיקה ======
+        function handleDeleteTask(id){
+            if (guardRO()) return; 
+            const modal = document.getElementById('delete-confirm-modal');
+            modal.classList.remove('hidden');
+            document.getElementById('btn-delete-confirm').onclick = function(){
+                modal.classList.add('hidden');
+                tasks = tasks.filter(t => t.id !== id);
+                renderTasks();
+                sendPostToSheets({ action:'deleteTask', taskId:id }, true)
+                    .then(ok => { if (ok) showNotification('המשימה נמחקה.'); });
+            };
+            document.getElementById('btn-delete-cancel').onclick = function(){ modal.classList.add('hidden'); };
+        }
+
+        // ====== טאבים ======
+        function switchTab(tab){
+            currentTab = tab;
+            const map = {
+                today: ['tab-today-btn','tab-today-content'],
+                bydate: ['tab-bydate-btn','tab-bydate-content'],
+                general: ['tab-general-btn','tab-general-content'],
+                history: ['tab-history-btn','tab-history-content']
+            };
+            Object.keys(map).forEach(k => {
+                document.getElementById(map[k][0]).className = "py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium text-sm transition";
+                document.getElementById(map[k][1]).classList.add('hidden');
+            });
+            document.getElementById(map[tab][0]).className = "py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm transition";
+            document.getElementById(map[tab][1]).classList.remove('hidden');
+
+            if (tab !== 'today') { const mb = document.getElementById('board-mode-banner'); if (mb) mb.classList.add('hidden'); }
+            if (tab === 'history') loadHistoryFromSheets();
+            else renderTasks();
+        }
+        function onByDateChange(value){ if (value) { selectedDate = value; updateCounts(); renderByDateTab(); } }
+        function quickByDate(which){
+            selectedDate = (which === 'tomorrow') ? tomorrowISO() : addDaysISO(todayISO(), 7);
+            document.getElementById('bydate-picker').value = selectedDate;
+            updateCounts(); renderByDateTab();
+        }
+
+        // ====== סגירת יום ======
+        function triggerEndDay(){
+            if (guardRO()) return; 
+            if (dayClosed) { showNotification('היום כבר נסגר. אפשר לערוך אותו דרך ההיסטוריה.', true); return; }
+            if (attendanceIntervals.length === 0) { showNotification('אנא הוסף לפחות סבב נוכחות אחד.', true); return; }
+            if (attendanceIntervals.some(i => !i.start)) { showNotification('יש סבב נוכחות ללא שעת התחלה.', true); return; }
+            // אם חסרה שעת סיום - נשאל מתי נסגר במקום להניח שעה שגויה
+            if (attendanceIntervals.some(i => i.start && !i.end)) { askEndTime(); return; }
+            showClosePreview();
+        }
+
+        function askEndTime(){
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2,'0');
+            const mm = String(now.getMinutes()).padStart(2,'0');
+            document.getElementById('endtime-input').value = `${hh}:${mm}`;
+            document.getElementById('endtime-modal').classList.remove('hidden');
+        }
+        function confirmEndTimeAndClose(){
+            const t = document.getElementById('endtime-input').value;
+            if (!t) { showNotification('נא להזין שעת סיום.', true); return; }
+            attendanceIntervals.forEach(iv => { if (iv.start && !iv.end) iv.end = t; });
+            renderAttendance();
+            syncAttendanceWithSheets();
+            document.getElementById('endtime-modal').classList.add('hidden');
+            showClosePreview();
+        }
+
+        function showClosePreview(){
+            const bd = boardDate();
+            const tomKey = addDaysISO(bd, 1);
+            const board = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bd);
+            const done = board.filter(t => t.done);
+            const notDone = board.filter(t => !t.done);
+            // תוכנית מחר: המשך מחר (מתמשכות) / נדחו (לא יומיות) + מתוזמנות למחר (רוטינות יומיות ייווצרו אוטומטית)
+            const tomorrow = [];
+            const seen = {};
+            board.forEach(t => {
+                if (isDaily(t.type)) return;
+                if (t.continuous) { tomorrow.push({name:t.name, reason:'המשך מחר'}); seen[t.name]=true; return; }
+                if (!t.done) { tomorrow.push({name:t.name, reason:'נדחתה'}); seen[t.name]=true; }
+            });
+            tasks.filter(t => t.status==='seed' && !isDaily(t.type)).forEach(t => {
+                if (routineWouldFall(t.type, t.dayOfMonth, t.monthOfYear, t.dueDate, tomKey, t.weekDay) && !seen[t.name]) { tomorrow.push({name:t.name, reason:'רוטינה'}); seen[t.name]=true; }
+            });
+            tasks.filter(t => t.status==='dated' && t.dueDate===tomKey).forEach(t => { if(!seen[t.name]){ tomorrow.push({name:t.name, reason:'מתוזמנת'}); seen[t.name]=true; } });
+
+            const li = (arr, empty, fmt) => arr.length ? arr.map(fmt).join('') : `<span class="text-xs text-slate-400 italic">${empty}</span>`;
+            const html = `
+                <div class="bg-slate-50 rounded-xl p-3 flex justify-between text-sm">
+                    <span class="text-slate-500">נוכחות מדווחת:</span>
+                    <span class="font-bold text-slate-800">${calcHours(attendanceIntervals)} שעות</span>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-emerald-700 mb-1.5">✅ בוצעו (${done.length})</div>
+                    <div class="bg-emerald-50/50 border border-emerald-100 rounded-lg px-3 py-2">
+                        ${li(done, 'לא סומנו משימות שבוצעו.', t => `<div class="text-xs py-0.5 flex justify-between gap-2"><span class="text-slate-800">${escapeHtml(t.name)}</span><span class="text-slate-500 italic max-w-[45%] text-left">${t.notes?escapeHtml(t.notes):''}</span></div>`)}
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-indigo-700 mb-1.5">➡️ לביצוע מחר (${tomorrow.length})</div>
+                    <div class="bg-indigo-50/40 border border-indigo-100 rounded-lg px-3 py-2">
+                        ${li(tomorrow, 'אין.', t => `<div class="text-xs py-0.5 flex justify-between gap-2"><span class="text-slate-700">${escapeHtml(t.name)}</span><span class="text-[10px] text-slate-400">${t.reason}</span></div>`)}
+                    </div>
+                </div>
+            `;
+            document.getElementById('close-preview-content').innerHTML = html;
+            lastCloseData = { done, tomorrow };
+            document.getElementById('close-preview-modal').classList.remove('hidden');
+        }
+
+        // בניית טקסט סיכום לסגירה - אותו פורמט כמו בהיסטוריה
+        let lastCloseData = null;
+        function buildCloseSummaryText(){
+            const bd = boardDate();
+            const d = lastCloseData || { done: [], tomorrow: [] };
+            let text = `📄 סיכום ${heDateWithWeekday(bd)}\n`;
+            text += `⏱️ שעות: ${calcHours(attendanceIntervals)}\n`;
+            attendanceIntervals.forEach((iv, i) => { text += `   • סבב ${i+1}: ${iv.start || '--:--'} עד ${iv.end || '--:--'}${iv.note ? ` — ${iv.note}` : ''}\n`; });
+            text += `\n✅ בוצעו:\n`;
+            if (d.done.length) d.done.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}\n`; });
+            else text += `   —\n`;
+            if (d.tomorrow && d.tomorrow.length) {
+                text += `\n➡️ למחר:\n`;
+                d.tomorrow.forEach(t => { text += `   • ${t.name} [${t.reason}]\n`; });
+            }
+            return text;
+        }
+        function closeAndCopy(){
+            copyTextToClipboard(buildCloseSummaryText());
+            showNotification('📋 הסיכום הועתק — היום נסגר.');
+            doCloseDay();
+        }
+
+        function doCloseDay(){
+            document.getElementById('close-preview-modal').classList.add('hidden');
+            showLoader("סוגר יום עבודה ושומר דוח…");
+            fetchJSONP(gasUrl, { action: 'closeDay', intervals: JSON.stringify(attendanceIntervals) }, 'cb_close')
+                .then(data => {
+                    hideLoader();
+                    if (data && data.status === 'success') {
+                        applyLoadedData(data);
+                        renderAttendance();
+                        showNotification("יום העבודה נסגר. הדוח נשמר ✅");
+                        switchTab('history'); // הצגת הדוח הסגור מיד
+                    } else {
+                        showNotification((data && data.message) || "שגיאה בסגירת היום.", true);
+                    }
+                })
+                .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור בסגירת היום.", true); });
+        }
+
+        // ====== פתיחת יום עבודה ======
+        function triggerOpenDay(){ openDayForDate(todayReal || todayISO()); }
+        function returnToToday(){ openDayForDate(todayReal || todayISO()); }
+
+        function openDayForDate(dateKey){
+            if (guardRO()) return; 
+            const params = { action: 'openDay' };
+            if (dateKey) params.date = dateKey;
+            const isToday = (dateKey === (todayReal || todayISO()));
+            showLoader(isToday ? "פותח יום עבודה…" : ("פותח יום " + heDate(dateKey) + "…"));
+            fetchJSONP(gasUrl, params, 'cb_open')
+                .then(data => {
+                    hideLoader();
+                    if (data && data.status === 'success') {
+                        applyLoadedData(data);
+                        renderAttendance();
+                        switchTab('today');
+                        showNotification(isToday ? "יום העבודה נפתח ✅" : ("נפתח יום " + heDate(dateKey) + " לדיווח ✅"));
+                    } else {
+                        showNotification((data && data.message) || "שגיאה בפתיחת היום.", true);
+                    }
+                })
+                .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור בפתיחת היום.", true); });
+        }
+
+        function openReportDayModal(){
+            const input = document.getElementById('report-day-input');
+            const yest = addDaysISO(todayReal || todayISO(), -1);
+            input.max = yest;
+            input.value = yest;
+            document.getElementById('report-day-modal').classList.remove('hidden');
+        }
+        function confirmReportDay(){
+            const d = document.getElementById('report-day-input').value;
+            if (!d) { showNotification('נא לבחור תאריך.', true); return; }
+            if (d >= (todayReal || todayISO())) { showNotification('יש לבחור תאריך מהעבר (לפני היום).', true); return; }
+            document.getElementById('report-day-modal').classList.add('hidden');
+            openDayForDate(d);
+        }
+
+        // ====== מעבר לתצוגת הדמיה של יום עתידי (לא יוצר כלום) ======
+        function planNextDay(){
+            selectedDate = tomorrowISO();
+            document.getElementById('bydate-picker').value = selectedDate;
+            switchTab('bydate');
+        }
+
+        // ====== היסטוריה ======
+        function parseSnapshot(raw){
+            let parsed; try { parsed = JSON.parse(raw); } catch(e) { parsed = []; }
+            if (Array.isArray(parsed)) return { tasks: parsed, tomorrow: [] };
+            return { tasks: parsed.tasks || [], tomorrow: parsed.tomorrow || [] };
+        }
+
+        function renderHistory(){
+            const container = document.getElementById('history-list');
+            const empty = document.getElementById('history-empty-state');
+            container.innerHTML = '';
+            if (history.length === 0) { empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+
+            history.forEach(dayLog => {
+                const snap = parseSnapshot(dayLog.tasks);
+                const done = snap.tasks.filter(t => t.done);
+                const notDone = snap.tasks.filter(t => !t.done);
+                const tomorrow = snap.tomorrow;
+
+                let parsedIntervals = [];
+                try { parsedIntervals = JSON.parse(dayLog.intervals); } catch(e) {}
+                const intervalsDisplay = parsedIntervals.map(i => `${i.start}-${i.end}${i.note ? ` (${escapeHtml(i.note)})` : ''}`).join(', ') || 'לא דווח';
+
+                // 1) בוצעו היום (בולט) + הערה על הביצוע, מחוברת למשימה (מתחתיה)
+                const doneHtml = done.length ? done.map(t => `
+                    <div class="text-xs py-1.5 border-b border-emerald-100/70 last:border-0">
+                        <div class="text-slate-800 font-medium">✅ ${escapeHtml(t.name)} <span class="text-[10px] text-slate-400 font-normal">(${t.type})</span></div>
+                        ${t.notes ? `<div class="text-[11px] text-slate-500 mt-0.5 pr-5 border-r-2 border-emerald-200 mr-0.5">📝 ${escapeHtml(t.notes)}</div>` : ''}
+                    </div>`).join('') : '<span class="text-xs text-slate-400 italic">לא סומנו משימות שבוצעו.</span>';
+
+                // 2) לביצוע מחר
+                const reasonColor = { 'רוטינה':'text-sky-600', 'מתוזמנת':'text-purple-600', 'נדחתה מהיום':'text-rose-500', 'נדחתה':'text-rose-500', 'המשך מחר':'text-amber-600' };
+                const tomorrowHtml = tomorrow.length ? tomorrow.map(t => `
+                    <div class="flex items-center justify-between gap-3 text-xs py-1.5 border-b border-indigo-100/60 last:border-0">
+                        <span class="text-slate-700">➡️ ${escapeHtml(t.name)} <span class="text-[10px] text-slate-400">(${t.type})</span></span>
+                        <span class="text-[10px] ${reasonColor[t.reason] || 'text-slate-400'} shrink-0">${t.reason}</span>
+                    </div>`).join('') : '<span class="text-xs text-slate-400 italic">אין משימות מתוכננות למחר.</span>';
+
+                // (הדוח מציג רק מה שבוצע ומה שנשאר למחר)
+
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center flex-wrap gap-2">
+                            <span class="font-bold text-slate-900 text-sm">📄 סיכום ${heDateWithWeekday(dayLog.date)}</span>
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-mono font-medium">${intervalsDisplay} (${dayLog.totalHours} שעות)</span>
+                                <button onclick="shareHistoryToWhatsApp('${dayLog.date}')" class="bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-medium px-2.5 py-1 rounded-lg transition">📋 העתק</button>
+                                <button onclick="openHistoryEdit('${dayLog.date}')" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg transition">✏️ ערוך</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="text-xs font-bold text-emerald-700 mb-1.5">בוצעו היום</div>
+                            <div class="bg-emerald-50/50 border border-emerald-100 rounded-lg px-3 py-2">${doneHtml}</div>
+                        </div>
+
+                        <div>
+                            <div class="text-xs font-bold text-indigo-700 mb-1.5">לביצוע מחר</div>
+                            <div class="bg-indigo-50/40 border border-indigo-100 rounded-lg px-3 py-2">${tomorrowHtml}</div>
+                        </div>
+                    </div>`);
+            });
+        }
+
+        function openTodayReportForEdit(){
+            switchTab('history');
+            // ניתן לערוך את היום הנוכחי לאחר שההיסטוריה נטענת
+            setTimeout(() => openHistoryEdit(todayISO()), 700);
+        }
+
+        function openHistoryEdit(dateKey){
+            const dayLog = history.find(h => h.date === dateKey);
+            if (!dayLog) { showNotification('הדוח עדיין נטען, נסה שוב בעוד רגע.', true); return; }
+            let intervals = [];
+            try { intervals = JSON.parse(dayLog.intervals); } catch(e) {}
+            const snap = parseSnapshot(dayLog.tasks);
+            historyEditState = { date: dateKey, intervals: JSON.parse(JSON.stringify(intervals)), tasks: JSON.parse(JSON.stringify(snap.tasks)), tomorrow: snap.tomorrow };
+
+            document.getElementById('history-edit-date').innerText = 'תאריך: ' + heDateWithWeekday(dateKey);
+            renderHistoryEditIntervals();
+            renderHistoryEditTasks();
+            document.getElementById('history-edit-modal').classList.remove('hidden');
+        }
+        function renderHistoryEditIntervals(){
+            const c = document.getElementById('history-edit-intervals');
+            c.innerHTML = '';
+            historyEditState.intervals.forEach((iv, idx) => {
+                c.insertAdjacentHTML('beforeend', `
+                    <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500 shrink-0">סבב ${idx+1}:</span>
+                            <input type="time" value="${iv.start||''}" onchange="historyEditState.intervals[${idx}].start=this.value" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs w-full">
+                            <span class="text-slate-400 text-xs">עד</span>
+                            <input type="time" value="${iv.end||''}" onchange="historyEditState.intervals[${idx}].end=this.value" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs w-full">
+                            <button onclick="historyEditRemoveInterval(${idx})" class="text-slate-300 hover:text-rose-600 p-1 shrink-0">✕</button>
+                        </div>
+                        <input type="text" value="${escapeAttr(iv.note||'')}" placeholder="הערה לסבב זה…" onchange="historyEditState.intervals[${idx}].note=this.value" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs">
+                    </div>`);
+            });
+        }
+        function historyEditAddInterval(){ historyEditState.intervals.push({start:'09:00', end:'', note:''}); renderHistoryEditIntervals(); }
+        function historyEditRemoveInterval(idx){ historyEditState.intervals.splice(idx,1); renderHistoryEditIntervals(); }
+        function renderHistoryEditTasks(){
+            const c = document.getElementById('history-edit-tasks');
+            c.innerHTML = '';
+            if (historyEditState.tasks.length === 0) { c.innerHTML = '<p class="text-xs text-slate-400">אין משימות בדוח זה.</p>'; return; }
+            historyEditState.tasks.forEach((t, idx) => {
+                c.insertAdjacentHTML('beforeend', `
+                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2">
+                        <button onclick="historyEditToggleDone(${idx})" class="shrink-0 w-5 h-5 rounded-md border-2 ${t.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'} flex items-center justify-center text-white text-xs">${t.done ? '✓' : ''}</button>
+                        <span class="text-sm text-slate-700 shrink-0 max-w-[35%] truncate" title="${escapeAttr(t.name)}">${escapeHtml(t.name)}${t._new ? ' <span class=\"text-[9px] text-amber-500\">(חדשה)</span>' : ''}</span>
+                        <input type="text" placeholder="הערה…" value="${escapeAttr(t.notes||'')}" onchange="historyEditState.tasks[${idx}].notes=this.value" class="flex-1 text-xs bg-white border border-slate-200 rounded-lg px-2 py-1.5">
+                        <button onclick="historyEditRemoveTask(${idx})" title="הסר משורה זו" class="shrink-0 text-slate-300 hover:text-rose-600 transition text-xs px-1">🗑️</button>
+                    </div>`);
+            });
+        }
+        function historyEditToggleDone(idx){ historyEditState.tasks[idx].done = !historyEditState.tasks[idx].done; renderHistoryEditTasks(); }
+        function historyEditRemoveTask(idx){ if (guardRO()) return; historyEditState.tasks.splice(idx, 1); renderHistoryEditTasks(); }
+        // הוספת משימה מזדמנת (חד-פעמית בלבד) ישירות לדוח יום עבר
+        function historyEditAddTask(){
+            if (guardRO()) return;
+            const el = document.getElementById('history-add-task-name');
+            const name = el.value.trim();
+            if (!name) { showNotification('נא להזין שם משימה.', true); return; }
+            historyEditState.tasks.push({ id: Date.now(), name, type: 'משימה מזדמנת', done: true, notes: '', dueDate: historyEditState.date, _new: true });
+            el.value = '';
+            renderHistoryEditTasks();
+        }
+        function closeHistoryEdit(){ document.getElementById('history-edit-modal').classList.add('hidden'); historyEditState = null; }
+        function saveHistoryEdit(){
+            if (guardRO()) return; 
+            if (!historyEditState) return;
+            const st = historyEditState;
+            showLoader("שומר את הדוח…");
+            fetchJSONP(gasUrl, {
+                action: 'updateHistory',
+                date: st.date,
+                intervals: JSON.stringify(st.intervals),
+                tasks: JSON.stringify({ tasks: st.tasks, tomorrow: st.tomorrow || [] })
+            }, 'cb_histedit').then(data => {
+                hideLoader();
+                if (data && data.status === 'success') {
+                    closeHistoryEdit();
+                    showNotification('הדוח עודכן בהצלחה ✅');
+                    loadHistoryFromSheets();
+                } else {
+                    showNotification((data && data.message) || 'שגיאה בעדכון הדוח.', true);
+                }
+            }).catch(err => { console.error(err); hideLoader(); showNotification('שגיאת חיבור בעדכון הדוח.', true); });
+        }
+
+        // ====== העתקת סיכום ======
+        function copyTextToClipboard(text){
+            const tmp = document.createElement('textarea');
+            tmp.value = text; document.body.appendChild(tmp); tmp.select();
+            try { document.execCommand('copy'); } catch(e) {}
+            document.body.removeChild(tmp);
+        }
+        function shareWhatsApp(text){
+            copyTextToClipboard(text); // העתקה בלבד - המשתמש מדביק בווצאפ
+        }
+
+        function copyDetailedSummaryToClipboard(){
+            const today = boardDate();
+            const dateStr = (workDate && todayReal && workDate !== todayReal) ? ('יום ' + heDate(workDate)) : new Date().toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+            let text = `📋 סיכום יום עבודה - ${dateStr}\n`;
+            text += `⏱️ שעות נוכחות: ${calcHours(attendanceIntervals)} שעות\n`;
+            if (attendanceIntervals.length > 0) {
+                attendanceIntervals.forEach((iv, i) => { text += `   • סבב ${i+1}: ${iv.start || '--:--'} עד ${iv.end || '--:--'}${iv.note ? ` — ${iv.note}` : ''}\n`; });
+            }
+            text += `\n✅ בוצעו היום:\n`;
+            const done = tasks.filter(t => t.status === 'dated' && t.dueDate === today && t.done);
+            if (done.length > 0) done.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}\n`; });
+            else text += `   —\n`;
+
+            text += `\n➡️ פתוחות / למחר:\n`;
+            const pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= today && !t.done);
+            if (pending.length > 0) pending.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}\n`; });
+            else text += `   —\n`;
+
+            const future = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate > today);
+            if (future.length > 0) {
+                text += `\n📅 מתוזמנות לעתיד:\n`;
+                future.forEach(t => { text += `   • ${t.name} ← ${heDateShort(t.dueDate)}\n`; });
+            }
+            shareWhatsApp(text);
+            showNotification('📋 הסיכום הועתק — אפשר להדביק בווצאפ.');
+        }
+
+        // בניית טקסט סיכום מיום היסטורי + שיתוף לווצאפ
+        function shareHistoryToWhatsApp(dateKey){
+            const dayLog = history.find(h => h.date === dateKey);
+            if (!dayLog) { showNotification('הדוח עדיין נטען, נסה שוב.', true); return; }
+            const snap = parseSnapshot(dayLog.tasks);
+            let intervals = [];
+            try { intervals = JSON.parse(dayLog.intervals); } catch(e) {}
+            const done = snap.tasks.filter(t => t.done);
+            const notDone = snap.tasks.filter(t => !t.done);
+
+            let text = `📄 סיכום ${heDateWithWeekday(dateKey)}\n`;
+            text += `⏱️ שעות: ${dayLog.totalHours}\n`;
+            intervals.forEach((iv, i) => { text += `   • סבב ${i+1}: ${iv.start || '--:--'} עד ${iv.end || '--:--'}${iv.note ? ` — ${iv.note}` : ''}\n`; });
+
+            text += `\n✅ בוצעו:\n`;
+            if (done.length) done.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}\n`; });
+            else text += `   —\n`;
+
+            if (snap.tomorrow && snap.tomorrow.length) {
+                text += `\n➡️ למחר:\n`;
+                snap.tomorrow.forEach(t => { text += `   • ${t.name} [${t.reason}]\n`; });
+            }
+            copyTextToClipboard(text);
+            showNotification('📋 הסיכום הועתק — אפשר להדביק בווצאפ.');
+        }
+
+        // ====== הגדרות ======
+        function toggleSettings(){ document.getElementById('settings-panel').classList.toggle('hidden'); }
+        function refreshData(){ loadDataFromSheets(true); }
+        function saveGasUrl(){
+            const val = document.getElementById('gas-url-input').value.trim();
+            if (val) { gasUrl = val; localStorage.setItem('gas_url', val); showNotification('כתובת הסנכרון עודכנה!'); loadDataFromSheets(true); }
+        }
+        function updateConnectionStatus(status){
+            const b = document.getElementById('refresh-btn');
+            if (!b) return;
+            const base = "inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition ";
+            // אם יש שינויים שלא נשמרו - זה גובר על החיווי הרגיל (חוץ מבזמן שמירה/טעינה)
+            if (pendingWrites.length > 0 && status !== 'syncing' && status !== 'loading') {
+                b.className = base + "bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300";
+                b.title = "יש שינויים שלא נשמרו — לחץ כדי לשמור אותם בשרת";
+                b.innerHTML = "⚠️ שמור (" + pendingWrites.length + ")";
+                return;
+            }
+            if (status === 'syncing') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "שומר…"; b.innerHTML = "💾 שומר"; }
+            else if (status === 'loading') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "טוען…"; b.innerHTML = "⏳ טוען"; }
+            else if (status === 'connected') { b.className = base + "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"; b.title = "מסונכרן — לחץ לרענון"; b.innerHTML = "🔄 מסונכרן"; }
+            else { b.className = base + "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"; b.title = "שגיאת חיבור — לחץ לניסיון חוזר"; b.innerHTML = "🔌 שגיאה"; }
+        }
+
+        // ====== עזרים ======
+        function showLoader(text){ document.getElementById('loader-text').innerText = text; const l = document.getElementById('global-loader'); l.classList.remove('opacity-0','pointer-events-none'); l.style.display = 'flex'; }
+        function hideLoader(){ const l = document.getElementById('global-loader'); l.classList.add('opacity-0','pointer-events-none'); setTimeout(() => { l.style.display = 'none'; }, 300); }
+        function escapeHtml(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function escapeAttr(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function showNotification(text, isError = false){
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-xl text-xs font-bold shadow-lg transition-all transform translate-y-2 opacity-0 duration-300 pointer-events-auto ${isError ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-slate-900 text-white'}`;
+            toast.innerText = text;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('opacity-0','translate-y-2'), 10);
+            setTimeout(() => { toast.classList.add('opacity-0','translate-y-2'); setTimeout(() => toast.remove(), 300); }, 4000);
+        }
+    </script>
+</body>
+</html>
