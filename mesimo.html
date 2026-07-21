@@ -63,7 +63,12 @@
     <main class="max-w-full mx-auto px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         <!-- צד ימין -->
-        <div class="lg:col-span-4 flex flex-col gap-6">
+        <div class="lg:col-span-3">
+            <button onclick="toggleSidePanel()" class="w-full flex items-center justify-between bg-white border border-slate-200 rounded-xl px-3 py-2 mb-3 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition">
+                <span>☰ תפריט בקרה</span>
+                <span id="sidepanel-arrow" class="transition-transform">▲</span>
+            </button>
+            <div id="side-panel-content" class="flex flex-col gap-6">
 
             <!-- בקרת יום עבודה -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5 order-1">
@@ -92,15 +97,6 @@
                     <div id="return-today-wrap" class="hidden">
                         <button onclick="returnToToday()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold py-2 rounded-xl transition">↩️ חזרה להיום</button>
                     </div>
-                </div>
-
-                <!-- כניסה/יציאה כעורך -->
-                <button id="editor-login-btn" onclick="editorLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">🔑 כניסה כעובד</button>
-                <button id="editor-logout-btn" onclick="editorLogout()" class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold py-2 rounded-xl transition">🕊️ כניסה כהרב סגל</button>
-
-                <!-- סטטוס מאוחד -->
-                <div class="pt-2.5 border-t border-slate-100">
-                    <span id="day-status-text" class="text-xs font-semibold text-slate-500">—</span>
                 </div>
             </div>
 
@@ -229,6 +225,10 @@
                 </button>
                 <div id="settings-panel" class="hidden p-5 border-t border-slate-200 bg-slate-50/50 space-y-4 text-xs">
                     <div>
+                        <button id="editor-login-btn" onclick="editorLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">🔑 כניסה כעובד</button>
+                        <button id="editor-logout-btn" onclick="editorLogout()" class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold py-2 rounded-xl transition">🕊️ כניסה כהרב סגל</button>
+                    </div>
+                    <div class="pt-3 border-t border-slate-200">
                         <label class="block font-semibold text-slate-600 mb-1">קישור ליישום האינטרנט (Web App URL):</label>
                         <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
                     </div>
@@ -239,10 +239,11 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
 
         <!-- צד שמאל -->
-        <div class="lg:col-span-8 space-y-6">
+        <div class="lg:col-span-9 space-y-6">
 
             <!-- חיווי בולט: יום פעיל מול תכנון יום הבא -->
             <div id="board-mode-banner" class="hidden"></div>
@@ -450,16 +451,6 @@
         function updateDayStatus(){
             const wd = workDate || todayReal;
             const isPast = wd && todayReal && wd !== todayReal;
-            let label, color;
-            if (dayClosed) { label = 'יום נסגר'; color = 'text-slate-500'; }
-            else if (dayOpen) { label = 'יום עבודה פתוח'; color = 'text-emerald-600'; }
-            else if (prevUnclosed) { label = 'טרם נסגר יום קודם'; color = 'text-rose-600'; }
-            else { label = 'יום טרם נפתח'; color = 'text-amber-600'; }
-            const txt = document.getElementById('day-status-text');
-            if (txt) {
-                txt.className = 'text-xs font-semibold ' + color;
-                txt.innerText = wd ? (label + ' · ' + heDate(wd) + (isPast ? ' (לא היום)' : '')) : label;
-            }
             const ob = document.getElementById('open-buttons');
             const cb = document.getElementById('close-button');
             if (ob) ob.classList.toggle('hidden', dayOpen);
@@ -594,6 +585,13 @@
 
             selectedDate = tomorrowISO();
             document.getElementById('bydate-picker').value = selectedDate;
+
+            try {
+                if (localStorage.getItem('side_panel_hidden') === '1') {
+                    document.getElementById('side-panel-content').classList.add('hidden');
+                    document.getElementById('sidepanel-arrow').textContent = '▼';
+                }
+            } catch(e) {}
 
             handleTaskTypeChange();
             handleAddModeChange();
@@ -2133,6 +2131,13 @@
 
         // ====== הגדרות ======
         function toggleSettings(){ document.getElementById('settings-panel').classList.toggle('hidden'); }
+        function toggleSidePanel(){
+            const c = document.getElementById('side-panel-content');
+            const arrow = document.getElementById('sidepanel-arrow');
+            const hidden = c.classList.toggle('hidden');
+            if (arrow) arrow.textContent = hidden ? '▼' : '▲';
+            try { localStorage.setItem('side_panel_hidden', hidden ? '1' : '0'); } catch(e) {}
+        }
         function refreshData(){ loadDataFromSheets(true); }
         function saveGasUrl(){
             const val = document.getElementById('gas-url-input').value.trim();
