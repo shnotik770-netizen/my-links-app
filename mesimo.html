@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;950&display=swap" rel="stylesheet">
     <style>
+        html { font-size: 118.75%; } /* מגדיל את כל הטקסט באתר (מבוסס rem) בכ-3 נקודות */
         body { font-family: 'Rubik', sans-serif; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -33,7 +34,7 @@
 
     <!-- Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-indigo-600 text-white rounded-xl">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,7 +50,7 @@
             <div class="flex items-center gap-3">
                 <div class="text-left hidden md:block">
                     <p class="text-sm font-medium text-slate-900" id="current-date-display">טוען תאריך...</p>
-                    <p class="text-[11px] text-slate-400">התאריך של היום</p>
+                    <p class="text-[14px] text-slate-400">התאריך של היום</p>
                 </div>
             </div>
         </div>
@@ -59,7 +60,7 @@
         🕊️ מצב הרב סגל (צפייה ותיעדוף משימות) — ניתן לתעדף משימות ולצפות בהיסטוריה; שאר פעולות העריכה חסומות. להזדהות כעובד (נוטיק) לחץ "כניסה כעובד".
     </div>
 
-    <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <main class="max-w-full mx-auto px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         <!-- צד ימין -->
         <div class="lg:col-span-4 flex flex-col gap-6">
@@ -159,14 +160,14 @@
                             <button type="submit" class="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 rounded-xl transition shadow-sm">הוסף</button>
                         </div>
 
-                        <p id="type-hint" class="text-[11px] text-slate-400 leading-snug"></p>
+                        <p id="type-hint" class="text-[14px] text-slate-400 leading-snug"></p>
 
                         <div id="initial-due-date-container" class="hidden">
-                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">תאריך ביצוע מבוקש</label>
+                            <label class="block text-[14px] font-semibold text-slate-500 mb-1">תאריך ביצוע מבוקש</label>
                             <input type="date" id="task-due-date" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
                         </div>
                         <div id="weekly-day-container" class="hidden">
-                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">באיזה יום בשבוע?</label>
+                            <label class="block text-[14px] font-semibold text-slate-500 mb-1">באיזה יום בשבוע?</label>
                             <select id="task-weekly-day" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
                                 <option value="0">ראשון</option><option value="1">שני</option>
                                 <option value="2">שלישי</option><option value="3">רביעי</option>
@@ -174,11 +175,11 @@
                             </select>
                         </div>
                         <div id="monthly-day-container" class="hidden">
-                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">באיזה יום בחודש? (1-31)</label>
+                            <label class="block text-[14px] font-semibold text-slate-500 mb-1">באיזה יום בחודש? (1-31)</label>
                             <input type="number" id="task-monthly-day" min="1" max="31" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition" placeholder="לדוגמה: 15">
                         </div>
                         <div id="annual-month-container" class="hidden">
-                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">באיזה חודש בשנה?</label>
+                            <label class="block text-[14px] font-semibold text-slate-500 mb-1">באיזה חודש בשנה?</label>
                             <select id="task-annual-month" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
                                 <option value="1">ינואר (01)</option><option value="2">פברואר (02)</option>
                                 <option value="3">מרץ (03)</option><option value="4">אפריל (04)</option>
@@ -194,13 +195,13 @@
                 <!-- מצב: רוטינה קבועה מהמערכת -->
                 <div id="mode-routine" class="hidden">
                     <button onclick="openRoutinePicker()" class="w-full bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-sm font-semibold py-2.5 rounded-xl transition">🔍 חפש רוטינה קבועה במערכת</button>
-                    <p class="text-[11px] text-slate-400 mt-1.5 text-center">בחר רוטינה מוגדרת כדי לבצע אותה ביום העבודה הנוכחי.</p>
+                    <p class="text-[14px] text-slate-400 mt-1.5 text-center">בחר רוטינה מוגדרת כדי לבצע אותה ביום העבודה הנוכחי.</p>
                 </div>
 
                 <!-- מצב: משיכה מהרשימה הכללית -->
                 <div id="mode-general" class="hidden">
                     <button onclick="openGeneralPicker()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-sm font-semibold py-2.5 rounded-xl transition">🔍 חפש משימה ברשימה הכללית</button>
-                    <p class="text-[11px] text-slate-400 mt-1.5 text-center">בחר משימה קיימת מהרשימה הכללית ומשוך אותה ליום העבודה.</p>
+                    <p class="text-[14px] text-slate-400 mt-1.5 text-center">בחר משימה קיימת מהרשימה הכללית ומשוך אותה ליום העבודה.</p>
                 </div>
             </div>
 
@@ -210,7 +211,7 @@
                 <button onclick="copyDetailedSummaryToClipboard()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
                     📋 העתק סיכום יום (לווצאפ)
                 </button>
-                <p class="text-[11px] text-slate-400 text-center leading-relaxed">
+                <p class="text-[14px] text-slate-400 text-center leading-relaxed">
                     מעתיק ללוח סיכום מסודר של מה שבוצע היום ומה שנשאר למחר, כולל שעות הנוכחות — מוכן להדבקה בווצאפ.
                 </p>
             </div>
@@ -234,7 +235,7 @@
                     <div class="pt-3 border-t border-slate-200">
                         <label class="block font-semibold text-slate-600 mb-1">שינוי סיסמת עובד:</label>
                         <input type="text" id="editor-pw-input" placeholder="סיסמה חדשה" onchange="saveEditorPw()" class="w-full px-3 py-2 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
-                        <p class="text-[11px] text-slate-400 mt-1.5">הסיסמה נשמרת בגיליון (Config) ותקפה בכל המכשירים. ברירת מחדל: 1234.</p>
+                        <p class="text-[14px] text-slate-400 mt-1.5">הסיסמה נשמרת בגיליון (Config) ותקפה בכל המכשירים. ברירת מחדל: 1234.</p>
                     </div>
                 </div>
             </div>
@@ -275,12 +276,12 @@
                             <label class="text-xs font-semibold text-slate-600">הצג משימות לתאריך:</label>
                             <input type="date" id="bydate-picker" onchange="onByDateChange(this.value)" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
                             <div class="flex gap-1.5">
-                                <button onclick="quickByDate('tomorrow')" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1.5 rounded-lg transition">מחר</button>
-                                <button onclick="quickByDate('week')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-2.5 py-1.5 rounded-lg transition">בעוד שבוע</button>
+                                <button onclick="quickByDate('tomorrow')" class="text-[14px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1.5 rounded-lg transition">מחר</button>
+                                <button onclick="quickByDate('week')" class="text-[14px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-2.5 py-1.5 rounded-lg transition">בעוד שבוע</button>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-[11px] text-slate-500">🔮 זו הדמיה בלבד — מציגה מה צפוי באותו יום (רוטינות + מתוזמנות + מה שעשוי להיגרר). המשימות נוצרות בפועל רק ב"פתיחת יום עבודה".</span>
+                            <span class="text-[14px] text-slate-500">🔮 זו הדמיה בלבד — מציגה מה צפוי באותו יום (רוטינות + מתוזמנות + מה שעשוי להיגרר). המשימות נוצרות בפועל רק ב"פתיחת יום עבודה".</span>
                         </div>
                     </div>
                     <div id="bydate-list" class="divide-y divide-slate-100"></div>
@@ -370,11 +371,11 @@
             <div class="space-y-2">
                 <button id="reschedule-move-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">
                     ➡️ העבר לתאריך זה
-                    <span class="block text-[10px] font-normal opacity-80">המשימה תעבור. לא תישאר במקום הנוכחי.</span>
+                    <span class="block text-[13px] font-normal opacity-80">המשימה תעבור. לא תישאר במקום הנוכחי.</span>
                 </button>
                 <button id="reschedule-copy-btn" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-sm font-semibold py-2.5 rounded-xl transition">
                     📑 שכפל לתאריך זה
-                    <span class="block text-[10px] font-normal opacity-80">יווצר עותק בתאריך החדש, והמשימה תישאר גם היום (להמשך טיפול).</span>
+                    <span class="block text-[13px] font-normal opacity-80">יווצר עותק בתאריך החדש, והמשימה תישאר גם היום (להמשך טיפול).</span>
                 </button>
                 <button id="reschedule-cancel-btn" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
             </div>
@@ -398,7 +399,11 @@
                     <input type="text" id="history-add-task-name" placeholder="הוסף משימה מזדמנת ליום זה…" class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <button onclick="historyEditAddTask()" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold px-3 rounded-lg transition">➕ הוסף</button>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-1">ניתן להוסיף כאן רק משימות מזדמנות (חד-פעמיות); רוטינות קבועות מתווספות דרך מסך המשימות.</p>
+                <p class="text-[13px] text-slate-400 mt-1">ניתן להוסיף כאן רק משימות מזדמנות (חד-פעמיות); רוטינות קבועות מתווספות דרך מסך המשימות.</p>
+            </div>
+            <div class="mb-6" id="history-edit-postponed-wrap">
+                <span class="block font-semibold text-slate-700 text-sm mb-2">משימות שנדחו למחר (ניתן למשוך בחזרה אם בוצעו בפועל):</span>
+                <div id="history-edit-postponed" class="space-y-2"></div>
             </div>
             <div class="flex gap-3">
                 <button onclick="saveHistoryEdit()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl text-sm transition shadow-md">שמור שינויים 💾</button>
@@ -601,11 +606,11 @@
         };
 
         // ====== תקשורת JSONP (עוקף CORS) ======
-        function fetchJSONP(url, params, callbackName) {
+        function fetchJSONP(url, params, callbackName, timeoutMs) {
             return new Promise((resolve, reject) => {
                 const uniqueCallback = callbackName + '_' + Date.now() + '_' + Math.round(100000 * Math.random());
                 let done = false;
-                const timer = setTimeout(() => { if (!done) { done = true; cleanup(); reject(new Error('JSONP timeout')); } }, 25000);
+                const timer = setTimeout(() => { if (!done) { done = true; cleanup(); reject(new Error('JSONP timeout')); } }, timeoutMs || 25000);
                 window[uniqueCallback] = function(data){ if (done) return; done = true; clearTimeout(timer); resolve(data); cleanup(); };
                 const queryParams = new URLSearchParams(params);
                 queryParams.set('callback', uniqueCallback);
@@ -619,6 +624,7 @@
             });
         }
 
+        let byDateDefaultSet = false; // מוגדר פעם אחת בלבד (לא דורס בחירה ידנית של המשתמש)
         function applyLoadedData(data){
             tasks = data.tasks || [];
             dayClosed = !!data.dayClosed;
@@ -633,6 +639,13 @@
                 attendanceIntervals = Array.isArray(attData) ? attData : [];
             } catch(e) {
                 attendanceIntervals = [{ start: "10:00", end: "", note: "" }];
+            }
+            if (!byDateDefaultSet) {
+                byDateDefaultSet = true;
+                // אם יום העבודה הנוכחי סגור, ברירת המחדל בתאריכון היא מחרתיים (מחר כבר מוצג בלוח הראשי)
+                selectedDate = dayClosed ? addDaysISO(todayISO(), 2) : tomorrowISO();
+                const picker = document.getElementById('bydate-picker');
+                if (picker) picker.value = selectedDate;
             }
             updateDayStatus();
         }
@@ -956,7 +969,7 @@
             // תאריך: רק בתצוגת "לפי תאריך". בלוח היום אין הצגת תאריך מקורי (לא רלוונטי).
             let dateNote = '';
             if (context === 'bydate' && task.dueDate) {
-                dateNote = `<span class="text-[10px] text-purple-600 font-medium shrink-0">📅${heDateShort(task.dueDate)}</span>`;
+                dateNote = `<span class="text-[13px] text-purple-600 font-medium shrink-0">📅${heDateShort(task.dueDate)}</span>`;
             }
 
             // מספר סדר + מדרג צבעים; המספר משמש גם כידית גרירה
@@ -965,9 +978,9 @@
                 const frac = total > 1 ? (idx / (total - 1)) : 0;
                 const light = 55 + Math.round(frac * 30);
                 priorityColor = `hsl(243 75% ${light}%)`;
-                numBadge = `<span draggable="true" ondragstart="taskDragStart(event, ${id})" ondragend="taskDragEnd(event)" title="גרור לסידור" class="shrink-0 cursor-grab active:cursor-grabbing text-[10px] font-bold text-white rounded-md w-5 h-5 flex items-center justify-center" style="background:${priorityColor}">${idx + 1}</span>`;
+                numBadge = `<span draggable="true" ondragstart="taskDragStart(event, ${id})" ondragend="taskDragEnd(event)" ontouchstart="taskTouchStart(event, ${id})" ontouchmove="taskTouchMove(event)" ontouchend="taskTouchEnd(event, ${id})" onclick="toggleTaskDetails(${id})" title="לחץ לפרטים · גרור לסידור" class="shrink-0 cursor-grab active:cursor-grabbing text-[13px] font-bold text-white rounded-md w-5 h-5 flex items-center justify-center select-none" style="background:${priorityColor}">${idx + 1}</span>`;
             } else {
-                numBadge = `<span class="shrink-0 w-5 h-5 flex items-center justify-center text-[10px] text-slate-300">${isDone ? '✓' : '•'}</span>`;
+                numBadge = `<span class="shrink-0 w-5 h-5 flex items-center justify-center text-[13px] text-slate-300">${isDone ? '✓' : '•'}</span>`;
             }
 
             // תיעדוף: מי תעדף לאחרונה (הרב סגל / נוטיק) - חיווי צבע + נקודה
@@ -993,31 +1006,31 @@
                     onblur="saveTaskName(${id}, this.value)"
                     class="font-medium text-slate-900 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-32 shrink-0">`;
             } else {
-                nameBlock = `<span class="font-medium text-slate-900 text-sm truncate shrink-0 max-w-[34%] ${isDone ? 'line-through text-slate-400' : ''}" title="${escapeAttr(task.name)}">${escapeHtml(task.name)}</span>`;
+                nameBlock = `<span class="font-medium text-slate-900 text-sm break-words ${isDone ? 'line-through text-slate-400' : ''}" title="${escapeAttr(task.name)}">${escapeHtml(task.name)}</span>`;
             }
 
-            const continuousBadge = task.continuous ? `<span title="משימה מתמשכת" class="text-[10px] shrink-0">🔁</span>` : '';
+            const continuousBadge = task.continuous ? `<span title="משימה מתמשכת - ממשיכה מימים קודמים" class="text-[12px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 shrink-0">🔁 ממשיכה מימים קודמים</span>` : '';
 
             const doneNoteInline = ed
-                ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="flex-1 min-w-0 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
-                : (task.notes ? `<span class="flex-1 min-w-0 text-xs text-slate-500 truncate">${escapeHtml(task.notes)}</span>` : `<span class="flex-1"></span>`);
+                ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="w-full mt-1 text-sm bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
+                : (task.notes ? `<span class="w-full mt-1 block text-sm text-slate-500 break-words">📝 ${escapeHtml(task.notes)}</span>` : '');
 
             // הערת "לביצוע" מוצגת בשורה עצמה כשהיא מלאה (לא מוסתרת מאחורי החץ)
             const todoLine = todo.trim()
-                ? `<div class="flex items-start gap-1 mt-1 pr-1 text-[11px] text-indigo-600"><span class="shrink-0">🎯</span><span class="min-w-0">${escapeHtml(todo)}</span></div>`
+                ? `<div class="flex items-start gap-1 mt-1 pr-1 text-[14px] text-indigo-600"><span class="shrink-0">🎯</span><span class="min-w-0">${escapeHtml(todo)}</span></div>`
                 : '';
 
             const reorderCtrl = canReorder ? `
                 <div class="flex items-center gap-1 shrink-0">
-                    <span class="text-[10px] text-slate-400">סדר:</span>
+                    <span class="text-[13px] text-slate-400">סדר:</span>
                     <button onclick="moveTask(${id}, -1)" ${idx === 0 ? 'disabled' : ''} class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs px-1">▲</button>
                     <button onclick="moveTask(${id}, 1)" ${idx === total - 1 ? 'disabled' : ''} class="text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs px-1">▼</button>
-                    <input type="number" min="1" max="${total}" value="${idx + 1}" onchange="setPriorityNumber(${id}, this.value)" title="מיקום ידני" class="w-11 text-[11px] bg-white border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <input type="number" min="1" max="${total}" value="${idx + 1}" onchange="setPriorityNumber(${id}, this.value)" title="מיקום ידני" class="w-11 text-[14px] bg-white border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 </div>` : '';
             const editorCtrls = ed ? `
                 <button onclick="startEditName(${id})" title="ערוך שם" class="text-slate-400 hover:text-indigo-600 transition text-xs px-1">✏️ שם</button>
                 <button onclick="toggleContinuous(${id})" title="${task.continuous ? 'בטל סימון מתמשכת' : 'סמן כמשימה מתמשכת'}" class="text-xs px-1 transition ${task.continuous ? 'text-amber-600 font-bold' : 'text-slate-400 hover:text-amber-600'}">🔁 מתמשכת</button>
-                <select onchange="onRescheduleSelect(${id}, this.value); this.value='';" class="text-[11px] bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <select onchange="onRescheduleSelect(${id}, this.value); this.value='';" class="text-[14px] bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <option value="" selected>תזמון…</option>
                     <option value="today">להיום</option>
                     <option value="tomorrow">למחר</option>
@@ -1027,7 +1040,7 @@
                 <button onclick="handleDeleteTask(${id})" title="מחק" class="text-slate-400 hover:text-rose-600 transition text-xs px-1">🗑️</button>` : '';
 
             const prioLegend = canReorder
-                ? `<div class="text-[10px] text-slate-400 flex items-center gap-2">
+                ? `<div class="text-[13px] text-slate-400 flex items-center gap-2">
                      ${prioBy === 'rav_segel' ? '<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span>תועדף ע״י הרב סגל</span>' : ''}
                      ${prioBy === 'noteik' ? '<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500"></span>תועדף ע״י נוטיק</span>' : ''}
                      ${!prioBy ? '<span>ללא תיעדוף</span>' : ''}
@@ -1036,7 +1049,7 @@
             const details = `
                 <div id="details-${id}" class="${expanded ? '' : 'hidden'} mt-2 pt-2 border-t border-slate-100 space-y-2">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[10px] text-indigo-500 shrink-0" title="הערות לביצוע (מה לעשות)">🎯 לביצוע:</span>
+                        <span class="text-[13px] text-indigo-500 shrink-0" title="הערות לביצוע (מה לעשות)">🎯 לביצוע:</span>
                         <input type="text" placeholder="מה צריך לעשות במשימה…" value="${escapeAttr(todo)}" onchange="updateTodoNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}"
                             class="flex-1 min-w-0 text-xs bg-indigo-50/40 border border-indigo-100 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     </div>
@@ -1045,9 +1058,9 @@
                 </div>`;
 
             return `
-                <div class="px-3 py-2 border-r-4 ${borderL} transition-all duration-150 ${containerBg}" ${priorityColor ? `style="border-right-color:${priorityColor}"` : ''}
+                <div class="px-3 py-2 border-r-4 ${borderL} transition-all duration-150 ${containerBg}" ${canReorder ? `data-task-row="${id}"` : ''} ${priorityColor ? `style="border-right-color:${priorityColor}"` : ''}
                     ${canReorder ? `ondragover="taskDragOver(event, this)" ondragleave="taskDragLeave(event, this)" ondrop="taskDrop(event, ${id}, this)"` : ''}>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-start gap-2 flex-wrap py-0.5">
                         ${selBox}
                         ${numBadge}
                         ${prioDot}
@@ -1055,11 +1068,11 @@
                         ${nameBlock}
                         ${continuousBadge}
                         ${dateNote}
-                        ${doneNoteInline}
-                        <span class="text-[9px] px-1 py-0.5 rounded ${badge} shrink-0 hidden sm:inline">${task.type}</span>
+                        <span class="text-[12px] px-1 py-0.5 rounded ${badge} shrink-0">${task.type}</span>
                         <button onclick="toggleTaskDetails(${id})" title="ניהול משימה" class="shrink-0 text-slate-300 hover:text-slate-600 transition">
                             <svg id="arrow-${id}" class="h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
+                        ${doneNoteInline}
                     </div>
                     ${todoLine}
                     ${details}
@@ -1149,13 +1162,12 @@
 
             // באנר מצב (הלוח מוצג תמיד - סימולציה חיה של יום התצוגה)
             let hint = '';
-            if (showingTomorrow) hint = `<div class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] text-indigo-700">🔮 היום נסגר — אלו משימות <b>יום העבודה הבא</b> (${heDate(viewDay)}). אפשר לתעדף כבר עכשיו; הסדר יישמר גם אם היום ייפתח מאוחר יותר.</div>`;
-            else if (!dayOpen) hint = `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-700">🌅 יום העבודה עדיין לא נפתח רשמית — זו תצוגה חיה של משימות היום. אפשר לתעדף ולהוסיף הערות; "פתיחת יום" (בצד ימין) תתחיל את היום רשמית.</div>`;
-            const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[11px] text-slate-500 flex items-center justify-between gap-2 flex-wrap">
+            if (!showingTomorrow && !dayOpen) hint = `<div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[14px] text-amber-700">🌅 יום העבודה עדיין לא נפתח רשמית — זו תצוגה חיה של משימות היום. אפשר לתעדף ולהוסיף הערות; "פתיחת יום" (בצד ימין) תתחיל את היום רשמית.</div>`;
+            const titleBar = `<div class="px-4 py-2 bg-slate-50/60 border-b border-slate-100 text-[14px] text-slate-500 flex items-center justify-between gap-2 flex-wrap">
                 <span>${dayLabel} · ${pending.length} משימות פתוחות</span>
                 <div class="flex items-center gap-2">
-                    ${(!readOnly && pending.length > 0) ? `<button onclick="toggleSelectionMode()" class="text-[10px] font-semibold ${selectionMode ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 border border-indigo-200'} px-2 py-0.5 rounded-md transition">${selectionMode ? '✕ בטל בחירה' : '☑️ בחירה מרובה'}</button>` : ''}
-                    ${pending.length > 1 ? '<span class="text-[10px] text-indigo-500">↕ גררו לסידור</span>' : ''}
+                    ${(!readOnly && pending.length > 0) ? `<button onclick="toggleSelectionMode()" class="text-[13px] font-semibold ${selectionMode ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 border border-indigo-200'} px-2 py-0.5 rounded-md transition">${selectionMode ? '✕ בטל בחירה' : '☑️ בחירה מרובה'}</button>` : ''}
+                    ${pending.length > 1 ? '<span class="text-[13px] text-indigo-500">↕ גררו לסידור</span>' : ''}
                 </div>
             </div>`;
             c.insertAdjacentHTML('beforeend', hint + titleBar);
@@ -1167,7 +1179,7 @@
 
             pending.forEach((t, i) => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'today', i, pending.length)));
             if (doneToday.length > 0) {
-                c.insertAdjacentHTML('beforeend', `<div class="px-5 py-2 bg-slate-50/70 text-[11px] font-bold text-slate-400">בוצעו (${doneToday.length})</div>`);
+                c.insertAdjacentHTML('beforeend', `<div class="px-5 py-2 bg-slate-50/70 text-[14px] font-bold text-slate-400">בוצעו (${doneToday.length})</div>`);
                 doneToday.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'today', 0, 0)));
             }
         }
@@ -1186,7 +1198,7 @@
             }
             real.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'bydate')));
             if (sim.length > 0) {
-                c.insertAdjacentHTML('beforeend', `<div class="px-3 py-1.5 bg-indigo-50/50 text-[11px] font-bold text-indigo-500 border-y border-indigo-100">🔮 צפוי בתוכנית (עדיין לא נוצר — ייווצר ב"פתיחת יום")</div>`);
+                c.insertAdjacentHTML('beforeend', `<div class="px-3 py-1.5 bg-indigo-50/50 text-[14px] font-bold text-indigo-500 border-y border-indigo-100">🔮 צפוי בתוכנית (עדיין לא נוצר — ייווצר ב"פתיחת יום")</div>`);
                 sim.forEach(s => c.insertAdjacentHTML('beforeend', simCardHtml(s)));
             }
         }
@@ -1204,18 +1216,15 @@
                     out.push({ name: t.name, type: t.type, reason: 'רוטינה' }); seen[t.name] = true;
                 }
             });
-            // משימות שלא בוצעו מתאריך מוקדם - עשויות להיגרר
-            tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate < dateKey && !t.done).forEach(t => {
-                if (!realNames[t.name] && !seen[t.name]) { out.push({ name: t.name, type: t.type, reason: 'תיגרר מ-' + heDateShort(t.dueDate) }); seen[t.name] = true; }
-            });
+            // (הוסרה הדמיית "עשוי להיגרר" ממשימות פתוחות של היום — לא ודאי כל עוד היום לא הסתיים ולא סומן מה בוצע)
             return out;
         }
         function simCardHtml(s) {
             return `<div class="px-3 py-2 flex items-center gap-2 border-r-4 border-r-indigo-200 bg-indigo-50/20">
                 <span class="shrink-0 w-4 h-4 rounded border-2 border-dashed border-indigo-300"></span>
-                <span class="text-sm text-slate-500 flex-1 truncate" title="${escapeAttr(s.name)}">${escapeHtml(s.name)}</span>
-                <span class="text-[9px] px-1 py-0.5 rounded ${getTypeBadgeStyle(s.type)} shrink-0 hidden sm:inline">${s.type}</span>
-                <span class="text-[10px] text-indigo-500 shrink-0">${s.reason}</span>
+                <span class="text-sm text-slate-500 flex-1 break-words" title="${escapeAttr(s.name)}">${escapeHtml(s.name)}</span>
+                <span class="text-[12px] px-1 py-0.5 rounded ${getTypeBadgeStyle(s.type)} shrink-0 hidden sm:inline">${s.type}</span>
+                <span class="text-[13px] text-indigo-500 shrink-0">${s.reason}</span>
             </div>`;
         }
 
@@ -1261,10 +1270,10 @@
                         <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                             <div class="flex items-center justify-between gap-2 mb-2">
                                 <span class="min-w-0">
-                                    <span class="font-medium text-slate-800 text-sm block truncate">${escapeHtml(s.name)}</span>
-                                    <span class="text-[11px] text-slate-400">${seedScheduleText(s)}</span>
+                                    <span class="font-medium text-slate-800 text-sm block break-words">${escapeHtml(s.name)}</span>
+                                    <span class="text-[14px] text-slate-400">${seedScheduleText(s)}</span>
                                 </span>
-                                <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(s.type)} shrink-0">${s.type}</span>
+                                <span class="text-[13px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(s.type)} shrink-0">${s.type}</span>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="addRoutineInstanceToday(${s.id}, 'addition')" class="flex-1 text-xs bg-white hover:bg-sky-50 text-sky-700 border border-sky-200 font-semibold py-1.5 rounded-lg transition">➕ בנוסף</button>
@@ -1284,10 +1293,10 @@
                         <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                             <div class="flex items-center justify-between gap-2 mb-2">
                                 <span class="min-w-0">
-                                    <span class="font-medium text-slate-800 text-sm block truncate">${escapeHtml(g.name)}</span>
-                                    ${g.notes ? `<span class="text-[11px] text-slate-400 truncate block">📝 ${escapeHtml(g.notes)}</span>` : ''}
+                                    <span class="font-medium text-slate-800 text-sm block break-words">${escapeHtml(g.name)}</span>
+                                    ${g.notes ? `<span class="text-[14px] text-slate-400 break-words block">📝 ${escapeHtml(g.notes)}</span>` : ''}
                                 </span>
-                                <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(g.type)} shrink-0">${g.type}</span>
+                                <span class="text-[13px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(g.type)} shrink-0">${g.type}</span>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="addGeneralTaskToday(${g.id}, 'copy')" class="flex-1 text-xs bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold py-1.5 rounded-lg transition">📑 שכפל (נשאר)</button>
@@ -1368,10 +1377,10 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5">
                                     <span class="font-medium text-slate-800 text-sm">${escapeHtml(task.name)}</span>
-                                    <button onclick="startEditName(${task.id})" title="ערוך שם" class="text-slate-300 hover:text-indigo-600 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(task.type)}">${task.type}</span>
+                                    <span class="text-[13px] px-2 py-0.5 rounded-full ${getTypeBadgeStyle(task.type)}">${task.type}</span>
                                 </div>
-                                ${task.notes ? `<span class="text-[11px] text-slate-400 italic">📝 ${escapeHtml(task.notes)}</span>` : ''}
+                                ${task.notes ? `<span class="text-[14px] text-slate-400 italic">📝 ${escapeHtml(task.notes)}</span>` : ''}
+                                <p class="text-[12px] text-slate-300 mt-0.5">🔒 עריכה תיפתח לאחר העברה ליום פעיל</p>
                             </div>
                             <div class="flex items-center gap-1.5 shrink-0">
                                 <button onclick="quickSchedule(${task.id}, 'today')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs py-1.5 px-3 rounded-lg transition">➕ להיום</button>
@@ -1384,7 +1393,7 @@
             }
 
             // רוטינות קבועות (תבניות)
-            c.insertAdjacentHTML('beforeend', `<div class="px-5 py-2 mt-2 bg-slate-50/70 text-[11px] font-bold text-slate-400 border-y border-slate-100">🔁 רוטינות קבועות</div>`);
+            c.insertAdjacentHTML('beforeend', `<div class="px-5 py-2 mt-2 bg-slate-50/70 text-[14px] font-bold text-slate-400 border-y border-slate-100">🔁 רוטינות קבועות</div>`);
             if (seeds.length === 0) {
                 c.insertAdjacentHTML('beforeend', `<div class="p-5 text-center text-slate-400 text-xs">לא הוגדרו רוטינות קבועות.</div>`);
             } else {
@@ -1394,7 +1403,7 @@
                             <div class="flex items-center gap-1.5 min-w-0">
                                 <span class="font-medium text-slate-800 text-sm">${escapeHtml(seed.name)}</span>
                                 <button onclick="startEditName(${seed.id})" title="ערוך שם" class="text-slate-300 hover:text-indigo-600 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-                                <span class="text-[11px] text-slate-400">— ${seedScheduleText(seed)}</span>
+                                <span class="text-[14px] text-slate-400">— ${seedScheduleText(seed)}</span>
                             </div>
                             <button onclick="handleDeleteTask(${seed.id})" class="text-slate-300 hover:text-rose-600 transition p-1 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
                         </div>`);
@@ -1509,18 +1518,64 @@
             pending.splice(to, 0, item);
             commitOrder(pending, src);
         }
+
+        // גרירה במגע (מובייל/טאץ') - מזהה את הכרטיס מתחת לאצבע ומפעיל את אותה לוגיקת שחרור
+        let touchDragId = null, touchStartX = 0, touchStartY = 0, touchMoved = false;
+        function taskTouchStart(ev, id){
+            touchDragId = id; touchMoved = false;
+            const t = ev.touches[0];
+            touchStartX = t.clientX; touchStartY = t.clientY;
+        }
+        function taskTouchMove(ev){
+            if (touchDragId == null) return;
+            const t = ev.touches[0];
+            const dx = Math.abs(t.clientX - touchStartX), dy = Math.abs(t.clientY - touchStartY);
+            if (!touchMoved && (dx > 8 || dy > 8)) touchMoved = true;
+            if (!touchMoved) return;
+            ev.preventDefault(); // חוסם גלילת הדף בזמן גרירה
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            const el = document.elementFromPoint(t.clientX, t.clientY);
+            const card = el ? el.closest('[data-task-row]') : null;
+            if (card) card.classList.add('drag-over');
+        }
+        function taskTouchEnd(ev, id){
+            if (touchDragId == null) return;
+            const wasMoved = touchMoved;
+            touchDragId = null; touchMoved = false;
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            if (!wasMoved) return; // טאפ רגיל - לא גרירה; ה-onclick יטפל בפתיחת הפרטים
+            const t = ev.changedTouches[0];
+            const el = document.elementFromPoint(t.clientX, t.clientY);
+            const card = el ? el.closest('[data-task-row]') : null;
+            if (!card) return;
+            const targetId = Number(card.getAttribute('data-task-row'));
+            if (!targetId || targetId === id) return;
+            const bDate = boardDate();
+            let pending = tasks.filter(x => x.status === 'dated' && x.dueDate && x.dueDate <= bDate && !x.done)
+                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+            const from = pending.findIndex(x => x.id === id);
+            const to = pending.findIndex(x => x.id === targetId);
+            if (from < 0 || to < 0) return;
+            const [item] = pending.splice(from, 1);
+            pending.splice(to, 0, item);
+            commitOrder(pending, id);
+        }
         function commitOrder(pending, touchedId){
             const updates = [];
             pending.forEach((t, i) => { t.priority = i; updates.push({ id: t.id, priority: i }); });
-            let actor = null;
+            let finalMark = null;
             if (touchedId != null) {
-                actor = currentActor();
+                const actor = currentActor();
                 const t = pending.find(x => x.id === touchedId);
-                if (t) t.prioritizedBy = actor;
+                if (t) {
+                    // קדימות: אם הרב סגל כבר תעדף, התיעדוף שלו לא נדרס ע"י נוטיק
+                    if (actor === 'rav_segel' || t.prioritizedBy !== 'rav_segel') t.prioritizedBy = actor;
+                    finalMark = t.prioritizedBy;
+                }
             }
             renderTasks();
             sendPostToSheets({ action: 'reorderTasks', list: JSON.stringify(updates) }, true);
-            if (touchedId != null) sendPostToSheets({ action: 'updateTask', taskId: touchedId, updates: { prioritizedBy: actor } }, true);
+            if (touchedId != null) sendPostToSheets({ action: 'updateTask', taskId: touchedId, updates: { prioritizedBy: finalMark } }, true);
         }
         function toggleContinuous(id){
             if (guardRO()) return;
@@ -1639,7 +1694,14 @@
             if (tab === 'history') loadHistoryFromSheets();
             else renderTasks();
         }
-        function onByDateChange(value){ if (value) { selectedDate = value; updateCounts(); renderByDateTab(); } }
+        function onByDateChange(value){
+            if (!value) return;
+            selectedDate = value;
+            if (dayClosed && value === tomorrowISO()) {
+                showNotification('ℹ️ שים לב: משימות מחר כבר מוצגות במסך הראשי (משימות היום), כי היום נסגר.');
+            }
+            updateCounts(); renderByDateTab();
+        }
         function quickByDate(which){
             selectedDate = (which === 'tomorrow') ? tomorrowISO() : addDaysISO(todayISO(), 7);
             document.getElementById('bydate-picker').value = selectedDate;
@@ -1702,13 +1764,13 @@
                 <div>
                     <div class="text-xs font-bold text-emerald-700 mb-1.5">✅ בוצעו (${done.length})</div>
                     <div class="bg-emerald-50/50 border border-emerald-100 rounded-lg px-3 py-2">
-                        ${li(done, 'לא סומנו משימות שבוצעו.', t => `<div class="text-xs py-0.5 flex justify-between gap-2"><span class="text-slate-800">${escapeHtml(t.name)}</span><span class="text-slate-500 italic max-w-[45%] text-left">${t.notes?escapeHtml(t.notes):''}</span></div>`)}
+                        ${li(done, 'לא סומנו משימות שבוצעו.', t => `<div class="text-xs py-0.5"><div class="flex justify-between gap-2"><span class="text-slate-800">${escapeHtml(t.name)}</span><span class="text-slate-500 italic max-w-[45%] text-left">${t.notes?escapeHtml(t.notes):''}</span></div>${t.continuous ? '<div class="text-[13px] text-amber-600 font-semibold">🔁 בוצע (לא הושלמה - ממשיכה לימים נוספים)</div>' : ''}</div>`)}
                     </div>
                 </div>
                 <div>
                     <div class="text-xs font-bold text-indigo-700 mb-1.5">➡️ לביצוע מחר (${tomorrow.length})</div>
                     <div class="bg-indigo-50/40 border border-indigo-100 rounded-lg px-3 py-2">
-                        ${li(tomorrow, 'אין.', t => `<div class="text-xs py-0.5 flex justify-between gap-2"><span class="text-slate-700">${escapeHtml(t.name)}</span><span class="text-[10px] text-slate-400">${t.reason}</span></div>`)}
+                        ${li(tomorrow, 'אין.', t => `<div class="text-xs py-0.5 flex justify-between gap-2"><span class="text-slate-700">${escapeHtml(t.name)}</span><span class="text-[13px] text-slate-400">${t.reason}</span></div>`)}
                     </div>
                 </div>
             `;
@@ -1726,7 +1788,7 @@
             text += `⏱️ שעות: ${calcHours(attendanceIntervals)}\n`;
             attendanceIntervals.forEach((iv, i) => { text += `   • סבב ${i+1}: ${iv.start || '--:--'} עד ${iv.end || '--:--'}${iv.note ? ` — ${iv.note}` : ''}\n`; });
             text += `\n✅ בוצעו:\n`;
-            if (d.done.length) d.done.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}\n`; });
+            if (d.done.length) d.done.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}${t.continuous ? ' [🔁 לא הושלמה - ממשיכה לימים נוספים]' : ''}\n`; });
             else text += `   —\n`;
             if (d.tomorrow && d.tomorrow.length) {
                 text += `\n➡️ למחר:\n`;
@@ -1808,8 +1870,8 @@
         // ====== היסטוריה ======
         function parseSnapshot(raw){
             let parsed; try { parsed = JSON.parse(raw); } catch(e) { parsed = []; }
-            if (Array.isArray(parsed)) return { tasks: parsed, tomorrow: [] };
-            return { tasks: parsed.tasks || [], tomorrow: parsed.tomorrow || [] };
+            if (Array.isArray(parsed)) return { tasks: parsed, tomorrow: [], prioritySummary: null };
+            return { tasks: parsed.tasks || [], tomorrow: parsed.tomorrow || [], prioritySummary: parsed.prioritySummary || null };
         }
 
         function renderHistory(){
@@ -1832,19 +1894,24 @@
                 // 1) בוצעו היום (בולט) + הערה על הביצוע, מחוברת למשימה (מתחתיה)
                 const doneHtml = done.length ? done.map(t => `
                     <div class="text-xs py-1.5 border-b border-emerald-100/70 last:border-0">
-                        <div class="text-slate-800 font-medium">✅ ${escapeHtml(t.name)} <span class="text-[10px] text-slate-400 font-normal">(${t.type})</span></div>
-                        ${t.notes ? `<div class="text-[11px] text-slate-500 mt-0.5 pr-5 border-r-2 border-emerald-200 mr-0.5">📝 ${escapeHtml(t.notes)}</div>` : ''}
+                        <div class="text-slate-800 font-medium">✅ ${escapeHtml(t.name)} <span class="text-[13px] text-slate-400 font-normal">(${t.type})</span></div>
+                        ${t.continuous ? `<div class="text-[13px] text-amber-600 font-semibold mt-0.5">🔁 בוצע (לא הושלמה - ממשיכה לימים נוספים)</div>` : ''}
+                        ${t.notes ? `<div class="text-[14px] text-slate-500 mt-0.5 pr-5 border-r-2 border-emerald-200 mr-0.5">📝 ${escapeHtml(t.notes)}</div>` : ''}
                     </div>`).join('') : '<span class="text-xs text-slate-400 italic">לא סומנו משימות שבוצעו.</span>';
 
                 // 2) לביצוע מחר
                 const reasonColor = { 'רוטינה':'text-sky-600', 'מתוזמנת':'text-purple-600', 'נדחתה מהיום':'text-rose-500', 'נדחתה':'text-rose-500', 'המשך מחר':'text-amber-600' };
                 const tomorrowHtml = tomorrow.length ? tomorrow.map(t => `
                     <div class="flex items-center justify-between gap-3 text-xs py-1.5 border-b border-indigo-100/60 last:border-0">
-                        <span class="text-slate-700">➡️ ${escapeHtml(t.name)} <span class="text-[10px] text-slate-400">(${t.type})</span></span>
-                        <span class="text-[10px] ${reasonColor[t.reason] || 'text-slate-400'} shrink-0">${t.reason}</span>
+                        <span class="text-slate-700">➡️ ${escapeHtml(t.name)} <span class="text-[13px] text-slate-400">(${t.type})</span></span>
+                        <span class="text-[13px] ${reasonColor[t.reason] || 'text-slate-400'} shrink-0">${t.reason}</span>
                     </div>`).join('') : '<span class="text-xs text-slate-400 italic">אין משימות מתוכננות למחר.</span>';
 
                 // (הדוח מציג רק מה שבוצע ומה שנשאר למחר)
+
+                const ps = snap.prioritySummary;
+                const prioritySummaryHtml = (ps && (ps.rav_segel || ps.noteik))
+                    ? `<span class="text-[13px] text-slate-400">🎯 תועדפו: <span class="text-purple-600 font-semibold">${ps.rav_segel||0} ע"י הרב סגל</span> · <span class="text-sky-600 font-semibold">${ps.noteik||0} ע"י נוטיק</span></span>` : '';
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
@@ -1856,6 +1923,7 @@
                                 <button onclick="openHistoryEdit('${dayLog.date}')" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-lg transition">✏️ ערוך</button>
                             </div>
                         </div>
+                        ${prioritySummaryHtml}
 
                         <div>
                             <div class="text-xs font-bold text-emerald-700 mb-1.5">בוצעו היום</div>
@@ -1882,12 +1950,39 @@
             let intervals = [];
             try { intervals = JSON.parse(dayLog.intervals); } catch(e) {}
             const snap = parseSnapshot(dayLog.tasks);
-            historyEditState = { date: dateKey, intervals: JSON.parse(JSON.stringify(intervals)), tasks: JSON.parse(JSON.stringify(snap.tasks)), tomorrow: snap.tomorrow };
+            historyEditState = { date: dateKey, intervals: JSON.parse(JSON.stringify(intervals)), tasks: JSON.parse(JSON.stringify(snap.tasks)), tomorrow: snap.tomorrow, prioritySummary: snap.prioritySummary };
 
             document.getElementById('history-edit-date').innerText = 'תאריך: ' + heDateWithWeekday(dateKey);
             renderHistoryEditIntervals();
             renderHistoryEditTasks();
+            renderHistoryEditPostponed();
             document.getElementById('history-edit-modal').classList.remove('hidden');
+        }
+        function renderHistoryEditPostponed(){
+            const wrap = document.getElementById('history-edit-postponed-wrap');
+            const c = document.getElementById('history-edit-postponed');
+            const postponed = (historyEditState.tomorrow || []).filter(t => t.reason === 'נדחתה' || t.reason === 'נדחתה מהיום');
+            if (postponed.length === 0) { wrap.classList.add('hidden'); return; }
+            wrap.classList.remove('hidden');
+            c.innerHTML = '';
+            postponed.forEach((t) => {
+                c.insertAdjacentHTML('beforeend', `
+                    <div class="p-2.5 bg-amber-50/50 border border-amber-100 rounded-lg flex items-center justify-between gap-2">
+                        <span class="text-sm text-slate-700 break-words">${escapeHtml(t.name)} <span class="text-[13px] text-slate-400">(${t.type})</span></span>
+                        <button onclick="historyEditPullBack('${escapeAttr(t.name)}')" class="shrink-0 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold px-2.5 py-1 rounded-lg transition">↩️ בוצעה בפועל - משוך בחזרה</button>
+                    </div>`);
+            });
+        }
+        function historyEditPullBack(name){
+            if (guardRO()) return;
+            const idx = (historyEditState.tomorrow || []).findIndex(t => t.name === name);
+            if (idx < 0) return;
+            const item = historyEditState.tomorrow[idx];
+            historyEditState.tomorrow.splice(idx, 1);
+            historyEditState.tasks.push({ id: Date.now(), name: item.name, type: item.type, done: true, notes: '', _pulled: true });
+            renderHistoryEditTasks();
+            renderHistoryEditPostponed();
+            showNotification(`"${item.name}" נמשכה בחזרה וסומנה כבוצעה. שים לב: אם המשימה עדיין קיימת כפתוחה במחר בפועל, מומלץ למחוק אותה שם כפילות.`);
         }
         function renderHistoryEditIntervals(){
             const c = document.getElementById('history-edit-intervals');
@@ -1916,7 +2011,7 @@
                 c.insertAdjacentHTML('beforeend', `
                     <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2">
                         <button onclick="historyEditToggleDone(${idx})" class="shrink-0 w-5 h-5 rounded-md border-2 ${t.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'} flex items-center justify-center text-white text-xs">${t.done ? '✓' : ''}</button>
-                        <span class="text-sm text-slate-700 shrink-0 max-w-[35%] truncate" title="${escapeAttr(t.name)}">${escapeHtml(t.name)}${t._new ? ' <span class=\"text-[9px] text-amber-500\">(חדשה)</span>' : ''}</span>
+                        <span class="text-sm text-slate-700 break-words" title="${escapeAttr(t.name)}">${escapeHtml(t.name)}${t._new ? ' <span class=\"text-[12px] text-amber-500\">(חדשה)</span>' : ''}</span>
                         <input type="text" placeholder="הערה…" value="${escapeAttr(t.notes||'')}" onchange="historyEditState.tasks[${idx}].notes=this.value" class="flex-1 text-xs bg-white border border-slate-200 rounded-lg px-2 py-1.5">
                         <button onclick="historyEditRemoveTask(${idx})" title="הסר משורה זו" class="shrink-0 text-slate-300 hover:text-rose-600 transition text-xs px-1">🗑️</button>
                     </div>`);
@@ -1936,25 +2031,40 @@
         }
         function closeHistoryEdit(){ document.getElementById('history-edit-modal').classList.add('hidden'); historyEditState = null; }
         function saveHistoryEdit(){
-            if (guardRO()) return; 
+            if (guardRO()) return;
             if (!historyEditState) return;
             const st = historyEditState;
-            showLoader("שומר את הדוח…");
-            fetchJSONP(gasUrl, {
+            // מכווץ את המטען לשדות ההכרחיים בלבד (מקטין את אורך ה-URL וסיכויי כשל)
+            const compactTasks = st.tasks.map(t => ({ id: t.id, name: t.name, type: t.type, done: !!t.done, notes: t.notes || '', continuous: !!t.continuous }));
+            const compactTomorrow = (st.tomorrow || []).map(t => ({ name: t.name, type: t.type, reason: t.reason }));
+            const payload = {
                 action: 'updateHistory',
                 date: st.date,
                 intervals: JSON.stringify(st.intervals),
-                tasks: JSON.stringify({ tasks: st.tasks, tomorrow: st.tomorrow || [] })
-            }, 'cb_histedit').then(data => {
-                hideLoader();
-                if (data && data.status === 'success') {
-                    closeHistoryEdit();
-                    showNotification('הדוח עודכן בהצלחה ✅');
+                tasks: JSON.stringify({ tasks: compactTasks, tomorrow: compactTomorrow, prioritySummary: st.prioritySummary || null })
+            };
+            showLoader("שומר את הדוח…");
+            const attempt = (isRetry) => fetchJSONP(gasUrl, payload, 'cb_histedit', 40000)
+                .then(data => {
+                    hideLoader();
+                    if (data && data.status === 'success') {
+                        closeHistoryEdit();
+                        showNotification('הדוח עודכן בהצלחה ✅');
+                        loadHistoryFromSheets();
+                    } else {
+                        showNotification((data && data.message) || 'שגיאה בעדכון הדוח.', true);
+                    }
+                })
+                .catch(err => {
+                    if (!isRetry) { attempt(true); return; } // ניסיון חוזר אחד לפני שמדווחים על כשל
+                    // הבקשה עשויה להיות הגיעה לשרת גם אם התשובה לא חזרה בזמן - מרעננים כדי לוודא ולא לדווח כשל שווא
+                    hideLoader();
+                    console.error(err);
                     loadHistoryFromSheets();
-                } else {
-                    showNotification((data && data.message) || 'שגיאה בעדכון הדוח.', true);
-                }
-            }).catch(err => { console.error(err); hideLoader(); showNotification('שגיאת חיבור בעדכון הדוח.', true); });
+                    closeHistoryEdit();
+                    showNotification('⚠️ לא התקבל אישור מהשרת בזמן. הדוח רוענן מהשרת — בדוק שהשינויים נשמרו; אם לא, נסה שוב.', true);
+                });
+            attempt(false);
         }
 
         // ====== העתקת סיכום ======
@@ -2010,7 +2120,7 @@
             intervals.forEach((iv, i) => { text += `   • סבב ${i+1}: ${iv.start || '--:--'} עד ${iv.end || '--:--'}${iv.note ? ` — ${iv.note}` : ''}\n`; });
 
             text += `\n✅ בוצעו:\n`;
-            if (done.length) done.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}\n`; });
+            if (done.length) done.forEach(t => { text += `   • ${t.name}${t.notes ? ` (${t.notes})` : ''}${t.continuous ? ' [🔁 לא הושלמה - ממשיכה לימים נוספים]' : ''}\n`; });
             else text += `   —\n`;
 
             if (snap.tomorrow && snap.tomorrow.length) {
