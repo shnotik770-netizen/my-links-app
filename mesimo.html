@@ -1012,8 +1012,8 @@
             const continuousBadge = task.continuous ? `<span title="משימה מתמשכת - ממשיכה מימים קודמים" class="text-[12px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 shrink-0">🔁 ממשיכה מימים קודמים</span>` : '';
 
             const doneNoteInline = ed
-                ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="w-full mt-1 text-sm bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
-                : (task.notes ? `<span class="w-full mt-1 block text-sm text-slate-500 break-words">📝 ${escapeHtml(task.notes)}</span>` : '');
+                ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="flex-1 min-w-[200px] text-sm bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
+                : (task.notes ? `<span class="flex-1 min-w-[200px] text-sm text-slate-500 break-words">📝 ${escapeHtml(task.notes)}</span>` : '');
 
             // הערת "לביצוע" מוצגת בשורה עצמה כשהיא מלאה (לא מוסתרת מאחורי החץ)
             const todoLine = todo.trim()
@@ -1068,11 +1068,11 @@
                         ${nameBlock}
                         ${continuousBadge}
                         ${dateNote}
+                        ${doneNoteInline}
                         <span class="text-[12px] px-1 py-0.5 rounded ${badge} shrink-0">${task.type}</span>
                         <button onclick="toggleTaskDetails(${id})" title="ניהול משימה" class="shrink-0 text-slate-300 hover:text-slate-600 transition">
                             <svg id="arrow-${id}" class="h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        ${doneNoteInline}
                     </div>
                     ${todoLine}
                     ${details}
