@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעקב ועריכת פרשנות תהילים</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Heebo', sans-serif; background-color: #f3f4f6; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col relative">
+
+    <!-- הודעות קופצות (Toasts) -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded shadow-lg z-50 hidden transition-opacity duration-300">
+        <span id="toastMessage">נשמר בהצלחה!</span>
+    </div>
+    
+    <div id="errorToast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded shadow-lg z-50 hidden transition-opacity duration-300">
+        <span id="errorToastMessage">שגיאה!</span>
+    </div>
+
+    <header class="bg-blue-900 text-white shadow-lg py-6">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">מעקב ועריכת פרשנות תהילים 📖</h1>
+            <p class="text-blue-200 text-lg">ממשק ניהול ישיר ל-GitHub</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <!-- הודעת טעינה -->
+        <div id="loadingMessage" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-900 mb-4"></div>
+            <h2 class="text-2xl font-semibold text-gray-600" id="loadingText">מתחבר ל-GitHub וקורא נתונים...</h2>
+        </div>
+
+        <div id="dashboard" class="hidden fade-in">
+            <!-- כרטיסיית סיכום וסטטוס -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <div class="flex flex-col md:flex-row justify-center items-center gap-8 mb-6">
+                    <div class="text-center">
+                        <span class="block text-4xl font-extrabold text-green-600" id="completedCount">0</span>
+                        <span class="text-gray-500 text-sm font-bold">הושלמו (✅)</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-4xl font-extrabold text-yellow-500" id="partialCount">0</span>
+                        <span class="text-gray-500 text-sm font-bold">בעבודה (⏳)</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-4xl font-extrabold text-gray-800">150</span>
+                        <span class="text-gray-500 text-sm font-bold">סך הכל</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-4xl font-extrabold text-red-500" id="missingCount">0</span>
+                        <span class="text-gray-500 text-sm font-bold">ריקים (❌)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- לוח כל הפרקים -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-xl font-bold mb-4 text-center text-gray-700">בחר פרק לעריכה</h3>
+                <div class="grid grid-cols-5 sm:grid-cols-10 md:grid-cols-15 gap-3" id="chaptersGrid">
+                    <!-- הפרקים יווצרו כאן דינמית -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- מודל (חלון קופץ) לעריכת פרק -->
+    <div id="editorModal" class="fixed inset-0 modal-overlay hidden z-40 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col fade-in">
+            <!-- כותרת המודל -->
+            <div class="bg-blue-900 text-white px-6 py-4 rounded-t-xl flex justify-between items-center shrink-0">
+                <h2 class="text-2xl font-bold" id="modalTitle">עריכת פרק...</h2>
+                <button onclick="closeModal()" class="text-white hover:text-red-300 font-bold text-2xl leading-none">&times;</button>
+            </div>
+            
+            <!-- אזור התוכן הנגלל -->
+            <div class="p-6 overflow-y-auto flex-grow bg-gray-50" id="modalContent">
+                <p class="text-sm text-gray-500 mb-6 bg-blue-50 p-3 rounded border border-blue-100">
+                    <strong>שים לב:</strong> תוכל לשמור בכל עת, גם אם לא הכל מלא. הפרק יסומן בירוק כמושלם רק כשכל השדות בכל שלושת הפירושים ימולאו (כותרת, מקור וטקסט).
+                </p>
+                <form id="editForm" class="space-y-6">
+                    <!-- שדות הטופס יווצרו דינמית ב-JS לפי הקטגוריות -->
+                </form>
+            </div>
+
+            <!-- אזור כפתורים למטה -->
+            <div class="bg-gray-100 px-6 py-4 rounded-b-xl border-t flex justify-end gap-4 items-center shrink-0">
+                <span id="saveSpinner" class="hidden text-blue-600 flex items-center text-sm font-bold">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    שומר ישירות ל-GitHub...
+                </span>
+                <button onclick="closeModal()" class="px-6 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-200 transition font-medium">ביטול</button>
+                <button onclick="saveChapter()" class="px-8 py-2 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 transition">שמור עריכה</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // הגדרות חיבור ל-GITHUB - הזן כאן את המפתח החדש!
+        // ==========================================
+        const GITHUB_TOKEN = "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"; // <- שים פה את ה-Token!
+        const REPO_OWNER = "shnotik770-netizen";
+        const REPO_NAME = "tehilim";
+        const FILE_PATH = "psalms/all-rabotein.json";
+        
+        const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+        const TOTAL_CHAPTERS = 150;
+
+        // הגדרת המבנה המדויק מתוך ה-JSON (3 קטגוריות הפירושים)
+        const categories = [
+            { id: "raboteinu", title: "תורת רבותינו נשיאינו" },
+            { id: "chassidut_meuvad", title: "חסידות מעובד" },
+            { id: "geula_mashiach", title: "גאולה ומשיח" }
+        ];
+
+        let appData = {}; 
+        let fileSha = ""; 
+        let currentEditingChapter = null;
+
+        // קידוד בטוח לעברית
+        function encodeBase64Unicode(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                return String.fromCharCode('0x' + p1);
+            }));
+        }
+
+        function decodeBase64Unicode(str) {
+            return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+        }
+
+        async function fetchGitHubData() {
+            try {
+                if(GITHUB_TOKEN === "הכנס_כאן_את_המפתח_החדש_שלך") {
+                    showCriticalError("אנא הזן את מפתח ה-GitHub בקוד האתר (שורה 131) ורענן.");
+                    return;
+                }
+
+                const response = await fetch(API_URL, {
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        appData = {};
+                        fileSha = "";
+                    } else {
+                        throw new Error(`שגיאה בחיבור: ${response.statusText}`);
+                    }
+                } else {
+                    const result = await response.json();
+                    fileSha = result.sha;
+                    const jsonString = decodeBase64Unicode(result.content);
+                    appData = JSON.parse(jsonString);
+                }
+
+                document.getElementById('loadingMessage').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                renderGrid();
+
+            } catch (error) {
+                console.error(error);
+                showCriticalError("שגיאה בתקשורת מול GitHub. ודא שהמפתח תקין ויש חיבור אינטרנט.");
+            }
+        }
+
+        function getChapterStatus(chapNum) {
+            const chapData = appData[String(chapNum)];
+            
+            if (!chapData || !chapData.commentaries) {
+                return 'empty'; 
+            }
+
+            let hasSomeData = false;
+            let isFullyComplete = true;
+
+            // בדיקת כל 3 הקטגוריות
+            for (const cat of categories) {
+                const arr = chapData.commentaries[cat.id];
+                
+                // אם הקטגוריה לא קיימת או שהמערך שלה ריק
+                if (!arr || arr.length === 0) {
+                    isFullyComplete = false;
+                    continue;
+                }
+
+                const item = arr[0]; // לוקחים את האובייקט הראשון במערך
+                const title = (item.title || "").trim();
+                const sources = (item.sources || "").trim(); // שימוש ב-sources
+                const text = (item.text || "").trim();
+
+                // אם לפחות שדה אחד מלא איפשהו - נחשב כ'בעבודה'
+                if (title !== "" || sources !== "" || text !== "") {
+                    hasSomeData = true;
+                }
+                
+                // אם אחד השדות בקטגוריה חסר - לא מושלם
+                if (title === "" || sources === "" || text === "") {
+                    isFullyComplete = false;
+                }
+            }
+
+            if (isFullyComplete) return 'complete';
+            if (hasSomeData) return 'partial';
+            return 'empty';
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('chaptersGrid');
+            grid.innerHTML = ''; 
+            
+            let counts = { complete: 0, partial: 0, empty: 0 };
+
+            for (let i = 1; i <= TOTAL_CHAPTERS; i++) {
+                const status = getChapterStatus(i);
+                counts[status]++;
+                
+                const box = document.createElement('button');
+                box.onclick = () => openEditor(i);
+                
+                let styles = "";
+                let icon = "";
+                if (status === 'complete') {
+                    styles = 'bg-green-50 border-green-500 text-green-700 hover:bg-green-100 shadow-[0_0_8px_rgba(34,197,94,0.3)]';
+                    icon = '✅';
+                } else if (status === 'partial') {
+                    styles = 'bg-yellow-50 border-yellow-400 text-yellow-700 hover:bg-yellow-100';
+                    icon = '⏳';
+                } else {
+                    styles = 'bg-red-50 border-red-300 text-red-600 hover:bg-red-100 opacity-80';
+                    icon = '❌';
+                }
+
+                box.className = `relative w-full aspect-square flex flex-col items-center justify-center rounded-xl border-2 font-black text-xl transition-all transform hover:scale-105 cursor-pointer ${styles}`;
+                
+                box.innerHTML = `
+                    <span>${i}</span>
+                    <span class="text-xs mt-1 drop-shadow-sm">${icon}</span>
+                `;
+                grid.appendChild(box);
+            }
+
+            document.getElementById('completedCount').textContent = counts.complete;
+            document.getElementById('partialCount').textContent = counts.partial;
+            document.getElementById('missingCount').textContent = counts.empty;
+        }
+
+        function openEditor(chapNum) {
+            currentEditingChapter = String(chapNum);
+            document.getElementById('modalTitle').textContent = `עריכת פרק ${chapNum}`;
+            
+            const form = document.getElementById('editForm');
+            form.innerHTML = ''; 
+
+            const chapData = appData[currentEditingChapter] || { commentaries: {} };
+            
+            // יצירת 3 הבלוקים לפי הקטגוריות
+            categories.forEach(cat => {
+                // משיכת מידע קיים אם יש
+                const catDataArray = chapData.commentaries[cat.id] || [];
+                const item = catDataArray.length > 0 ? catDataArray[0] : { title: "", sources: "", text: "" };
+                
+                const block = document.createElement('div');
+                block.className = "bg-white border border-gray-200 p-5 rounded-lg shadow-sm";
+                
+                // עיצוב תגית ירוקה אם המקטע ספציפית הזה מלא
+                const isSectionComplete = item.title?.trim() && item.sources?.trim() && item.text?.trim();
+                const badge = isSectionComplete ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-normal mr-2">הושלם</span>' : '';
+
+                block.innerHTML = `
+                    <h4 class="font-bold text-blue-800 border-b border-blue-100 pb-2 mb-4 text-lg flex items-center">
+                        ${cat.title} ${badge}
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">כותרת הפירוש</label>
+                            <input type="text" id="title_${cat.id}" value="${item.title || ''}" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="הכנס כותרת...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">מקור (Source)</label>
+                            <input type="text" id="sources_${cat.id}" value="${item.sources || ''}" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="לדוגמה: שיחת ש״פ נח...">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">טקסט הפירוש</label>
+                        <textarea id="text_${cat.id}" rows="4" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="הכנס את תוכן הפירוש כאן...">${item.text || ''}</textarea>
+                    </div>
+                `;
+                form.appendChild(block);
+            });
+
+            document.getElementById('editorModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('editorModal').classList.add('hidden');
+            currentEditingChapter = null;
+        }
+
+        async function saveChapter() {
+            const spinner = document.getElementById('saveSpinner');
+            spinner.classList.remove('hidden');
+            
+            // בניית מבנה הנתונים המדויק לשמירה
+            const updatedCommentaries = {};
+            
+            categories.forEach(cat => {
+                updatedCommentaries[cat.id] = [{
+                    title: document.getElementById(`title_${cat.id}`).value,
+                    text: document.getElementById(`text_${cat.id}`).value,
+                    sources: document.getElementById(`sources_${cat.id}`).value // שמירה ל-sources
+                }];
+            });
+
+            // שמירה במשתנה הגלובלי (כדי שהממשק יתעדכן מיד)
+            if (!appData[currentEditingChapter]) {
+                appData[currentEditingChapter] = {};
+            }
+            appData[currentEditingChapter].commentaries = updatedCommentaries;
+
+            try {
+                // המרת האובייקט לטקסט מיושר יפה ול-Base64
+                const jsonContent = JSON.stringify(appData, null, 2);
+                const encodedContent = encodeBase64Unicode(jsonContent);
+
+                const body = {
+                    message: `עריכת פרק ${currentEditingChapter} דרך ממשק הניהול`,
+                    content: encodedContent,
+                    sha: fileSha 
+                };
+
+                const response = await fetch(API_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    const errInfo = await response.json();
+                    throw new Error(errInfo.message || "שגיאה בשמירת הנתונים ל-GitHub");
+                }
+
+                // עדכון ה-SHA החדש שהתקבל
+                const result = await response.json();
+                fileSha = result.content.sha;
+
+                renderGrid();
+                closeModal();
+                showToast("הפרק נשמר בהצלחה ב-GitHub!");
+
+            } catch (error) {
+                console.error(error);
+                showErrorToast("שגיאה בשמירה: " + error.message);
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 3000);
+        }
+
+        function showErrorToast(msg) {
+            const toast = document.getElementById('errorToast');
+            document.getElementById('errorToastMessage').textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 5000);
+        }
+
+        function showCriticalError(msg) {
+            document.getElementById('loadingText').innerHTML = `<span class="text-red-600 font-bold">${msg}</span>`;
+            document.querySelector('.animate-spin').classList.add('hidden');
+        }
+
+        window.onload = fetchGitHubData;
+    </script>
+</body>
+</html>
