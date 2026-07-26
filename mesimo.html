@@ -53,6 +53,7 @@
             <div id="board-mode-banner" class="hidden flex-1 min-w-0"></div>
 
             <div class="flex items-center gap-3 shrink-0">
+                <button id="refresh-btn-header" onclick="refreshData()" title="רענן נתונים" class="inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition bg-amber-50 text-amber-700 border-amber-200">🔄 רענן</button>
                 <div class="text-left hidden md:block">
                     <p class="text-sm font-medium text-slate-900" id="current-date-display">טוען תאריך...</p>
                     <p class="text-[14px] text-slate-400">התאריך של היום</p>
@@ -2148,20 +2149,20 @@
             if (val) { gasUrl = val; localStorage.setItem('gas_url', val); showNotification('כתובת הסנכרון עודכנה!'); loadDataFromSheets(true); }
         }
         function updateConnectionStatus(status){
-            const b = document.getElementById('refresh-btn');
-            if (!b) return;
             const base = "inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition ";
+            const targets = [document.getElementById('refresh-btn'), document.getElementById('refresh-btn-header')].filter(Boolean);
+            if (targets.length === 0) return;
             // אם יש שינויים שלא נשמרו - זה גובר על החיווי הרגיל (חוץ מבזמן שמירה/טעינה)
             if (pendingWrites.length > 0 && status !== 'syncing' && status !== 'loading') {
-                b.className = base + "bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300";
-                b.title = "יש שינויים שלא נשמרו — לחץ כדי לשמור אותם בשרת";
-                b.innerHTML = "⚠️ שמור (" + pendingWrites.length + ")";
+                targets.forEach(b => { b.className = base + "bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"; b.title = "יש שינויים שלא נשמרו — לחץ כדי לשמור אותם בשרת"; b.innerHTML = "⚠️ שמור (" + pendingWrites.length + ")"; });
                 return;
             }
-            if (status === 'syncing') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "שומר…"; b.innerHTML = "💾 שומר"; }
-            else if (status === 'loading') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "טוען…"; b.innerHTML = "⏳ טוען"; }
-            else if (status === 'connected') { b.className = base + "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"; b.title = "מסונכרן — לחץ לרענון"; b.innerHTML = "🔄 מסונכרן"; }
-            else { b.className = base + "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"; b.title = "שגיאת חיבור — לחץ לניסיון חוזר"; b.innerHTML = "🔌 שגיאה"; }
+            targets.forEach(b => {
+                if (status === 'syncing') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "שומר…"; b.innerHTML = "💾 שומר"; }
+                else if (status === 'loading') { b.className = base + "bg-amber-50 text-amber-700 border-amber-200"; b.title = "טוען…"; b.innerHTML = "⏳ טוען"; }
+                else if (status === 'connected') { b.className = base + "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"; b.title = "מסונכרן — לחץ לרענון"; b.innerHTML = "🔄 מסונכרן"; }
+                else { b.className = base + "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"; b.title = "שגיאת חיבור — לחץ לניסיון חוזר"; b.innerHTML = "🔌 שגיאה"; }
+            });
         }
 
         // ====== עזרים ======
