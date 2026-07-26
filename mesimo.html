@@ -34,8 +34,8 @@
 
     <!-- Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+        <div class="max-w-full mx-auto px-6 h-16 flex items-center gap-3">
+            <div class="flex items-center gap-3 shrink-0">
                 <button id="header-menu-btn" onclick="toggleSidePanel()" title="הצג/הסתר תפריט בקרה" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
@@ -44,13 +44,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
                 </div>
-                <div>
+                <div class="hidden sm:block">
                     <h1 class="font-bold text-lg text-slate-900">משימות משרד נוטיק</h1>
                     <p class="text-xs text-slate-500">ניהול משימות ונוכחות בזמן אמת</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div id="board-mode-banner" class="hidden flex-1 min-w-0"></div>
+
+            <div class="flex items-center gap-3 shrink-0">
                 <div class="text-left hidden md:block">
                     <p class="text-sm font-medium text-slate-900" id="current-date-display">טוען תאריך...</p>
                     <p class="text-[14px] text-slate-400">התאריך של היום</p>
@@ -243,9 +245,6 @@
 
         <!-- צד שמאל -->
         <div class="lg:col-span-9 space-y-6" id="main-column">
-
-            <!-- חיווי בולט: יום פעיל מול תכנון יום הבא -->
-            <div id="board-mode-banner" class="hidden"></div>
 
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="border-b border-slate-200 flex flex-wrap gap-x-6 px-6">
@@ -1130,20 +1129,22 @@
             else if (showingTomorrow) dayLabel = `📋 משימות של יום העבודה הבא · ${heDateShort(viewDay)}`;
             else dayLabel = dayOpen ? '📋 משימות של היום · יום עבודה פתוח' : '📋 משימות של היום';
 
-            // חיווי גדול ובולט בראש הדף: יום פעיל מול תכנון קדימה
+            // חיווי בולט בכותרת: יום פעיל מול תכנון קדימה
             const modeBanner = document.getElementById('board-mode-banner');
             if (modeBanner) {
                 if (!reporting && dayOpen) {
                     modeBanner.classList.remove('hidden');
-                    modeBanner.innerHTML = `<div class="bg-emerald-600 text-white rounded-2xl px-5 py-3 flex items-center gap-3 shadow-md">
-                        <span class="text-2xl">🟢</span>
-                        <div><div class="font-bold text-base">מסך יום עבודה פעיל (היום פתוח)</div><div class="text-emerald-100 text-xs">${heDate(bDate)} — שינויים כאן משפיעים על היום בפועל.</div></div>
+                    modeBanner.innerHTML = `<div class="bg-emerald-600 text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm w-fit max-w-full mx-auto">
+                        <span class="text-base shrink-0">🟢</span>
+                        <span class="font-bold text-sm whitespace-nowrap">יום עבודה פעיל (היום פתוח)</span>
+                        <span class="text-emerald-100 text-[13px] whitespace-nowrap hidden sm:inline">— ${heDate(bDate)} · שינויים כאן משפיעים על היום בפועל</span>
                     </div>`;
                 } else if (!reporting) {
                     modeBanner.classList.remove('hidden');
-                    modeBanner.innerHTML = `<div class="bg-indigo-600 text-white rounded-2xl px-5 py-3 flex items-center gap-3 shadow-md">
-                        <span class="text-2xl">🔵</span>
-                        <div><div class="font-bold text-base">מסך תכנון ותעדוף יום עבודה הבא</div><div class="text-indigo-100 text-xs">${heDate(bDate)} — היום עדיין לא נפתח רשמית; אפשר לתעדף מראש.</div></div>
+                    modeBanner.innerHTML = `<div class="bg-indigo-600 text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm w-fit max-w-full mx-auto">
+                        <span class="text-base shrink-0">🔵</span>
+                        <span class="font-bold text-sm whitespace-nowrap">מסך תכנון ותעדוף יום עבודה הבא</span>
+                        <span class="text-indigo-100 text-[13px] whitespace-nowrap hidden sm:inline">— ${heDate(bDate)} · היום עדיין לא נפתח רשמית</span>
                     </div>`;
                 } else {
                     modeBanner.classList.add('hidden'); modeBanner.innerHTML = '';
