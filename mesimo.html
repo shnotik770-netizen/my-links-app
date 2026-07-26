@@ -54,6 +54,11 @@
 
             <div class="flex items-center gap-3 shrink-0">
                 <button id="refresh-btn-header" onclick="refreshData()" title="רענן נתונים" class="inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition bg-amber-50 text-amber-700 border-amber-200">🔄 רענן</button>
+                <button onclick="openSettingsModal()" title="הגדרות" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    </svg>
+                </button>
                 <div class="text-left hidden md:block">
                     <p class="text-sm font-medium text-slate-900" id="current-date-display">טוען תאריך...</p>
                     <p class="text-[14px] text-slate-400">התאריך של היום</p>
@@ -66,11 +71,9 @@
         🕊️ מצב הרב סגל (צפייה ותיעדוף משימות) — לחץ כאן להזדהות כעובד (נוטיק)
     </button>
 
-    <main class="max-w-full mx-auto px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <!-- צד ימין -->
-        <div class="lg:col-span-3" id="side-column">
-            <div id="side-panel-content" class="flex flex-col gap-6">
+    <!-- תפריט בקרה: רצועה ברוחב מלא מתחת לכותרת (ברירת מחדל: גלוי) -->
+    <div id="side-column" class="max-w-full mx-auto px-6 mt-4">
+        <div id="side-panel-content" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
 
             <!-- בקרת יום עבודה -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5 order-1">
@@ -203,49 +206,13 @@
                 </div>
             </div>
 
-            <!-- שיתוף -->
-            <div id="share-card" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 order-4">
-                <h3 class="font-bold text-slate-950 text-sm">שיתוף וסיכום</h3>
-                <button onclick="copyDetailedSummaryToClipboard()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
-                    📋 העתק סיכום יום (לווצאפ)
-                </button>
-                <p class="text-[14px] text-slate-400 text-center leading-relaxed">
-                    מעתיק ללוח סיכום מסודר של מה שבוצע היום ומה שנשאר למחר, כולל שעות הנוכחות — מוכן להדבקה בווצאפ.
-                </p>
-            </div>
-
-            <!-- הגדרות -->
-            <div id="settings-card" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden order-5">
-                <button onclick="toggleSettings()" class="w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition">
-                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        </svg>
-                        הגדרות
-                    </h3>
-                    <span class="text-slate-400">▼</span>
-                </button>
-                <div id="settings-panel" class="hidden p-5 border-t border-slate-200 bg-slate-50/50 space-y-4 text-xs">
-                    <div>
-                        <button id="editor-login-btn" onclick="editorLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">🔑 כניסה כעובד</button>
-                        <button id="editor-logout-btn" onclick="editorLogout()" class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold py-2 rounded-xl transition">🕊️ כניסה כהרב סגל</button>
-                    </div>
-                    <div class="pt-3 border-t border-slate-200">
-                        <label class="block font-semibold text-slate-600 mb-1">קישור ליישום האינטרנט (Web App URL):</label>
-                        <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
-                    </div>
-                    <div class="pt-3 border-t border-slate-200">
-                        <label class="block font-semibold text-slate-600 mb-1">שינוי סיסמת עובד:</label>
-                        <input type="text" id="editor-pw-input" placeholder="סיסמה חדשה" onchange="saveEditorPw()" class="w-full px-3 py-2 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
-                        <p class="text-[14px] text-slate-400 mt-1.5">הסיסמה נשמרת בגיליון (Config) ותקפה בכל המכשירים. ברירת מחדל: 1234.</p>
-                    </div>
-                </div>
-            </div>
             </div>
         </div>
 
-        <!-- צד שמאל -->
-        <div class="lg:col-span-9 space-y-6" id="main-column">
+    <main class="max-w-full mx-auto px-6 mt-6">
+
+        <!-- אזור המשימות -->
+        <div class="space-y-6" id="main-column">
 
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="border-b border-slate-200 flex flex-wrap gap-x-6 px-6">
@@ -362,6 +329,29 @@
         <button onclick="toggleSelectionMode()" class="text-slate-300 hover:text-white text-sm">ביטול</button>
     </div>
 
+    <!-- מודל הגדרות -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 space-y-4 text-xs">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-900 text-base">⚙️ הגדרות</h3>
+                <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
+            </div>
+            <div>
+                <button id="editor-login-btn" onclick="editorLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">🔑 כניסה כעובד</button>
+                <button id="editor-logout-btn" onclick="editorLogout()" class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold py-2 rounded-xl transition">🕊️ כניסה כהרב סגל</button>
+            </div>
+            <div class="pt-3 border-t border-slate-200">
+                <label class="block font-semibold text-slate-600 mb-1">קישור ליישום האינטרנט (Web App URL):</label>
+                <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
+            </div>
+            <div class="pt-3 border-t border-slate-200">
+                <label class="block font-semibold text-slate-600 mb-1">שינוי סיסמת עובד:</label>
+                <input type="text" id="editor-pw-input" placeholder="סיסמה חדשה" onchange="saveEditorPw()" class="w-full px-3 py-2 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
+                <p class="text-[14px] text-slate-400 mt-1.5">הסיסמה נשמרת בגיליון (Config) ותקפה בכל המכשירים. ברירת מחדל: 1234.</p>
+            </div>
+        </div>
+    </div>
+
     <div id="reschedule-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
             <h3 class="font-bold text-base text-slate-900 mb-1">תזמון מחדש</h3>
@@ -467,8 +457,6 @@
             const banner = document.getElementById('readonly-banner');
             if (banner) banner.classList.toggle('hidden', !readOnly);
             const addCard = document.getElementById('addtask-card'); if (addCard) addCard.classList.toggle('hidden', readOnly);
-            const shareCard = document.getElementById('share-card'); if (shareCard) shareCard.classList.toggle('hidden', readOnly);
-            const settingsCard = document.getElementById('settings-card'); if (settingsCard) settingsCard.classList.toggle('hidden', readOnly);
             const dayControls = document.getElementById('day-action-controls'); if (dayControls) dayControls.classList.toggle('hidden', readOnly);
             const loginBtn = document.getElementById('editor-login-btn'); if (loginBtn) loginBtn.classList.toggle('hidden', !readOnly);
             const logoutBtn = document.getElementById('editor-logout-btn'); if (logoutBtn) logoutBtn.classList.toggle('hidden', readOnly);
@@ -2128,13 +2116,11 @@
         }
 
         // ====== הגדרות ======
-        function toggleSettings(){ document.getElementById('settings-panel').classList.toggle('hidden'); }
+        function openSettingsModal(){ document.getElementById('settings-modal').classList.remove('hidden'); }
         function setSidePanelState(hidden){
             const side = document.getElementById('side-column');
-            const main = document.getElementById('main-column');
             const btn = document.getElementById('header-menu-btn');
             if (side) side.classList.toggle('hidden', hidden);
-            if (main) main.className = hidden ? 'lg:col-span-12 space-y-6' : 'lg:col-span-9 space-y-6';
             if (btn) btn.className = 'p-2 rounded-xl transition ' + (hidden ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600');
         }
         function toggleSidePanel(){
