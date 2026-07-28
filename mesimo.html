@@ -73,10 +73,10 @@
 
     <!-- תפריט בקרה: רצועה ברוחב מלא מתחת לכותרת (ברירת מחדל: גלוי) -->
     <div id="side-column" class="max-w-full mx-auto px-6 mt-4">
-        <div id="side-panel-content" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+        <div id="side-panel-content" class="columns-1 md:columns-2 xl:columns-3 gap-4">
 
             <!-- בקרת יום עבודה -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5 order-1">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5 mb-4 break-inside-avoid">
                 <div class="flex items-center justify-between gap-2">
                     <h2 class="font-bold text-slate-950 text-sm">בקרת יום עבודה</h2>
                     <button id="refresh-btn" onclick="refreshData()" title="רענן נתונים" class="inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition bg-amber-50 text-amber-700 border-amber-200">🔄 רענן</button>
@@ -106,7 +106,7 @@
             </div>
 
             <!-- נוכחות -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 order-2">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 mb-4 break-inside-avoid">
                 <div class="flex items-center justify-between">
                     <h2 class="font-bold text-slate-950 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,7 +126,7 @@
             </div>
 
             <!-- הוספת משימה (גלוי תמיד, מעל הנוכחות) -->
-            <div id="addtask-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm order-3 space-y-3">
+            <div id="addtask-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-4 break-inside-avoid space-y-3">
                 <h2 class="font-bold text-slate-950 text-sm flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     הוספת משימה
