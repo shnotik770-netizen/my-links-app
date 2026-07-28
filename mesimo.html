@@ -1437,9 +1437,16 @@
             if (guardRO()) return; 
             const t = tasks.find(x => x.id === id);
             if (!t) return;
+            const wasContinuousAndOpen = t.continuous && !t.done;
             t.done = !t.done;
+            const updates = { done: t.done };
+            // כשמסמנים משימה מתמשכת כבוצעה - שואלים אם היא הסתיימה סופית או שעדיין ממשיכה מחר
+            if (wasContinuousAndOpen && t.done) {
+                const finished = confirm('🔁 זו משימה מתמשכת.\n\nהאם היא הסתיימה סופית (לא תמשיך יותר)?\n\nאישור = הסתיימה סופית — לא תעבור למחר.\nביטול = עדיין ממשיכה — תעבור למחר כרגיל.');
+                if (finished) { t.continuous = false; updates.continuous = false; }
+            }
             renderTasks();
-            sendPostToSheets({ action: 'updateTask', taskId: id, updates: { done: t.done } }, true);
+            sendPostToSheets({ action: 'updateTask', taskId: id, updates }, true);
         }
         function updateTaskNotes(id, value){
             if (guardRO()) return; 
@@ -1577,6 +1584,11 @@
         function onRescheduleSelect(id, mode){
             if (guardRO()) return; 
             if (!mode) return;
+            const t0 = tasks.find(x => x.id === id);
+            if (t0 && t0.continuous && !rescheduleBulk) {
+                const proceed = confirm('⚠️ זו משימה מתמשכת - היא כבר עוברת אוטומטית ליום הבא בכל סגירת יום.\n\nתזמון/שכפול ידני שלה עלול ליצור כפילות (עותק ידני + ההעברה האוטומטית).\n\nלהמשיך בכל זאת?');
+                if (!proceed) { renderTasks(); return; }
+            }
             if (mode === 'general') {
                 const t = tasks.find(x => x.id === id); if (!t) return;
                 t.status = 'general'; t.dueDate = ''; renderTasks();
