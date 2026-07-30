@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-            <div id="board-mode-banner" class="hidden order-3 w-full sm:order-none sm:w-auto sm:flex-1"></div>
+            <div id="board-mode-banner" class="hidden flex-1 min-w-[110px]"></div>
 
             <div class="flex items-center gap-3 shrink-0">
                 <button id="refresh-btn-header" onclick="refreshData()" title="רענן נתונים" class="inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition bg-amber-50 text-amber-700 border-amber-200">🔄 רענן</button>
@@ -1088,17 +1088,17 @@
             if (modeBanner) {
                 if (!reporting && dayOpen) {
                     modeBanner.classList.remove('hidden');
-                    modeBanner.innerHTML = `<div class="bg-emerald-600 text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm w-fit max-w-full mx-auto">
+                    modeBanner.innerHTML = `<div class="bg-emerald-600 text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm w-full min-w-0">
                         <span class="text-base shrink-0">🟢</span>
-                        <span class="font-bold text-sm whitespace-nowrap">יום עבודה פעיל (היום פתוח)</span>
-                        <span class="text-emerald-100 text-[13px] whitespace-nowrap hidden sm:inline">— ${heDate(bDate)} · שינויים כאן משפיעים על היום בפועל</span>
+                        <span class="font-bold text-sm truncate min-w-0">יום עבודה פעיל (היום פתוח)</span>
+                        <span class="text-emerald-100 text-[13px] whitespace-nowrap hidden lg:inline shrink-0">— ${heDate(bDate)} · שינויים כאן משפיעים על היום בפועל</span>
                     </div>`;
                 } else if (!reporting) {
                     modeBanner.classList.remove('hidden');
-                    modeBanner.innerHTML = `<div class="bg-indigo-600 text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm w-fit max-w-full mx-auto">
+                    modeBanner.innerHTML = `<div class="bg-indigo-600 text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm w-full min-w-0">
                         <span class="text-base shrink-0">🔵</span>
-                        <span class="font-bold text-sm whitespace-nowrap">מסך תכנון ותעדוף יום עבודה הבא</span>
-                        <span class="text-indigo-100 text-[13px] whitespace-nowrap hidden sm:inline">— ${heDate(bDate)} · היום עדיין לא נפתח רשמית</span>
+                        <span class="font-bold text-sm truncate min-w-0">מסך תכנון ותעדוף יום עבודה הבא</span>
+                        <span class="text-indigo-100 text-[13px] whitespace-nowrap hidden lg:inline shrink-0">— ${heDate(bDate)} · היום עדיין לא נפתח רשמית</span>
                     </div>`;
                 } else {
                     modeBanner.classList.add('hidden'); modeBanner.innerHTML = '';
