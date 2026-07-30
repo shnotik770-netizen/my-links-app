@@ -54,11 +54,8 @@
 
             <div class="flex items-center gap-3 shrink-0">
                 <button id="refresh-btn-header" onclick="refreshData()" title="רענן נתונים" class="inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition bg-amber-50 text-amber-700 border-amber-200">🔄 רענן</button>
-                <button onclick="openSettingsModal()" title="הגדרות" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    </svg>
-                </button>
+                <button id="editor-login-btn" onclick="editorLogin()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition">🔑 כניסה כעובד</button>
+                <button id="editor-logout-btn" onclick="editorLogout()" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition">🕊️ כניסה כהרב סגל</button>
                 <div class="text-left hidden md:block">
                     <p class="text-sm font-medium text-slate-900" id="current-date-display">טוען תאריך...</p>
                     <p class="text-[14px] text-slate-400">התאריך של היום</p>
@@ -329,29 +326,6 @@
         <button onclick="toggleSelectionMode()" class="text-slate-300 hover:text-white text-sm">ביטול</button>
     </div>
 
-    <!-- מודל הגדרות -->
-    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 space-y-4 text-xs">
-            <div class="flex items-center justify-between">
-                <h3 class="font-bold text-slate-900 text-base">⚙️ הגדרות</h3>
-                <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
-            </div>
-            <div>
-                <button id="editor-login-btn" onclick="editorLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">🔑 כניסה כעובד</button>
-                <button id="editor-logout-btn" onclick="editorLogout()" class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold py-2 rounded-xl transition">🕊️ כניסה כהרב סגל</button>
-            </div>
-            <div class="pt-3 border-t border-slate-200">
-                <label class="block font-semibold text-slate-600 mb-1">קישור ליישום האינטרנט (Web App URL):</label>
-                <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGasUrl()" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
-            </div>
-            <div class="pt-3 border-t border-slate-200">
-                <label class="block font-semibold text-slate-600 mb-1">שינוי סיסמת עובד:</label>
-                <input type="text" id="editor-pw-input" placeholder="סיסמה חדשה" onchange="saveEditorPw()" class="w-full px-3 py-2 border border-slate-200 bg-white rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">
-                <p class="text-[14px] text-slate-400 mt-1.5">הסיסמה נשמרת בגיליון (Config) ותקפה בכל המכשירים. ברירת מחדל: 1234.</p>
-            </div>
-        </div>
-    </div>
-
     <div id="reschedule-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
             <h3 class="font-bold text-base text-slate-900 mb-1">תזמון מחדש</h3>
@@ -494,14 +468,6 @@
                 if (q.get('edit') === '1') { readOnly = false; localStorage.setItem('is_editor','1'); }
             } catch(e) {}
         }
-        function saveEditorPw(){
-            if (readOnly) return;
-            const v = document.getElementById('editor-pw-input').value.trim();
-            if (!v) return;
-            fetchJSONP(gasUrl, { action: 'setEditorPw', pw: v }, 'cb_setpw')
-                .then(() => showNotification('סיסמת העורך עודכנה.'))
-                .catch(() => showNotification('שגיאה בעדכון הסיסמה.', true));
-        }
         let currentTab = 'today';
         let selectedDate = '';        // טאב "משימות לתאריך"
         let editingNameId = null;     // עריכת שם משימה אינלייןֿ
@@ -568,7 +534,6 @@
 
             const savedUrl = localStorage.getItem('gas_url');
             if (savedUrl) gasUrl = savedUrl;
-            document.getElementById('gas-url-input').value = gasUrl;
 
             selectedDate = tomorrowISO();
             document.getElementById('bydate-picker').value = selectedDate;
@@ -2127,8 +2092,7 @@
             showNotification('📋 הסיכום הועתק — אפשר להדביק בווצאפ.');
         }
 
-        // ====== הגדרות ======
-        function openSettingsModal(){ document.getElementById('settings-modal').classList.remove('hidden'); }
+        // ====== תפריט בקרה ======
         function setSidePanelState(hidden){
             const side = document.getElementById('side-column');
             const btn = document.getElementById('header-menu-btn');
@@ -2142,10 +2106,6 @@
             try { localStorage.setItem('side_panel_hidden', hidden ? '1' : '0'); } catch(e) {}
         }
         function refreshData(){ loadDataFromSheets(true); }
-        function saveGasUrl(){
-            const val = document.getElementById('gas-url-input').value.trim();
-            if (val) { gasUrl = val; localStorage.setItem('gas_url', val); showNotification('כתובת הסנכרון עודכנה!'); loadDataFromSheets(true); }
-        }
         function updateConnectionStatus(status){
             const base = "inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition ";
             const targets = [document.getElementById('refresh-btn'), document.getElementById('refresh-btn-header')].filter(Boolean);
