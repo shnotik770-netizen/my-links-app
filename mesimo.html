@@ -557,16 +557,31 @@
             return new Promise((resolve, reject) => {
                 const uniqueCallback = callbackName + '_' + Date.now() + '_' + Math.round(100000 * Math.random());
                 let done = false;
-                const timer = setTimeout(() => { if (!done) { done = true; cleanup(); reject(new Error('JSONP timeout')); } }, timeoutMs || 25000);
-                window[uniqueCallback] = function(data){ if (done) return; done = true; clearTimeout(timer); resolve(data); cleanup(); };
+                const timer = setTimeout(() => {
+                    if (!done) { done = true; reject(new Error('JSONP timeout')); }
+                    // לא מוחקים את window[uniqueCallback] כאן: אם התשובה עדיין בדרך (שרת איטי/עמוס),
+                    // תגיע מאוחר יותר ותנסה לקרוא לפונקציה - אם היא כבר נמחקה זה זורק
+                    // "ReferenceError: ... is not defined". השארתה מונעת את זה; הניקוי קורה כשהתשובה מגיעה בפועל.
+                }, timeoutMs || 25000);
+                window[uniqueCallback] = function(data){
+                    clearTimeout(timer);
+                    const el = document.getElementById(uniqueCallback);
+                    if (el) el.remove();
+                    delete window[uniqueCallback];
+                    if (!done) { done = true; resolve(data); }
+                    // אם done כבר true (טיימאאוט כבר קרה) - התשובה הגיעה באיחור; מתעלמים בשקט בלי לזרוק שגיאה.
+                };
                 const queryParams = new URLSearchParams(params);
                 queryParams.set('callback', uniqueCallback);
                 const scriptUrl = url + (url.includes('?') ? '&' : '?') + queryParams.toString();
                 const script = document.createElement('script');
                 script.src = scriptUrl;
                 script.id = uniqueCallback;
-                script.onerror = function(){ if (done) return; done = true; clearTimeout(timer); reject(new Error('JSONP request failed')); cleanup(); };
-                function cleanup(){ delete window[uniqueCallback]; const el=document.getElementById(uniqueCallback); if(el) el.remove(); }
+                script.onerror = function(){
+                    const el = document.getElementById(uniqueCallback);
+                    if (el) el.remove();
+                    if (!done) { done = true; clearTimeout(timer); delete window[uniqueCallback]; reject(new Error('JSONP request failed')); }
+                };
                 document.body.appendChild(script);
             });
         }
@@ -615,6 +630,7 @@
                         updateConnectionStatus('error');
                         showNotification("שגיאה בחיבור לשרת. השינויים המקומיים נשמרו ולא נמחקו.", true);
                         if (isInitial) hideLoader();
+                        else renderTasks(); // גם בכשל, מרנדרים מחדש עם הנתונים האחרונים הידועים - כדי שהבאנר והלוח לא יישארו במצב חלקי/מוסתר
                     });
             };
             if (pendingWrites.length > 0) {
@@ -1635,7 +1651,15 @@
             const d = document.getElementById('reschedule-date-input').value;
             const t = tasks.find(x => x.id === reschedulePendingId);
             if (t && d) {
-                const copy = { id: Date.now(), name: t.name, type: t.type, status:'dated', dueDate:d, dayOfMonth:'', monthOfYear:'', done:false, notes:t.notes, priority: 500, todoNotes: t.todoNotes || '', continuous: t.continuous || false, prioritizedBy: '', quickTier: '' };
+                let copiedNotes = '';
+                if (t.done) {
+                    // משימה שבוצעה: מעתיקים רק את "הערות לביצוע" (התוכנית), לא את "הערות בוצע" (סיכום הביצוע של היום)
+                    copiedNotes = '';
+                } else if ((t.notes || '').trim()) {
+                    // משימה שעוד לא בוצעה, עם הערת בוצע קיימת - שואלים אם להעתיק אותה גם כן
+                    copiedNotes = confirm('למשימה יש "הערת בוצע" קיימת.\n\nהאם להעתיק גם אותה למשימה החדשה?\n\nאישור = להעתיק גם את ההערה.\nביטול = להתחיל בלי הערת בוצע.') ? t.notes : '';
+                }
+                const copy = { id: Date.now(), name: t.name, type: t.type, status:'dated', dueDate:d, dayOfMonth:'', monthOfYear:'', done:false, notes:copiedNotes, priority: 500, todoNotes: t.todoNotes || '', continuous: t.continuous || false, prioritizedBy: '', quickTier: '' };
                 tasks.push(copy);
                 sendPostToSheets({ action:'addTask', task:copy }, true);
             }
