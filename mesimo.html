@@ -766,6 +766,9 @@
         function isYearly(t){ return t === 'משימה שנתית' || t === 'רוטינה שנתית'; }
         function isWeekly(t){ return t === 'משימה שבועית' || t === 'רוטינת יום בשבוע'; }
         function isRoutine(t){ return isDaily(t) || isMonthly(t) || isYearly(t) || isWeekly(t); }
+        // תיעדוף מהיר: אדום(0) < כתום(1) < ירוק(2) < רגיל(3) - קובע קבוצת-על במיון, לפני העדיפות הרגילה
+        function tierRank(t){ return t.quickTier === 'red' ? 0 : t.quickTier === 'orange' ? 1 : t.quickTier === 'green' ? 2 : 3; }
+        function pendingSort(list){ return list.sort((a,b)=> (tierRank(a)-tierRank(b)) || (a.priority-b.priority) || (a.id-b.id)); }
         const WEEKDAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 
         function handleTaskTypeChange() {
@@ -866,7 +869,7 @@
                 }
             }
 
-            newTasks.forEach(t => { t.priority = 500; t.todoNotes = ''; t.continuous = false; t.prioritizedBy = ''; tasks.push(t); });
+            newTasks.forEach(t => { t.priority = 500; t.todoNotes = ''; t.continuous = false; t.prioritizedBy = ''; t.quickTier = ''; tasks.push(t); });
             renderTasks();
             Promise.all(newTasks.map(t => sendPostToSheets({ action: 'addTask', task: t }, true)))
                 .then(results => { if (results.every(Boolean)) showNotification('המשימה נוספה בהצלחה!'); });
@@ -957,6 +960,8 @@
             }
 
             const continuousBadge = task.continuous ? `<span title="משימה מתמשכת - ממשיכה מימים קודמים" class="text-[12px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 shrink-0">🔁 ממשיכה מימים קודמים</span>` : '';
+            const QUICK_TIER_BADGE = { red: '<span class="text-[12px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 shrink-0">🔴 דחוף להיום</span>', orange: '<span class="text-[12px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 shrink-0">🟠 דחוף</span>', green: '<span class="text-[12px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">🟢 דחוף השבוע</span>' };
+            const quickTierBadge = (canReorder && task.quickTier && QUICK_TIER_BADGE[task.quickTier]) ? QUICK_TIER_BADGE[task.quickTier] : '';
 
             const doneNoteInline = ed
                 ? `<input type="text" placeholder="הערת בוצע…" value="${escapeAttr(task.notes || '')}" onchange="updateTaskNotes(${id}, this.value)" onkeydown="if(event.key==='Enter'){this.blur();}" class="flex-1 min-w-[200px] text-sm bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">`
@@ -967,6 +972,13 @@
                 ? `<div class="flex items-start gap-1 mt-1 pr-1 text-[14px] text-indigo-600"><span class="shrink-0">🎯</span><span class="min-w-0">${escapeHtml(todo)}</span></div>`
                 : '';
 
+            const quickTierBtns = canReorder ? `
+                <div class="flex items-center gap-1 shrink-0">
+                    <span class="text-[13px] text-slate-400">תיעדוף מהיר:</span>
+                    <button onclick="setQuickTier(${id}, 'red')" title="דחוף להיום - קופץ לראש הרשימה" class="text-[12px] font-bold px-2 py-1 rounded-lg transition ${task.quickTier==='red' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}">🔴 היום</button>
+                    <button onclick="setQuickTier(${id}, 'orange')" title="דחוף - קופץ לראש הרשימה, אחרי דחוף-להיום" class="text-[12px] font-bold px-2 py-1 rounded-lg transition ${task.quickTier==='orange' ? 'bg-orange-600 text-white' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}">🟠 דחוף</button>
+                    <button onclick="setQuickTier(${id}, 'green')" title="דחוף השבוע - קופץ לסוף המשימות המתועדפות" class="text-[12px] font-bold px-2 py-1 rounded-lg transition ${task.quickTier==='green' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}">🟢 השבוע</button>
+                </div>` : '';
             const reorderCtrl = canReorder ? `
                 <div class="flex items-center gap-1 shrink-0">
                     <span class="text-[13px] text-slate-400">סדר:</span>
@@ -1001,6 +1013,7 @@
                             class="flex-1 min-w-0 text-xs bg-indigo-50/40 border border-indigo-100 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     </div>
                     ${prioLegend}
+                    ${quickTierBtns ? `<div class="flex items-center gap-2 flex-wrap">${quickTierBtns}</div>` : ''}
                     ${(reorderCtrl || editorCtrls) ? `<div class="flex items-center gap-2 flex-wrap">${reorderCtrl}${editorCtrls}</div>` : ''}
                 </div>`;
 
@@ -1014,6 +1027,7 @@
                         ${doneBox}
                         ${nameBlock}
                         ${continuousBadge}
+                        ${quickTierBadge}
                         ${dateNote}
                         ${doneNoteInline}
                         <span class="text-[12px] px-1 py-0.5 rounded ${badge} shrink-0">${task.type}</span>
@@ -1106,7 +1120,7 @@
             }
 
             const pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
-                                 .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+                                 .sort((a,b)=> (tierRank(a)-tierRank(b)) || (a.priority - b.priority) || (a.id - b.id));
             const doneToday = tasks.filter(t => t.status === 'dated' && t.dueDate === bDate && t.done);
 
             // באנר מצב (הלוח מוצג תמיד - סימולציה חיה של יום התצוגה)
@@ -1274,7 +1288,7 @@
             const exists = tasks.some(t => t.status === 'dated' && t.name === seed.name && t.dueDate === today);
             const calls = [];
             if (!exists) {
-                const instance = { id: Date.now(), name: seed.name, type: seed.type, status: 'dated', dueDate: today, dayOfMonth: '', monthOfYear: '', done: false, notes: '', priority: 500, todoNotes: '', continuous: seed.continuous || false, prioritizedBy: '' };
+                const instance = { id: Date.now(), name: seed.name, type: seed.type, status: 'dated', dueDate: today, dayOfMonth: '', monthOfYear: '', done: false, notes: '', priority: 500, todoNotes: '', continuous: seed.continuous || false, prioritizedBy: '', quickTier: '' };
                 tasks.push(instance);
                 calls.push(sendPostToSheets({ action: 'addTask', task: instance }, true));
             }
@@ -1304,7 +1318,7 @@
                 return;
             }
             // copy
-            const copy = { id: Date.now(), name: g.name, type: g.type, status: 'dated', dueDate: today, dayOfMonth: '', monthOfYear: '', done: false, notes: g.notes, priority: 500, todoNotes: g.todoNotes || '', continuous: g.continuous || false, prioritizedBy: '' };
+            const copy = { id: Date.now(), name: g.name, type: g.type, status: 'dated', dueDate: today, dayOfMonth: '', monthOfYear: '', done: false, notes: g.notes, priority: 500, todoNotes: g.todoNotes || '', continuous: g.continuous || false, prioritizedBy: '', quickTier: '' };
             tasks.push(copy);
             renderTasks();
             sendPostToSheets({ action: 'addTask', task: copy }, true)
@@ -1432,7 +1446,7 @@
         function moveTask(id, dir){
             const bDate = boardDate();
             let pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
-                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+                               .sort((a,b)=> (tierRank(a)-tierRank(b)) || (a.priority - b.priority) || (a.id - b.id));
             const idx = pending.findIndex(t => t.id === id);
             if (idx < 0) return;
             const swap = idx + dir;
@@ -1443,7 +1457,7 @@
         function setPriorityNumber(id, valueRaw){
             const bDate = boardDate();
             let pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
-                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+                               .sort((a,b)=> (tierRank(a)-tierRank(b)) || (a.priority - b.priority) || (a.id - b.id));
             const from = pending.findIndex(t => t.id === id);
             if (from < 0) return;
             let to = Math.round(Number(valueRaw)) - 1;
@@ -1466,7 +1480,7 @@
             if (src == null || src === targetId) return;
             const bDate = boardDate();
             let pending = tasks.filter(t => t.status === 'dated' && t.dueDate && t.dueDate <= bDate && !t.done)
-                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+                               .sort((a,b)=> (tierRank(a)-tierRank(b)) || (a.priority - b.priority) || (a.id - b.id));
             const from = pending.findIndex(t => t.id === src);
             const to = pending.findIndex(t => t.id === targetId);
             if (from < 0 || to < 0) return;
@@ -1508,7 +1522,7 @@
             if (!targetId || targetId === id) return;
             const bDate = boardDate();
             let pending = tasks.filter(x => x.status === 'dated' && x.dueDate && x.dueDate <= bDate && !x.done)
-                               .sort((a,b)=> (a.priority - b.priority) || (a.id - b.id));
+                               .sort((a,b)=> (tierRank(a)-tierRank(b)) || (a.priority - b.priority) || (a.id - b.id));
             const from = pending.findIndex(x => x.id === id);
             const to = pending.findIndex(x => x.id === targetId);
             if (from < 0 || to < 0) return;
@@ -1540,6 +1554,16 @@
             renderTasks();
             sendPostToSheets({ action: 'updateTask', taskId: id, updates: { continuous: t.continuous } }, true)
                 .then(ok => { if (ok) showNotification(t.continuous ? '🔁 סומנה כמשימה מתמשכת.' : 'הוסר סימון מתמשכת.'); });
+        }
+        // תיעדוף מהיר: לחיצה על אותו תג פעיל מבטלת אותו; לחיצה על תג אחר מחליפה
+        const QUICK_TIER_LABEL = { red: '🔴 דחוף להיום', orange: '🟠 דחוף', green: '🟢 דחוף השבוע' };
+        function setQuickTier(id, tier){
+            if (guardRO()) return;
+            const t = tasks.find(x => x.id === id); if (!t) return;
+            t.quickTier = (t.quickTier === tier) ? '' : tier;
+            renderTasks();
+            sendPostToSheets({ action: 'updateTask', taskId: id, updates: { quickTier: t.quickTier } }, true)
+                .then(ok => { if (ok) showNotification(t.quickTier ? QUICK_TIER_LABEL[t.quickTier] + ' הוגדר.' : 'התיעדוף המהיר בוטל.'); });
         }
 
         // ====== תזמון מחדש (העברה / שכפול) ======
@@ -1611,7 +1635,7 @@
             const d = document.getElementById('reschedule-date-input').value;
             const t = tasks.find(x => x.id === reschedulePendingId);
             if (t && d) {
-                const copy = { id: Date.now(), name: t.name, type: t.type, status:'dated', dueDate:d, dayOfMonth:'', monthOfYear:'', done:false, notes:t.notes, priority: 500, todoNotes: t.todoNotes || '', continuous: t.continuous || false, prioritizedBy: '' };
+                const copy = { id: Date.now(), name: t.name, type: t.type, status:'dated', dueDate:d, dayOfMonth:'', monthOfYear:'', done:false, notes:t.notes, priority: 500, todoNotes: t.todoNotes || '', continuous: t.continuous || false, prioritizedBy: '', quickTier: '' };
                 tasks.push(copy);
                 sendPostToSheets({ action:'addTask', task:copy }, true);
             }
