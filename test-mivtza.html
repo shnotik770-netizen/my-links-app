@@ -57,7 +57,10 @@
     settingsIconDraft: null,   // אייקון שנבחר בטופס ההגדרות לפני שמירה
     settingsValueModeDraft: null,   // מצב חישוב היעד (ratio/tiers) שנבחר בטופס לפני שמירה
     settingsHeroThemeDraft: null,   // איור הרקע שנבחר בטופס לפני שמירה
-    showTiersLadder: false
+    showTiersLadder: false,
+    reportUserFilter: 'all',
+    reportTaskFilter: 'all',
+    reportStatusFilter: 'all'
   };
 
   // ⚠️ חובה למלא כאן את כתובת ה-Web App שקיבלת מ-Deploy ב-Apps Script (מסתיימת ב-/exec).
@@ -429,9 +432,10 @@
       return;
     }
     t.points = Number(t.points) || 0;
-    t.graceDays = t.taskType === 'occasional' ? 1 : (Number(t.graceDays) || 1);
+    t.graceDays = t.taskType === 'regular' ? (Number(t.graceDays) || 1) : 1;
     t.occasionalDateMode = t.occasionalDateMode || 'today';
     t.weeklyBonus = t.taskType === 'regular' ? (Number(t.weeklyBonus) || 0) : 0;
+    if (t.taskType === 'weekly') { t.weekDays = ''; t.maxCount = ''; }
     runGuarded(function () {
       callApi('saveTask', { adminUserId: state.session.id, task: t })
         .then(function () { clearBusy(); state.editingTask = null; loadData(false); })
@@ -1008,6 +1012,27 @@
     return html;
   }
 
+  function describeInactiveReason_(task) {
+    var si = task.statusInfo || {};
+    if (si.reason === 'notStartedYet') {
+      return 'המשימה תיפתח בתאריך ' + (si.nextActiveDate || task.startDate);
+    }
+    if (si.reason === 'ended') {
+      return 'המשימה הסתיימה';
+    }
+    if (si.reason === 'wrongWeekday') {
+      var daysLabel = task.weekDays ? String(task.weekDays).split(',').map(function (x) { return DAY_LETTERS[Number(x.trim())]; }).join(', ') : '';
+      return 'המשימה פעילה בימים: ' + daysLabel + (si.nextActiveDate ? (' • הפעם הבאה: ' + si.nextActiveDate) : '');
+    }
+    if (si.reason === 'alreadyLogged') {
+      if (task.taskType === 'weekly') {
+        return si.nextActiveDate ? ('כבר דווחה השבוע • השבוע הבא מתחיל ב-' + si.nextActiveDate) : 'כבר דווחה השבוע';
+      }
+      return 'כבר דווחה - ניתן לדווח שוב מחר';
+    }
+    return 'לא ניתנת לדיווח כרגע';
+  }
+
   function renderTaskRow(task) {
     var reqApproval = String(task.requiresApproval).toUpperCase() === 'TRUE' || task.requiresApproval === true;
     var hasPending = state.data.logs.some(function (l) { return String(l.taskId) === String(task.id) && l.status === 'pending'; });
@@ -1038,13 +1063,17 @@
       '</div>' +
       '<p class="text-xs text-slate-400 mt-1">בחרי את התאריך שבו בוצעה המשימה בפועל</p>';
     } else if (!task.availableDates || task.availableDates.length === 0) {
-      html += '<div class="text-xs text-slate-400">לא ניתנת לדיווח כרגע</div>';
-    } else if (task.availableDates.length === 1 && task.availableDates[0].label === 'היום') {
+      html += '<div class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="info" size="12"></i>' + describeInactiveReason_(task) + '</div>';
+    } else if (task.availableDates.length === 1 && (task.availableDates[0].label === 'היום' || task.availableDates[0].label === 'השבוע')) {
       var d0 = task.availableDates[0];
       var subKey = task.id + '|' + d0.date;
       var busy = !!state.submitting[subKey];
+      var btnLabel = d0.label === 'השבוע' ? 'סימון כבוצע השבוע' : 'סימון כבוצע היום';
       html += '<button data-task-id="' + esc(task.id) + '" data-log-date="' + d0.date + '" class="task-btn w-full text-center py-2 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-sm font-medium transition" ' + (busy ? 'disabled' : '') + '>' +
-        (busy ? 'שולח...' : 'סימון כבוצע היום') + '</button>';
+        (busy ? 'שולח...' : btnLabel) + '</button>';
+      if (task.taskType === 'weekly' && task.weekDeadline) {
+        html += '<p class="text-xs text-slate-400 mt-1">יש לדווח עד מוצאי שבת (' + esc(task.weekDeadline) + ')</p>';
+      }
     } else {
       html += '<div class="flex gap-2 flex-wrap">';
       task.availableDates.forEach(function (d) {
@@ -1064,6 +1093,7 @@
     var d = state.data;
     var tabs = [
       { id: 'overview', label: 'סקירה', icon: 'layout-dashboard' },
+      { id: 'report', label: 'דוח פעילות', icon: 'bar-chart-3' },
       { id: 'approvals', label: 'אישורים', icon: 'shield-check' },
       { id: 'leaderboard', label: 'ניקוד', icon: 'user' },
       { id: 'users', label: 'משתתפות', icon: 'users' },
@@ -1082,6 +1112,7 @@
     html += '</div>';
 
     if (state.adminTab === 'overview') html += renderOverviewTab();
+    if (state.adminTab === 'report') html += renderReportTab();
     if (state.adminTab === 'approvals') html += renderApprovalsTab();
     if (state.adminTab === 'leaderboard') html += renderLeaderboardTab();
     if (state.adminTab === 'users') html += renderUsersTab();
@@ -1137,6 +1168,83 @@
       html += '</div>';
     }
     html += '</section></div>';
+    return html;
+  }
+
+  function renderReportTab() {
+    var d = state.data;
+
+    var userOptions = '<option value="all">כל המשתתפות</option>' +
+      d.users.map(function (u) { return '<option value="' + esc(u.id) + '" ' + (state.reportUserFilter === u.id ? 'selected' : '') + '>' + esc(u.displayName) + '</option>'; }).join('');
+    var taskOptions = '<option value="all">כל המשימות</option>' +
+      d.tasks.map(function (t) { return '<option value="' + esc(t.id) + '" ' + (state.reportTaskFilter === t.id ? 'selected' : '') + '>' + esc(t.title) + '</option>'; }).join('');
+    var statusOptions = [
+      { v: 'all', label: 'כל הסטטוסים' },
+      { v: 'approved', label: 'אושר' },
+      { v: 'pending', label: 'ממתין לאישור' },
+      { v: 'rejected', label: 'נדחה' }
+    ].map(function (o) { return '<option value="' + o.v + '" ' + (state.reportStatusFilter === o.v ? 'selected' : '') + '>' + o.label + '</option>'; }).join('');
+
+    var html = '<section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">' +
+      '<h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="text-indigo-500"></i>דוח פעילות</h2>' +
+      '<div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-5">' +
+        '<select id="report-user-filter" class="border border-slate-200 rounded-lg px-3 py-2 text-sm">' + userOptions + '</select>' +
+        '<select id="report-task-filter" class="border border-slate-200 rounded-lg px-3 py-2 text-sm">' + taskOptions + '</select>' +
+        '<select id="report-status-filter" class="border border-slate-200 rounded-lg px-3 py-2 text-sm">' + statusOptions + '</select>' +
+      '</div>';
+
+    var filteredLogs = d.logs.filter(function (l) {
+      if (state.reportUserFilter !== 'all' && String(l.userId) !== String(state.reportUserFilter)) return false;
+      if (state.reportTaskFilter !== 'all' && String(l.taskId) !== String(state.reportTaskFilter)) return false;
+      if (state.reportStatusFilter !== 'all' && l.status !== state.reportStatusFilter) return false;
+      return true;
+    }).sort(function (a, b) { return (b.timestamp || '').localeCompare(a.timestamp || ''); });
+
+    // סיכום לפי משתתפת (בתוך הסינון הנוכחי)
+    var byUser = {};
+    filteredLogs.forEach(function (l) {
+      if (!byUser[l.userId]) byUser[l.userId] = { name: l.username, count: 0, points: 0 };
+      byUser[l.userId].count++;
+      if (l.status === 'approved') byUser[l.userId].points += Number(l.points);
+    });
+    var byUserRows = Object.keys(byUser).map(function (uid) { return byUser[uid]; }).sort(function (a, b) { return b.points - a.points; });
+
+    if (byUserRows.length > 0) {
+      html += '<div class="mb-5"><h3 class="text-sm font-bold text-slate-600 mb-2">סיכום לפי משתתפת (לפי הסינון הנוכחי)</h3><div class="space-y-1.5">' +
+        byUserRows.map(function (r) {
+          return '<div class="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm">' +
+            '<span class="font-medium">' + esc(r.name) + '</span>' +
+            '<span class="text-slate-500">' + r.count + ' דיווחים • <span class="font-bold text-indigo-600">' + r.points + ' נק\' מאושרות</span></span>' +
+          '</div>';
+        }).join('') +
+      '</div></div>';
+    }
+
+    html += '<h3 class="text-sm font-bold text-slate-600 mb-2">פירוט מלא (' + filteredLogs.length + ')</h3>';
+    if (filteredLogs.length === 0) {
+      html += '<p class="text-slate-400 text-sm text-center py-6">אין רשומות שתואמות את הסינון</p>';
+    } else {
+      html += '<div class="space-y-1.5 max-h-[420px] overflow-y-auto">' +
+        filteredLogs.map(function (l) {
+          var badge = l.status === 'approved' ? 'bg-green-100 text-green-600' : l.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600';
+          var label = l.status === 'approved' ? 'אושר' : l.status === 'pending' ? 'ממתין' : 'נדחה';
+          return '<div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100 text-sm gap-2">' +
+            '<div class="min-w-0"><p class="font-medium truncate">' + esc(l.username) + ' • ' + esc(l.taskTitle) + '</p>' +
+            '<p class="text-xs text-slate-400">עבור ' + esc(l.logDate || '') + ' • נשלח ' + fmtDate(l.timestamp) + '</p></div>' +
+            '<div class="flex items-center gap-2 shrink-0"><span class="text-xs font-medium px-2 py-1 rounded-full ' + badge + '">' + label + '</span>' +
+            '<span class="font-bold text-slate-700">+' + l.points + '</span></div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    var totalPointsShown = filteredLogs.filter(function (l) { return l.status === 'approved'; }).reduce(function (s, l) { return s + Number(l.points); }, 0);
+    html += '<div class="grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-slate-100">' +
+      '<div class="text-center"><div class="text-2xl font-black text-slate-800">' + filteredLogs.length + '</div><div class="text-xs text-slate-500 mt-1">דיווחים בסינון הנוכחי</div></div>' +
+      '<div class="text-center"><div class="text-2xl font-black text-indigo-600">' + totalPointsShown + '</div><div class="text-xs text-slate-500 mt-1">נקודות מאושרות בסינון הנוכחי</div></div>' +
+    '</div>';
+
+    html += '</section>';
     return html;
   }
 
@@ -1229,8 +1337,7 @@
   function taskMatchesFilters_(t) {
     var q = (state.taskSearch || '').trim();
     if (q && String(t.title || '').indexOf(q) === -1) return false;
-    if (state.taskTypeFilter === 'regular' && t.taskType === 'occasional') return false;
-    if (state.taskTypeFilter === 'occasional' && t.taskType !== 'occasional') return false;
+    if (state.taskTypeFilter !== 'all' && (t.taskType || 'regular') !== state.taskTypeFilter) return false;
     if (state.taskStatusFilter !== 'all') {
       var isActive = taskIsCurrentlyActive_(t);
       if (state.taskStatusFilter === 'active' && !isActive) return false;
@@ -1266,6 +1373,7 @@
         '<span class="w-px bg-slate-200 mx-1"></span>' +
         filterPillBtn_('task-type', 'all', state.taskTypeFilter, 'כל הסוגים') +
         filterPillBtn_('task-type', 'regular', state.taskTypeFilter, 'רגילה') +
+        filterPillBtn_('task-type', 'weekly', state.taskTypeFilter, 'שבועית') +
         filterPillBtn_('task-type', 'occasional', state.taskTypeFilter, 'מזדמנת') +
       '</div>' +
     '</div>';
@@ -1274,7 +1382,9 @@
     var totalPointsAll = 0, totalPointsRemaining = 0;
     var visibleCount = 0;
     d.tasks.forEach(function (t) {
-      var isRegular = t.taskType !== 'occasional';
+      var taskTypeVal = t.taskType || 'regular';
+      var isRegular = taskTypeVal === 'regular';
+      var isWeeklyType = taskTypeVal === 'weekly';
       var reqApproval = String(t.requiresApproval).toUpperCase() === 'TRUE' || t.requiresApproval === true;
       var scheduleLabel;
       if (isRegular) {
@@ -1284,6 +1394,8 @@
         } else {
           scheduleLabel = 'כל ימות השבוע';
         }
+      } else if (isWeeklyType) {
+        scheduleLabel = 'פעם בשבוע, כל יום עד מוצ"ש';
       } else {
         scheduleLabel = 'עד ' + (t.maxCount || '∞') + ' פעמים סה"כ';
       }
@@ -1309,7 +1421,7 @@
       html += '<div class="flex items-start justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 gap-3">' +
         '<div class="min-w-0">' +
           '<p class="font-bold flex items-center gap-2 flex-wrap">' + esc(t.title) + ' <span class="font-normal text-slate-400 text-xs">(+' + t.points + ')</span>' +
-            '<span class="text-[10px] font-medium px-1.5 py-0.5 rounded ' + (isRegular ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600') + '">' + (isRegular ? 'רגילה' : 'מזדמנת') + '</span>' +
+            '<span class="text-[10px] font-medium px-1.5 py-0.5 rounded ' + (isRegular ? 'bg-blue-100 text-blue-600' : isWeeklyType ? 'bg-teal-100 text-teal-600' : 'bg-purple-100 text-purple-600') + '">' + (isRegular ? 'רגילה' : isWeeklyType ? 'שבועית' : 'מזדמנת') + '</span>' +
             '<span class="text-[10px] font-medium px-1.5 py-0.5 rounded ' + (isActive ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-slate-500') + '">' + (isActive ? 'פעיל' : 'לא פעיל') + '</span>' +
           '</p>' +
           '<p class="text-xs text-slate-500 mt-1">' + scheduleLabel + ' • ' + rangeLabel + '</p>' +
@@ -1344,7 +1456,11 @@
   }
 
   function renderTaskModal(t) {
-    var isRegular = t.taskType !== 'occasional';
+    var taskType = t.taskType || 'regular';
+    var isRegular = taskType === 'regular';
+    var isWeekly = taskType === 'weekly';
+    var isOccasional = taskType === 'occasional';
+
     var selectedDays = t.weekDays ? String(t.weekDays).split(',').map(function (x) { return x.trim(); }) : [];
     var weekDaysHtml = '<div class="grid grid-cols-7 gap-1">';
     for (var i = 0; i < 7; i++) {
@@ -1377,21 +1493,27 @@
       '<label class="flex items-center gap-2 text-sm"><input id="t-approval" type="checkbox" ' + (String(t.requiresApproval).toUpperCase() === 'TRUE' || t.requiresApproval === true ? 'checked' : '') + ' />דורש אישור מנהלת</label>' +
       '<div><label class="text-xs text-slate-500">סוג משימה</label>' +
         '<select id="t-type" onchange="onTaskTypeChange(this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 mt-1">' +
-          '<option value="regular" ' + (isRegular ? 'selected' : '') + '>רגילה (לפי ימי שבוע)</option>' +
-          '<option value="occasional" ' + (!isRegular ? 'selected' : '') + '>מזדמנת (מספר פעמים מוגבל)</option>' +
+          '<option value="regular" ' + (isRegular ? 'selected' : '') + '>רגילה (יומית / ימים נבחרים בשבוע)</option>' +
+          '<option value="weekly" ' + (isWeekly ? 'selected' : '') + '>שבועית (פעם בשבוע, כל יום עד מוצ"ש)</option>' +
+          '<option value="occasional" ' + (isOccasional ? 'selected' : '') + '>מזדמנת (מספר פעמים מוגבל)</option>' +
         '</select></div>' +
       '<div class="grid grid-cols-2 gap-3">' +
         '<div><label class="text-xs text-slate-500">מתאריך</label><input id="t-start" type="date" value="' + esc(t.startDate || '') + '" class="w-full border border-slate-200 rounded-lg px-3 py-2 mt-1" /></div>' +
         '<div><label class="text-xs text-slate-500">עד תאריך</label><input id="t-end" type="date" value="' + esc(t.endDate || '') + '" class="w-full border border-slate-200 rounded-lg px-3 py-2 mt-1" /></div>' +
       '</div>' +
       '<p class="text-xs text-slate-400">ריק בשני השדות = המשימה פעילה לאורך כל המבצע (ותתעדכן אוטומטית אם המבצע יוארך). אם מוזן טווח - הוא מוגבל תמיד לטווח המבצע עצמו, גם אם הוזן טווח רחב יותר.</p>' +
+      (isWeekly ? '<p class="text-xs text-indigo-600 bg-indigo-50 rounded-lg p-2">משימה שבועית: המשתתפת יכולה לדווח עליה פעם אחת, בכל יום שהיא רוצה מראשון עד מוצאי שבת. אחרי מוצ"ש ההזדמנות לאותו שבוע נסגרת, ומתחיל שבוע חדש.</p>' : '') +
       (isRegular
         ? '<div><label class="text-xs text-slate-500 block mb-1">ימים פעילים בשבוע</label>' + weekDaysHtml + '</div>'
-        : '<div><label class="text-xs text-slate-500">מספר פעמים מרבי סה"כ</label><input id="t-maxcount" type="number" value="' + (t.maxCount || '') + '" class="w-full border border-slate-200 rounded-lg px-3 py-2 mt-1" placeholder="לדוגמה: 4" /></div>'
+        : (isOccasional
+            ? '<div><label class="text-xs text-slate-500">מספר פעמים מרבי סה"כ</label><input id="t-maxcount" type="number" value="' + (t.maxCount || '') + '" class="w-full border border-slate-200 rounded-lg px-3 py-2 mt-1" placeholder="לדוגמה: 4" /></div>'
+            : '')
       ) +
       (isRegular
         ? '<div><label class="text-xs text-slate-500">חלון איחור בדיווח</label>' + graceHtml + '</div>'
-        : '<div><label class="text-xs text-slate-500">מגבלה יומית בדיווח</label>' + occModeHtml + '</div>'
+        : (isOccasional
+            ? '<div><label class="text-xs text-slate-500">מגבלה יומית בדיווח</label>' + occModeHtml + '</div>'
+            : '')
       ) +
       (isRegular
         ? '<div><label class="text-xs text-slate-500">בונוס התמדה (אופציונלי)</label><input id="t-weeklybonus" type="number" value="' + (t.weeklyBonus || '') + '" class="w-full border border-slate-200 rounded-lg px-3 py-2 mt-1" placeholder="נקודות בונוס על השלמת כל הימים הפעילים באותו שבוע" />' +
@@ -1636,26 +1758,44 @@
     var saveSettingsBtn = document.getElementById('save-settings-btn');
     if (saveSettingsBtn) saveSettingsBtn.onclick = saveSettingsForm;
 
+    // כפתורי בחירה (אייקון/שיטת חישוב/רקע) שומרים מיידית בלחיצה - לא רק כשמגיעים לכפתור "שמירה" הכללי,
+    // כדי שהבחירה לעולם לא "תיעלם" בטעות בחזרה לברירת המחדל הקודמת.
+    function quickSaveSettingField_(draftStateKey, fieldKey, value) {
+      state[draftStateKey] = value; // עדכון אופטימי מיידי לתצוגה
+      render();
+      runGuarded(function () {
+        var s = Object.assign({}, state.data.settings);
+        s[fieldKey] = value;
+        callApi('saveSettings', { adminUserId: state.session.id, settings: s })
+          .then(function () { clearBusy(); state[draftStateKey] = null; loadData(false); })
+          .catch(function () { clearBusy(); render(); alert('שגיאה בשמירה, נסי שוב'); });
+      });
+    }
+
     document.querySelectorAll('.icon-choice-btn').forEach(function (btn) {
       btn.onclick = function () {
-        state.settingsIconDraft = btn.getAttribute('data-icon-choice');
-        render();
+        quickSaveSettingField_('settingsIconDraft', 'brandIcon', btn.getAttribute('data-icon-choice'));
       };
     });
 
     document.querySelectorAll('.value-mode-btn').forEach(function (btn) {
       btn.onclick = function () {
-        state.settingsValueModeDraft = btn.getAttribute('data-value-mode');
-        render();
+        quickSaveSettingField_('settingsValueModeDraft', 'valueMode', btn.getAttribute('data-value-mode'));
       };
     });
 
     document.querySelectorAll('.hero-theme-btn').forEach(function (btn) {
       btn.onclick = function () {
-        state.settingsHeroThemeDraft = btn.getAttribute('data-hero-theme');
-        render();
+        quickSaveSettingField_('settingsHeroThemeDraft', 'heroTheme', btn.getAttribute('data-hero-theme'));
       };
     });
+
+    var reportUserFilter = document.getElementById('report-user-filter');
+    if (reportUserFilter) reportUserFilter.onchange = function () { state.reportUserFilter = reportUserFilter.value; render(); };
+    var reportTaskFilter = document.getElementById('report-task-filter');
+    if (reportTaskFilter) reportTaskFilter.onchange = function () { state.reportTaskFilter = reportTaskFilter.value; render(); };
+    var reportStatusFilter = document.getElementById('report-status-filter');
+    if (reportStatusFilter) reportStatusFilter.onchange = function () { state.reportStatusFilter = reportStatusFilter.value; render(); };
 
     var addTierBtn = document.getElementById('add-tier-btn');
     if (addTierBtn) addTierBtn.onclick = addNewTier;
