@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מבצע צבאות ה' - משפחת נוטיק</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .navy-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        }
+        .royal-gradient {
+            background: linear-gradient(135deg, #7e22ce 0%, #1e3a8a 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 pb-12">
+
+    <!-- Header -->
+    <header class="navy-gradient text-white shadow-xl pb-8 pt-6 px-4 rounded-b-3xl relative overflow-hidden">
+        <!-- Crown Background Element -->
+        <div class="absolute -top-10 -left-10 opacity-10 text-9xl select-none pointer-events-none">👑</div>
+        <div class="absolute -bottom-10 -right-10 opacity-10 text-9xl select-none pointer-events-none">👑</div>
+
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            
+            <!-- Badges Top -->
+            <div class="flex flex-wrap items-center justify-center gap-2 mb-3">
+                <span class="inline-flex items-center gap-1.5 bg-amber-400 text-slate-900 font-extrabold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider shadow">
+                    <span>👑</span> המלך בשדה!
+                </span>
+                <span class="inline-flex items-center gap-1.5 bg-purple-600 text-white font-extrabold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider shadow">
+                    <span>🎺</span> משיח מגיע - מתכוננים לקראתו!
+                </span>
+            </div>
+
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1">
+                מבצע חיילי צבאות ה'
+            </h1>
+            <p class="text-amber-200 text-sm sm:text-base font-bold">משפחת נוטיק • ג' אלול - י"ז אלול</p>
+            
+            <!-- Slogan Banner -->
+            <div class="mt-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-2 px-4 max-w-xl mx-auto">
+                <p class="text-xs sm:text-sm font-black text-amber-300">
+                    "מתנהגים יפה לכבוד המלך בשדה ומתכוננים לביאת משיח צדקנו!"
+                </p>
+            </div>
+
+            <!-- Connection Status Badge -->
+            <div class="mt-4 inline-flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-700 text-xs">
+                <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                <span id="status-text" class="font-bold text-slate-200">טוען חיבור לגוגל שיטס...</span>
+                <button onclick="switchTab('settings')" class="underline text-amber-300 font-bold mr-2 hover:text-white">הגדרות</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto px-4 -mt-4 relative z-20">
+        
+        <!-- Tabs Navigation -->
+        <div class="flex justify-center bg-white p-1.5 rounded-2xl shadow-md mb-6 max-w-lg mx-auto border border-slate-200">
+            <button id="tab-report" onclick="switchTab('report')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 bg-blue-900 text-white shadow">
+                📝 דיווח יומי
+            </button>
+            <button id="tab-summary" onclick="switchTab('summary')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100">
+                🏆 לוח ניקוד
+            </button>
+            <button id="tab-settings" onclick="switchTab('settings')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100">
+                ⚙️ קוד Google Sheets
+            </button>
+        </div>
+
+        <!-- SECTION 1: DAILY REPORT FORM -->
+        <section id="section-report" class="space-y-6">
+            
+            <!-- Hasidic Inspiration Banner -->
+            <div class="royal-gradient text-white p-4 rounded-2xl shadow-md flex items-center gap-4 border border-purple-400/30">
+                <div class="text-3xl sm:text-4xl">👑</div>
+                <div>
+                    <h3 class="font-black text-sm sm:text-base text-amber-300">חיילים יקרים: המלך בשדה!</h3>
+                    <p class="text-xs sm:text-sm text-slate-100 leading-relaxed">
+                        בחודש אלול ה' מאיר לנו פנים שוחקות וקרוב אלינו במיוחד! כשאנו מבצעים את המשימות בשמחה ובכבוד, אנו מתנהגים כראוי לכבוד המלך ומכינים את העולם לביאת המשיח!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Child and Date Selection Card -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 card-shadow">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Child Selection -->
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 mb-2 uppercase">בחר/י חייל/ת:</label>
+                        <div class="grid grid-cols-3 gap-2" id="child-buttons">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-500 mb-2 uppercase">בחר/י תאריך (אפשרי באיחור):</label>
+                        <select id="date-select" onchange="loadCurrentReport()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 font-bold py-2.5 px-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Rating Card -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 card-shadow">
+                <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-extrabold text-slate-800" id="form-title">דיווח עבור...</h2>
+                        <p class="text-xs text-slate-500">בחרו ניקוד מ-0 עד 5 לכל משימה</p>
+                    </div>
+                    <div class="text-left bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                        <span class="text-[10px] text-amber-800 block font-bold">סה"כ ליום זה</span>
+                        <span id="daily-total" class="text-2xl font-black text-amber-600">0 / 25</span>
+                    </div>
+                </div>
+
+                <!-- Task Rating List -->
+                <div id="tasks-container" class="space-y-4">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-8">
+                    <button id="save-btn" onclick="saveReportToSheets()" class="w-full gold-gradient hover:opacity-95 text-slate-900 font-extrabold py-3.5 px-6 rounded-xl text-lg shadow-lg hover:shadow-xl transition transform active:scale-98 flex items-center justify-center gap-2">
+                        <span>👑</span> שמור ושלח לגוגל שיטס לכבוד המלך
+                    </button>
+                    <div id="save-loader" class="hidden text-center py-3">
+                        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-900"></div>
+                        <p class="text-xs font-bold text-slate-600 mt-1">שומר נתונים בגיליון Google Sheets...</p>
+                    </div>
+                    <p id="save-status-msg" class="text-center font-bold text-sm mt-3 hidden"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: LEADERBOARD & SUMMARY -->
+        <section id="section-summary" class="hidden space-y-6">
+            
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-800">טבלת ניקוד ודרגות בצבאות ה'</h2>
+                    <p class="text-xs text-slate-500">מוכנים לקבלת פני משיח צדקנו!</p>
+                </div>
+                <button onclick="fetchLatestDataFromSheets()" class="text-xs bg-white hover:bg-slate-50 text-blue-900 border border-slate-300 font-bold px-3 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
+                    <span>🔄</span> רענן נתונים מגוגל שיטס
+                </button>
+            </div>
+
+            <!-- Kids Ranks Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="kids-cards-container">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Full Breakdown Table -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 card-shadow overflow-x-auto">
+                <h3 class="font-bold text-base text-slate-800 mb-3">פירוט יומי שמי (ג' אלול - י"ז אלול)</h3>
+                <table class="w-full text-right text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 border-b border-slate-200 text-slate-700 font-bold">
+                            <th class="p-3">תאריך</th>
+                            <th class="p-3">מענדי</th>
+                            <th class="p-3">אמונה</th>
+                            <th class="p-3">רבקה נסיה</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 3: GOOGLE SHEETS APPS SCRIPT SETUP -->
+        <section id="section-settings" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 card-shadow">
+                <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                    <div class="p-3 bg-blue-100 text-blue-900 rounded-2xl font-bold text-2xl">📊</div>
+                    <div>
+                        <h3 class="font-extrabold text-lg text-slate-800">חיבור האפליקציה ל-Google Sheets כ-Database</h3>
+                        <p class="text-xs text-slate-500">הגדירו זאת פעם אחת בלבד – וכל הנתונים ישמרו בגיליון שלכם בשידור חי!</p>
+                    </div>
+                </div>
+
+                <!-- Setup Steps -->
+                <div class="space-y-4 text-sm text-slate-700 mb-6">
+                    <div class="flex gap-3 items-start bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <span class="bg-blue-900 text-white font-extrabold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">1</span>
+                        <div>
+                            <p class="font-bold">פתחו גיליון Google Sheets חדש</p>
+                            <p class="text-xs text-slate-500">תנו לו שם, למשל: "מבצע צבאות ה - משפחת נוטיק".</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 items-start bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <span class="bg-blue-900 text-white font-extrabold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">2</span>
+                        <div class="w-full">
+                            <p class="font-bold">העתיקו את קוד ה-Apps Script הבלעדי שנמצא בקופסה למטה:</p>
+                            <div class="relative mt-2">
+                                <textarea id="apps-script-code" readonly class="w-full bg-slate-900 text-amber-300 font-mono text-xs p-3 rounded-xl h-44 focus:outline-none" dir="ltr">
+// === Google Apps Script Code for Mivtza Notik ===
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+  return ContentService.createTextOutput(JSON.stringify({ status: "success", data: data }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // Add Headers if empty
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["תאריך", "ילד", "מודה אני", "תפילה", "ברכת המזון", "לימוד", "עזרה בבית", "סה\"כ", "זמן עדכון"]);
+      sheet.getRange(1, 1, 1, 9).setFontWeight("bold").setBackground("#1e3a8a").setFontColor("#ffffff");
+    }
+    
+    var contents = e.postData ? JSON.parse(e.postData.contents) : {};
+    var date = contents.date;
+    var child = contents.child;
+    var modeh = Number(contents.modeh || 0);
+    var tefillah = Number(contents.tefillah || 0);
+    var birkat = Number(contents.birkat || 0);
+    var limud = Number(contents.limud || 0);
+    var ezra = Number(contents.ezra || 0);
+    var total = modeh + tefillah + birkat + limud + ezra;
+    var timestamp = new Date().toLocaleString("he-IL");
+    
+    var values = sheet.getDataRange().getValues();
+    var rowIndex = -1;
+    
+    // Check if row already exists for this child & date
+    for (var i = 1; i < values.length; i++) {
+      if (values[i][0] == date && values[i][1] == child) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    
+    var newRow = [date, child, modeh, tefillah, birkat, limud, ezra, total, timestamp];
+    
+    if (rowIndex > 0) {
+      sheet.getRange(rowIndex, 1, 1, newRow.length).setValues([newRow]);
+    } else {
+      sheet.appendRow(newRow);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "נשמר בהצלחה!" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+                                </textarea>
+                                <button onclick="copyAppsScript()" class="absolute top-2 left-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold text-xs px-3 py-1.5 rounded-lg shadow">
+                                    📋 העתק קוד
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 items-start bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <span class="bg-blue-900 text-white font-extrabold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">3</span>
+                        <div>
+                            <p class="font-bold">הדביקו בגיליון ופרסו (Deploy):</p>
+                            <ul class="list-disc list-inside text-xs text-slate-600 space-y-1 mt-1">
+                                <li>בגיליון גוגל שיטס, לחצו בתפריט על <strong>תוספים (Extensions)</strong> ← <strong>Apps Script</strong>.</li>
+                                <li>מחקו את מה שכתוב שם, הדביקו את הקוד שהעתקתם ולחצו על סמל הדיסקט (שמירה).</li>
+                                <li>לחצו בצד שמאל למעלה על <strong>פריסה (Deploy)</strong> ← <strong>פריסה חדשה (New deployment)</strong>.</li>
+                                <li>בגלגל השיניים בחרו <strong>Web App (יישום אינטרנט)</strong>.</li>
+                                <li>בשדה <strong>Who has access (למי יש גישה)</strong> – בחרו חובה: <strong>Anyone (כולם)</strong>.</li>
+                                <li>לחצו <strong>Deploy</strong>, אשרו הרשאות חשבון גוגל, והעתיקו את ה-<strong>Web App URL</strong> שנוצר.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 items-start bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <span class="bg-blue-900 text-white font-extrabold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">4</span>
+                        <div class="w-full">
+                            <p class="font-bold mb-1">הדביקו כאן את הקישור שקיבלתם (Web App URL):</p>
+                            <input type="url" id="sheet-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-white border border-slate-300 font-mono text-xs p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600" dir="ltr">
+                            <button onclick="saveSheetUrl()" class="mt-2 w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow">
+                                💾 שמור קישור ובדוק חיבור
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Constants & Data Model
+        const KIDS = ['מענדי', 'אמונה', 'רבקה נסיה'];
+        
+        const DAYS = [
+            "ג' אלול", "ד' אלול", "ה' אלול", "ו' אלול", "ז' אלול",
+            "ח' אלול", "ט' אלול", "י' אלול", "י\"א אלול", "י\"ב אלול",
+            "י\"ג אלול", "י\"ד אלול", "ט\"ו אלול", "ט\"ז אלול", "י\"ז אלול"
+        ];
+
+        const TASKS = [
+            { id: 'modeh', label: 'מודה אני ונטילת ידיים מיד שקמים', icon: '🌅' },
+            { id: 'tefillah', label: 'תפילה יפה בבוקר מתוך הסידור', icon: '📖' },
+            { id: 'birkat', label: 'ברכת המזון בצורה מכובדת', icon: '🍽️' },
+            { id: 'limud', label: 'לימוד 5 דקות (חסידות, משניות או תניא)', icon: '📚' },
+            { id: 'ezra', label: 'עזרה בבית', icon: '🏠' }
+        ];
+
+        // State variables
+        let selectedChild = KIDS[0];
+        let selectedDay = DAYS[0];
+        let webAppUrl = localStorage.getItem('notik_google_sheet_url') || '';
+        let reportsData = {}; 
+
+        // App Initialization
+        window.onload = function() {
+            initDataStructure();
+            loadLocalStorageData();
+            initChildButtons();
+            initDateDropdown();
+            initTasksForm();
+            loadCurrentReport();
+            checkGoogleSheetsConnection();
+        };
+
+        function initDataStructure() {
+            KIDS.forEach(child => {
+                if (!reportsData[child]) reportsData[child] = {};
+                DAYS.forEach(day => {
+                    if (!reportsData[child][day]) {
+                        reportsData[child][day] = { modeh: 0, tefillah: 0, birkat: 0, limud: 0, ezra: 0 };
+                    }
+                });
+            });
+        }
+
+        function loadLocalStorageData() {
+            const saved = localStorage.getItem('notik_mivtza_cache_v2');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    reportsData = { ...reportsData, ...parsed };
+                } catch(e) {
+                    console.error("Localstorage parse error", e);
+                }
+            }
+        }
+
+        function saveLocalCache() {
+            localStorage.setItem('notik_mivtza_cache_v2', JSON.stringify(reportsData));
+        }
+
+        // Connection Check
+        function checkGoogleSheetsConnection() {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const input = document.getElementById('sheet-url-input');
+
+            if (webAppUrl) {
+                input.value = webAppUrl;
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
+                text.innerText = "מחובר ל-Google Sheets!";
+                fetchLatestDataFromSheets();
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                text.innerText = "לא מחובר ל-Google Sheets (לחץ להגדרה)";
+            }
+        }
+
+        function saveSheetUrl() {
+            const inputVal = document.getElementById('sheet-url-input').value.trim();
+            if (!inputVal) {
+                alert("נא להזין כתובת URL תקינה!");
+                return;
+            }
+            webAppUrl = inputVal;
+            localStorage.setItem('notik_google_sheet_url', webAppUrl);
+            checkGoogleSheetsConnection();
+            alert("כתובת Google Sheets נשמרה בהצלחה!");
+            switchTab('report');
+        }
+
+        // UI Initialization Functions
+        function initChildButtons() {
+            const container = document.getElementById('child-buttons');
+            container.innerHTML = KIDS.map(child => `
+                <button type="button" onclick="selectChild('${child}')" id="btn-child-${child}" 
+                    class="py-2 px-2 rounded-xl text-xs font-bold transition border ${selectedChild === child ? 'bg-blue-900 text-white border-blue-900 shadow' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}">
+                    ${child}
+                </button>
+            `).join('');
+        }
+
+        function selectChild(child) {
+            selectedChild = child;
+            initChildButtons();
+            loadCurrentReport();
+        }
+
+        function initDateDropdown() {
+            const select = document.getElementById('date-select');
+            select.innerHTML = DAYS.map(day => `<option value="${day}">${day}</option>`).join('');
+            select.value = selectedDay;
+        }
+
+        function initTasksForm() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = TASKS.map(task => `
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xl">${task.icon}</span>
+                        <span class="font-bold text-xs sm:text-sm text-slate-800">${task.label}</span>
+                    </div>
+                    <div class="flex justify-between items-center gap-1">
+                        ${[0,1,2,3,4,5].map(pts => `
+                            <button type="button" onclick="setTaskScore('${task.id}', ${pts})" id="btn-${taskId(task.id)}-${pts}"
+                                class="flex-1 py-1.5 rounded-lg text-xs font-extrabold transition border border-slate-200 bg-white text-slate-600 hover:border-amber-400">
+                                ${pts}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function taskId(id) { return id; }
+
+        function loadCurrentReport() {
+            selectedDay = document.getElementById('date-select').value;
+            document.getElementById('form-title').innerText = `דיווח עבור ${selectedChild} - ${selectedDay}`;
+
+            const dayData = reportsData[selectedChild]?.[selectedDay] || {};
+
+            TASKS.forEach(task => {
+                const score = dayData[task.id] || 0;
+                updateTaskScoreUI(task.id, score);
+            });
+
+            calculateDailyTotal();
+        }
+
+        function updateTaskScoreUI(taskId, score) {
+            [0,1,2,3,4,5].forEach(pts => {
+                const btn = document.getElementById(`btn-${taskId}-${pts}`);
+                if (btn) {
+                    if (pts === score) {
+                        btn.className = "flex-1 py-1.5 rounded-lg text-xs font-black transition border bg-amber-500 text-slate-900 border-amber-500 shadow-sm scale-105";
+                    } else {
+                        btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-slate-600 hover:border-amber-300";
+                    }
+                }
+            });
+        }
+
+        function setTaskScore(taskId, score) {
+            if (!reportsData[selectedChild][selectedDay]) {
+                reportsData[selectedChild][selectedDay] = {};
+            }
+            reportsData[selectedChild][selectedDay][taskId] = score;
+            updateTaskScoreUI(taskId, score);
+            calculateDailyTotal();
+            saveLocalCache();
+        }
+
+        function calculateDailyTotal() {
+            const dayData = reportsData[selectedChild]?.[selectedDay] || {};
+            let total = 0;
+            TASKS.forEach(task => {
+                total += (dayData[task.id] || 0);
+            });
+            document.getElementById('daily-total').innerText = `${total} / 25`;
+            return total;
+        }
+
+        // SAVE REPORT TO GOOGLE SHEETS
+        async function saveReportToSheets() {
+            saveLocalCache();
+
+            const dayData = reportsData[selectedChild][selectedDay] || {};
+            const total = calculateDailyTotal();
+
+            const payload = {
+                date: selectedDay,
+                child: selectedChild,
+                modeh: dayData.modeh || 0,
+                tefillah: dayData.tefillah || 0,
+                birkat: dayData.birkat || 0,
+                limud: dayData.limud || 0,
+                ezra: dayData.ezra || 0,
+                total: total
+            };
+
+            const statusMsg = document.getElementById('save-status-msg');
+            const saveBtn = document.getElementById('save-btn');
+            const loader = document.getElementById('save-loader');
+
+            statusMsg.classList.add('hidden');
+
+            if (!webAppUrl) {
+                alert("שימו לב: הנתונים נשמרו במכשיר, אך קישור לגוגל שיטס עדיין לא הוגדר! לעדכון ישיר בגיליון, היכנסו בלשונית 'קוד Google Sheets'.");
+                switchTab('settings');
+                return;
+            }
+
+            saveBtn.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            try {
+                await fetch(webAppUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                loader.classList.add('hidden');
+                saveBtn.classList.remove('hidden');
+
+                statusMsg.className = "text-center font-bold text-sm mt-3 text-emerald-600 block bg-emerald-50 p-2.5 rounded-xl border border-emerald-200";
+                statusMsg.innerText = `👑 אשריך ${selectedChild}! הדיווח ליום ${selectedDay} נרשם בהצלחה לכבוד המלך בשדה!`;
+
+                setTimeout(() => statusMsg.classList.add('hidden'), 4000);
+
+            } catch (error) {
+                console.error("Sheets error", error);
+                loader.classList.add('hidden');
+                saveBtn.classList.remove('hidden');
+
+                statusMsg.className = "text-center font-bold text-sm mt-3 text-amber-600 block bg-amber-50 p-2.5 rounded-xl border border-amber-200";
+                statusMsg.innerText = "הנתונים נשמרו מקומית! (הייתה שגיאת חיבור קלה לגוגל שיטס)";
+            }
+
+            updateSummaryView();
+        }
+
+        // FETCH DATA FROM GOOGLE SHEETS
+        async function fetchLatestDataFromSheets() {
+            if (!webAppUrl) return;
+
+            try {
+                const res = await fetch(webAppUrl);
+                const json = await res.json();
+                
+                if (json.status === "success" && json.data && json.data.length > 1) {
+                    const rows = json.data.slice(1);
+                    rows.forEach(row => {
+                        const [date, child, modeh, tefillah, birkat, limud, ezra] = row;
+                        if (KIDS.includes(child) && DAYS.includes(date)) {
+                            reportsData[child][date] = {
+                                modeh: Number(modeh || 0),
+                                tefillah: Number(tefillah || 0),
+                                birkat: Number(birkat || 0),
+                                limud: Number(limud || 0),
+                                ezra: Number(ezra || 0)
+                            };
+                        }
+                    });
+                    saveLocalCache();
+                    updateSummaryView();
+                    loadCurrentReport();
+                }
+            } catch(e) {
+                console.log("Reading from sheets warning:", e);
+            }
+        }
+
+        // SUMMARY & LEADERBOARD VIEW
+        function updateSummaryView() {
+            const cardsContainer = document.getElementById('kids-cards-container');
+            cardsContainer.innerHTML = KIDS.map(child => {
+                let grandTotal = 0;
+                const maxPossible = DAYS.length * 25;
+
+                DAYS.forEach(day => {
+                    const dayData = reportsData[child]?.[day] || {};
+                    TASKS.forEach(t => grandTotal += (dayData[t.id] || 0));
+                });
+
+                let rank = "חייל/ת בצבאות ה' 🎖️";
+                if (grandTotal >= 300) rank = "מפקד/ת מוביל/ה לקבלת משיח 🏆";
+                else if (grandTotal >= 200) rank = "חייל/ת מצטיין/ת של המלך ⭐";
+                else if (grandTotal >= 100) rank = "חייל/ת נמרץ/ת בצבאות ה' 🎖️";
+
+                return `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 card-shadow text-center relative overflow-hidden">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-2">
+                            ${child[0]}
+                        </div>
+                        <h4 class="font-extrabold text-xl text-slate-800">${child}</h4>
+                        <p class="text-xs font-extrabold text-amber-600 mb-3">${rank}</p>
+                        <div class="bg-slate-50 py-2.5 px-3 rounded-xl border border-slate-200">
+                            <span class="text-xs text-slate-400 block font-bold">סך הכל נקודות</span>
+                            <span class="text-3xl font-black text-slate-800">${grandTotal}</span>
+                            <span class="text-xs text-slate-400">/ ${maxPossible}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Table
+            const tableBody = document.getElementById('summary-table-body');
+            tableBody.innerHTML = DAYS.map(day => {
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 font-bold text-slate-700">${day}</td>
+                        ${KIDS.map(child => {
+                            const dayData = reportsData[child]?.[day] || {};
+                            let daySum = 0;
+                            TASKS.forEach(t => daySum += (dayData[t.id] || 0));
+                            
+                            let colorClass = "text-slate-400";
+                            if (daySum === 25) colorClass = "text-emerald-600 font-black";
+                            else if (daySum > 0) colorClass = "text-amber-600 font-bold";
+
+                            return `<td class="p-3 ${colorClass}">${daySum} נק'</td>`;
+                        }).join('')}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // NAVIGATION TABS
+        function switchTab(tab) {
+            document.getElementById('section-report').classList.add('hidden');
+            document.getElementById('section-summary').classList.add('hidden');
+            document.getElementById('section-settings').classList.add('hidden');
+
+            document.getElementById('tab-report').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100";
+            document.getElementById('tab-summary').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100";
+            document.getElementById('tab-settings').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100";
+
+            if (tab === 'report') {
+                document.getElementById('section-report').classList.remove('hidden');
+                document.getElementById('tab-report').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 bg-blue-900 text-white shadow";
+            } else if (tab === 'summary') {
+                document.getElementById('section-summary').classList.remove('hidden');
+                document.getElementById('tab-summary').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 bg-blue-900 text-white shadow";
+                updateSummaryView();
+            } else if (tab === 'settings') {
+                document.getElementById('section-settings').classList.remove('hidden');
+                document.getElementById('tab-settings').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 bg-blue-900 text-white shadow";
+            }
+        }
+
+        function copyAppsScript() {
+            const textarea = document.getElementById('apps-script-code');
+            textarea.select();
+            document.execCommand('copy');
+            alert("הקוד הועתק בהצלחה! פתחו את Google Apps Script והדביקו אותו שם.");
+        }
+    </script>
+</body>
+</html>
