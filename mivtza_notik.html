@@ -57,11 +57,10 @@
                 </p>
             </div>
 
-            <!-- Connection Status Badge -->
-            <div class="mt-4 inline-flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-700 text-xs">
-                <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                <span id="status-text" class="font-bold text-slate-200">טוען חיבור לגוגל שיטס...</span>
-                <button onclick="switchTab('settings')" class="underline text-amber-300 font-bold mr-2 hover:text-white">הגדרות</button>
+            <!-- Connection Status Badge (Static Connected) -->
+            <div class="mt-4 inline-flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-700 text-xs shadow-sm">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="font-bold text-emerald-300">מחובר ומסתנכרן אוטומטית לגוגל שיטס</span>
             </div>
         </div>
     </header>
@@ -70,15 +69,12 @@
     <main class="max-w-4xl mx-auto px-4 -mt-4 relative z-20">
         
         <!-- Tabs Navigation -->
-        <div class="flex justify-center bg-white p-1.5 rounded-2xl shadow-md mb-6 max-w-lg mx-auto border border-slate-200">
+        <div class="flex justify-center bg-white p-1.5 rounded-2xl shadow-md mb-6 max-w-sm mx-auto border border-slate-200">
             <button id="tab-report" onclick="switchTab('report')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 bg-blue-900 text-white shadow">
                 📝 דיווח יומי
             </button>
             <button id="tab-summary" onclick="switchTab('summary')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100">
-                🏆 לוח ניקוד
-            </button>
-            <button id="tab-settings" onclick="switchTab('settings')" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100">
-                ⚙️ קוד Google Sheets
+                🏆 לוח ניקוד ודרגות
             </button>
         </div>
 
@@ -140,10 +136,12 @@
                     <button id="save-btn" onclick="saveReportToSheets()" class="w-full gold-gradient hover:opacity-95 text-slate-900 font-extrabold py-3.5 px-6 rounded-xl text-lg shadow-lg hover:shadow-xl transition transform active:scale-98 flex items-center justify-center gap-2">
                         <span>👑</span> שמור ושלח לגוגל שיטס לכבוד המלך
                     </button>
+                    <!-- Loader (Hidden by default) -->
                     <div id="save-loader" class="hidden text-center py-3">
-                        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-900"></div>
-                        <p class="text-xs font-bold text-slate-600 mt-1">שומר נתונים בגיליון Google Sheets...</p>
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-4 border-blue-900 mb-2"></div>
+                        <p class="text-sm font-extrabold text-blue-900">שומר נתונים, אנא המתן...</p>
                     </div>
+                    <!-- Status Message -->
                     <p id="save-status-msg" class="text-center font-bold text-sm mt-3 hidden"></p>
                 </div>
             </div>
@@ -157,8 +155,8 @@
                     <h2 class="text-xl font-extrabold text-slate-800">טבלת ניקוד ודרגות בצבאות ה'</h2>
                     <p class="text-xs text-slate-500">מוכנים לקבלת פני משיח צדקנו!</p>
                 </div>
-                <button onclick="fetchLatestDataFromSheets()" class="text-xs bg-white hover:bg-slate-50 text-blue-900 border border-slate-300 font-bold px-3 py-2 rounded-xl shadow-sm flex items-center gap-1.5">
-                    <span>🔄</span> רענן נתונים מגוגל שיטס
+                <button onclick="fetchLatestDataFromSheets()" id="refresh-btn" class="text-xs bg-white hover:bg-slate-50 text-blue-900 border border-slate-300 font-bold px-3 py-2 rounded-xl shadow-sm flex items-center gap-1.5 transition">
+                    <span>🔄</span> רענן נתונים
                 </button>
             </div>
 
@@ -186,129 +184,12 @@
             </div>
         </section>
 
-        <!-- SECTION 3: GOOGLE SHEETS APPS SCRIPT SETUP -->
-        <section id="section-settings" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 card-shadow">
-                <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
-                    <div class="p-3 bg-blue-100 text-blue-900 rounded-2xl font-bold text-2xl">📊</div>
-                    <div>
-                        <h3 class="font-extrabold text-lg text-slate-800">חיבור האפליקציה ל-Google Sheets כ-Database</h3>
-                        <p class="text-xs text-slate-500">הגדירו זאת פעם אחת בלבד – וכל הנתונים ישמרו בגיליון שלכם בשידור חי!</p>
-                    </div>
-                </div>
-
-                <!-- Setup Steps -->
-                <div class="space-y-4 text-sm text-slate-700 mb-6">
-                    <div class="flex gap-3 items-start bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                        <span class="bg-blue-900 text-white font-extrabold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">1</span>
-                        <div>
-                            <p class="font-bold">פתחו גיליון Google Sheets חדש</p>
-                            <p class="text-xs text-slate-500">תנו לו שם, למשל: "מבצע צבאות ה - משפחת נוטיק".</p>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 items-start bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                        <span class="bg-blue-900 text-white font-extrabold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">2</span>
-                        <div class="w-full">
-                            <p class="font-bold">העתיקו את קוד ה-Apps Script הבלעדי שנמצא בקופסה למטה:</p>
-                            <div class="relative mt-2">
-                                <textarea id="apps-script-code" readonly class="w-full bg-slate-900 text-amber-300 font-mono text-xs p-3 rounded-xl h-44 focus:outline-none" dir="ltr">
-// === Google Apps Script Code for Mivtza Notik ===
-function doGet(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = sheet.getDataRange().getValues();
-  return ContentService.createTextOutput(JSON.stringify({ status: "success", data: data }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    
-    // Add Headers if empty
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["תאריך", "ילד", "מודה אני", "תפילה", "ברכת המזון", "לימוד", "עזרה בבית", "סה\"כ", "זמן עדכון"]);
-      sheet.getRange(1, 1, 1, 9).setFontWeight("bold").setBackground("#1e3a8a").setFontColor("#ffffff");
-    }
-    
-    var contents = e.postData ? JSON.parse(e.postData.contents) : {};
-    var date = contents.date;
-    var child = contents.child;
-    var modeh = Number(contents.modeh || 0);
-    var tefillah = Number(contents.tefillah || 0);
-    var birkat = Number(contents.birkat || 0);
-    var limud = Number(contents.limud || 0);
-    var ezra = Number(contents.ezra || 0);
-    var total = modeh + tefillah + birkat + limud + ezra;
-    var timestamp = new Date().toLocaleString("he-IL");
-    
-    var values = sheet.getDataRange().getValues();
-    var rowIndex = -1;
-    
-    // Check if row already exists for this child & date
-    for (var i = 1; i < values.length; i++) {
-      if (values[i][0] == date && values[i][1] == child) {
-        rowIndex = i + 1;
-        break;
-      }
-    }
-    
-    var newRow = [date, child, modeh, tefillah, birkat, limud, ezra, total, timestamp];
-    
-    if (rowIndex > 0) {
-      sheet.getRange(rowIndex, 1, 1, newRow.length).setValues([newRow]);
-    } else {
-      sheet.appendRow(newRow);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "נשמר בהצלחה!" }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-                                </textarea>
-                                <button onclick="copyAppsScript()" class="absolute top-2 left-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold text-xs px-3 py-1.5 rounded-lg shadow">
-                                    📋 העתק קוד
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 items-start bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                        <span class="bg-blue-900 text-white font-extrabold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">3</span>
-                        <div>
-                            <p class="font-bold">הדביקו בגיליון ופרסו (Deploy):</p>
-                            <ul class="list-disc list-inside text-xs text-slate-600 space-y-1 mt-1">
-                                <li>בגיליון גוגל שיטס, לחצו בתפריט על <strong>תוספים (Extensions)</strong> ← <strong>Apps Script</strong>.</li>
-                                <li>מחקו את מה שכתוב שם, הדביקו את הקוד שהעתקתם ולחצו על סמל הדיסקט (שמירה).</li>
-                                <li>לחצו בצד שמאל למעלה על <strong>פריסה (Deploy)</strong> ← <strong>פריסה חדשה (New deployment)</strong>.</li>
-                                <li>בגלגל השיניים בחרו <strong>Web App (יישום אינטרנט)</strong>.</li>
-                                <li>בשדה <strong>Who has access (למי יש גישה)</strong> – בחרו חובה: <strong>Anyone (כולם)</strong>.</li>
-                                <li>לחצו <strong>Deploy</strong>, אשרו הרשאות חשבון גוגל, והעתיקו את ה-<strong>Web App URL</strong> שנוצר.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 items-start bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                        <span class="bg-blue-900 text-white font-extrabold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">4</span>
-                        <div class="w-full">
-                            <p class="font-bold mb-1">הדביקו כאן את הקישור שקיבלתם (Web App URL):</p>
-                            <input type="url" id="sheet-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-white border border-slate-300 font-mono text-xs p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600" dir="ltr">
-                            <button onclick="saveSheetUrl()" class="mt-2 w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow">
-                                💾 שמור קישור ובדוק חיבור
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
     </main>
 
     <script>
-        // Constants & Data Model
+        // --- CONSTANTS & CONFIGURATION ---
+        const webAppUrl = "https://script.google.com/macros/s/AKfycbwMujA0wPH49datVS4sUgSmgNfClxTU6DzYt6_vSUOMvZ5pbUBbXHczfbGsJ7Du-jEg8A/exec";
+        
         const KIDS = ['מענדי', 'אמונה', 'רבקה נסיה'];
         
         const DAYS = [
@@ -328,7 +209,6 @@ function doPost(e) {
         // State variables
         let selectedChild = KIDS[0];
         let selectedDay = DAYS[0];
-        let webAppUrl = localStorage.getItem('notik_google_sheet_url') || '';
         let reportsData = {}; 
 
         // App Initialization
@@ -339,7 +219,7 @@ function doPost(e) {
             initDateDropdown();
             initTasksForm();
             loadCurrentReport();
-            checkGoogleSheetsConnection();
+            fetchLatestDataFromSheets(); // Fetch data automatically on load
         };
 
         function initDataStructure() {
@@ -354,7 +234,7 @@ function doPost(e) {
         }
 
         function loadLocalStorageData() {
-            const saved = localStorage.getItem('notik_mivtza_cache_v2');
+            const saved = localStorage.getItem('notik_mivtza_cache_v3');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
@@ -366,37 +246,7 @@ function doPost(e) {
         }
 
         function saveLocalCache() {
-            localStorage.setItem('notik_mivtza_cache_v2', JSON.stringify(reportsData));
-        }
-
-        // Connection Check
-        function checkGoogleSheetsConnection() {
-            const dot = document.getElementById('status-dot');
-            const text = document.getElementById('status-text');
-            const input = document.getElementById('sheet-url-input');
-
-            if (webAppUrl) {
-                input.value = webAppUrl;
-                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
-                text.innerText = "מחובר ל-Google Sheets!";
-                fetchLatestDataFromSheets();
-            } else {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
-                text.innerText = "לא מחובר ל-Google Sheets (לחץ להגדרה)";
-            }
-        }
-
-        function saveSheetUrl() {
-            const inputVal = document.getElementById('sheet-url-input').value.trim();
-            if (!inputVal) {
-                alert("נא להזין כתובת URL תקינה!");
-                return;
-            }
-            webAppUrl = inputVal;
-            localStorage.setItem('notik_google_sheet_url', webAppUrl);
-            checkGoogleSheetsConnection();
-            alert("כתובת Google Sheets נשמרה בהצלחה!");
-            switchTab('report');
+            localStorage.setItem('notik_mivtza_cache_v3', JSON.stringify(reportsData));
         }
 
         // UI Initialization Functions
@@ -493,6 +343,11 @@ function doPost(e) {
 
         // SAVE REPORT TO GOOGLE SHEETS
         async function saveReportToSheets() {
+            const saveBtn = document.getElementById('save-btn');
+            
+            // Prevent double-clicking / duplicate submissions
+            if (saveBtn.disabled) return;
+
             saveLocalCache();
 
             const dayData = reportsData[selectedChild][selectedDay] || {};
@@ -510,17 +365,12 @@ function doPost(e) {
             };
 
             const statusMsg = document.getElementById('save-status-msg');
-            const saveBtn = document.getElementById('save-btn');
             const loader = document.getElementById('save-loader');
 
             statusMsg.classList.add('hidden');
-
-            if (!webAppUrl) {
-                alert("שימו לב: הנתונים נשמרו במכשיר, אך קישור לגוגל שיטס עדיין לא הוגדר! לעדכון ישיר בגיליון, היכנסו בלשונית 'קוד Google Sheets'.");
-                switchTab('settings');
-                return;
-            }
-
+            
+            // Disable and hide button, show loader
+            saveBtn.disabled = true;
             saveBtn.classList.add('hidden');
             loader.classList.remove('hidden');
 
@@ -532,29 +382,31 @@ function doPost(e) {
                     body: JSON.stringify(payload)
                 });
 
-                loader.classList.add('hidden');
-                saveBtn.classList.remove('hidden');
-
-                statusMsg.className = "text-center font-bold text-sm mt-3 text-emerald-600 block bg-emerald-50 p-2.5 rounded-xl border border-emerald-200";
+                statusMsg.className = "text-center font-bold text-sm mt-3 text-emerald-600 block bg-emerald-50 p-3 rounded-xl border border-emerald-200 shadow-sm";
                 statusMsg.innerText = `👑 אשריך ${selectedChild}! הדיווח ליום ${selectedDay} נרשם בהצלחה לכבוד המלך בשדה!`;
-
-                setTimeout(() => statusMsg.classList.add('hidden'), 4000);
 
             } catch (error) {
                 console.error("Sheets error", error);
+                statusMsg.className = "text-center font-bold text-sm mt-3 text-amber-600 block bg-amber-50 p-3 rounded-xl border border-amber-200 shadow-sm";
+                statusMsg.innerText = "הנתונים נשמרו במכשיר, אך הייתה תקלה קלה בשליחה לרשת. אנא ודא/י חיבור לאינטרנט.";
+            } finally {
+                // Remove loader, bring back the button and unlock it
                 loader.classList.add('hidden');
                 saveBtn.classList.remove('hidden');
-
-                statusMsg.className = "text-center font-bold text-sm mt-3 text-amber-600 block bg-amber-50 p-2.5 rounded-xl border border-amber-200";
-                statusMsg.innerText = "הנתונים נשמרו מקומית! (הייתה שגיאת חיבור קלה לגוגל שיטס)";
+                saveBtn.disabled = false;
+                
+                // Hide success message after 4 seconds
+                setTimeout(() => statusMsg.classList.add('hidden'), 4000);
+                
+                // Refresh summary
+                updateSummaryView();
             }
-
-            updateSummaryView();
         }
 
         // FETCH DATA FROM GOOGLE SHEETS
         async function fetchLatestDataFromSheets() {
-            if (!webAppUrl) return;
+            const refreshBtn = document.getElementById('refresh-btn');
+            if(refreshBtn) refreshBtn.classList.add('animate-spin');
 
             try {
                 const res = await fetch(webAppUrl);
@@ -580,6 +432,8 @@ function doPost(e) {
                 }
             } catch(e) {
                 console.log("Reading from sheets warning:", e);
+            } finally {
+                if(refreshBtn) refreshBtn.classList.remove('animate-spin');
             }
         }
 
@@ -642,11 +496,9 @@ function doPost(e) {
         function switchTab(tab) {
             document.getElementById('section-report').classList.add('hidden');
             document.getElementById('section-summary').classList.add('hidden');
-            document.getElementById('section-settings').classList.add('hidden');
 
             document.getElementById('tab-report').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100";
             document.getElementById('tab-summary').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100";
-            document.getElementById('tab-settings').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 text-slate-600 hover:bg-slate-100";
 
             if (tab === 'report') {
                 document.getElementById('section-report').classList.remove('hidden');
@@ -655,18 +507,9 @@ function doPost(e) {
                 document.getElementById('section-summary').classList.remove('hidden');
                 document.getElementById('tab-summary').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 bg-blue-900 text-white shadow";
                 updateSummaryView();
-            } else if (tab === 'settings') {
-                document.getElementById('section-settings').classList.remove('hidden');
-                document.getElementById('tab-settings').className = "flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition duration-200 bg-blue-900 text-white shadow";
             }
-        }
-
-        function copyAppsScript() {
-            const textarea = document.getElementById('apps-script-code');
-            textarea.select();
-            document.execCommand('copy');
-            alert("הקוד הועתק בהצלחה! פתחו את Google Apps Script והדביקו אותו שם.");
         }
     </script>
 </body>
 </html>
+```eof
