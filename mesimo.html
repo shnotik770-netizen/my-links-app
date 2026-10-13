@@ -56,9 +56,9 @@
                 <button id="refresh-btn-header" onclick="refreshData()" title="רענן נתונים" class="inline-flex items-center gap-1 text-xs font-semibold border rounded-lg px-2.5 py-1 transition bg-amber-50 text-amber-700 border-amber-200">🔄 רענן</button>
                 <button id="editor-login-btn" onclick="editorLogin()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition">🔑 כניסה כעובד</button>
                 <button id="editor-logout-btn" onclick="editorLogout()" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition">🕊️ כניסה כהרב סגל</button>
-                <div class="text-left hidden md:block">
-                    <p class="text-sm font-medium text-slate-900" id="current-date-display">טוען תאריך...</p>
-                    <p class="text-[14px] text-slate-400">התאריך של היום</p>
+                <div class="text-left">
+                    <p class="text-sm font-bold text-slate-900" id="current-date-display">טוען תאריך...</p>
+                    <p class="text-[12px] text-slate-400" id="today-date-small"></p>
                 </div>
             </div>
         </div>
@@ -109,7 +109,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        סבבי נוכחות היום
+                        <span id="attendance-title">סבבי נוכחות היום</span>
                     </h2>
                     <button onclick="addAttendanceInterval()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-1 px-3 rounded-lg transition">
                         ➕ סבב חדש
@@ -408,10 +408,38 @@
         let viewDay = '';        // יום התצוגה של הלוח (היום, או מחר אם היום נסגר)
         let todayReal = '';      // התאריך הקלנדרי האמיתי
         let lastClosed = '';     // התאריך האחרון שנסגר
+        let resumeDay = '';      // ביום שנפתח באיחור: היום שאליו חוזרים אחרי הסגירה
 
         function boardDate(){ return viewDay || workDate || todayISO(); }
 
+        // תאריך מלא בעברית (יום בשבוע + תאריך) ממפתח yyyy-MM-dd
+        function heLongDate(iso){
+            if (!iso) return '';
+            const p = iso.split('-'); if (p.length !== 3) return iso;
+            return new Date(Number(p[0]), Number(p[1])-1, Number(p[2])).toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        }
+        // כותרת: התאריך הפתוח בגדול, תאריך היום בקטן מתחתיו
+        function updateHeaderDates(){
+            const main = document.getElementById('current-date-display');
+            const small = document.getElementById('today-date-small');
+            if (!main || !small) return;
+            const today = todayReal || todayISO();
+            const reporting = !!(workDate && workDate !== today);
+            const bd = boardDate();
+            let label, cls;
+            if (reporting) { label = '📄 התאריך הפתוח (דיווח באיחור): ' + heLongDate(workDate); cls = 'text-sm font-bold text-amber-700'; }
+            else if (dayOpen) { label = '🟢 התאריך הפתוח: ' + heLongDate(bd); cls = 'text-sm font-bold text-emerald-700'; }
+            else if (viewDay && workDate && viewDay !== workDate) { label = '🔵 יום העבודה הבא: ' + heLongDate(viewDay); cls = 'text-sm font-bold text-indigo-700'; }
+            else { label = 'יום עבודה לא נפתח · ' + heLongDate(bd); cls = 'text-sm font-bold text-slate-700'; }
+            main.className = cls;
+            main.innerText = label;
+            small.innerText = 'היום: ' + heLongDate(today);
+            const at = document.getElementById('attendance-title');
+            if (at) at.innerText = reporting ? ('סבבי נוכחות · ' + heDate(workDate)) : 'סבבי נוכחות היום';
+        }
+
         function updateDayStatus(){
+            updateHeaderDates();
             const wd = workDate || todayReal;
             const isPast = wd && todayReal && wd !== todayReal;
             const ob = document.getElementById('open-buttons');
@@ -529,8 +557,8 @@
 
         // ====== אתחול ======
         window.onload = function() {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('he-IL', options);
+            document.getElementById('current-date-display').innerText = 'טוען יום עבודה…';
+            document.getElementById('today-date-small').innerText = 'היום: ' + heLongDate(todayISO());
 
             const savedUrl = localStorage.getItem('gas_url');
             if (savedUrl) gasUrl = savedUrl;
@@ -596,6 +624,7 @@
             viewDay = data.viewDay || data.workDate || '';
             todayReal = data.today || '';
             lastClosed = data.lastClosed || '';
+            resumeDay = data.resumeDay || '';
             try {
                 const attData = JSON.parse(data.attendance.intervals);
                 attendanceIntervals = Array.isArray(attData) ? attData : [];
@@ -1131,7 +1160,14 @@
                         <span class="text-indigo-100 text-[13px] whitespace-nowrap hidden lg:inline shrink-0">— ${heDate(bDate)} · היום עדיין לא נפתח רשמית</span>
                     </div>`;
                 } else {
-                    modeBanner.classList.add('hidden'); modeBanner.innerHTML = '';
+                    // דיווח על יום עבר - חיווי בולט שזה לא היום
+                    const back = resumeDay ? ` · אחרי הסגירה חוזרים ל־${heDate(resumeDay)}` : '';
+                    modeBanner.classList.remove('hidden');
+                    modeBanner.innerHTML = `<div class="bg-amber-500 text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm w-full min-w-0">
+                        <span class="text-base shrink-0">📄</span>
+                        <span class="font-bold text-sm truncate min-w-0">דיווח באיחור: יום ${heDate(workDate)}</span>
+                        <span class="text-amber-50 text-[13px] whitespace-nowrap hidden lg:inline shrink-0">— זה לא היום${back}</span>
+                    </div>`;
                 }
             }
 
@@ -1831,12 +1867,27 @@
 
         // ====== פתיחת יום עבודה ======
         function triggerOpenDay(){ openDayForDate(todayReal || todayISO()); }
-        function returnToToday(){ openDayForDate(todayReal || todayISO()); }
+        // חזרה להיום מיום עבר שנפתח: לא סוגרים אותו בשקט (קודם זה יצר דוח בלי תצוגה מקדימה)
+        function returnToToday(){
+            if (guardRO()) return;
+            const today = todayReal || todayISO();
+            if (workDate && workDate !== today && dayOpen) {
+                if (confirm(`היום ${heDate(workDate)} פתוח ועדיין לא נסגר.\n\nאישור = לסגור אותו עכשיו (עם תצוגה מקדימה ושמירת דוח)\nביטול = אפשרויות נוספות`)) {
+                    triggerEndDay();
+                    return;
+                }
+                if (!confirm(`לחזור להיום בלי לסגור את ${heDate(workDate)}?\nלא יישמר דוח ליום הזה, ומשימות פתוחות יעברו להיום.`)) return;
+                openDayForDate(today, true);
+                return;
+            }
+            openDayForDate(today);
+        }
 
-        function openDayForDate(dateKey){
-            if (guardRO()) return; 
+        function openDayForDate(dateKey, skipClose){
+            if (guardRO()) return;
             const params = { action: 'openDay' };
             if (dateKey) params.date = dateKey;
+            if (skipClose) params.skipClose = '1';
             const isToday = (dateKey === (todayReal || todayISO()));
             showLoader(isToday ? "פותח יום עבודה…" : ("פותח יום " + heDate(dateKey) + "…"));
             fetchJSONP(gasUrl, params, 'cb_open')
