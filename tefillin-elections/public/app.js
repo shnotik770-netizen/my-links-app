@@ -4,7 +4,7 @@
   const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
   const MAX_PER_SLOT = 2;
   // Must match public/version.json (both are set by bump-version.sh).
-  const VERSION = '2026.10.22-151708';
+  const VERSION = '2026.10.22-152721';
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
@@ -309,7 +309,7 @@
     app.innerHTML =
       '<div class="intro card">' +
         '<p><strong>איך משתבצים?</strong> לוחצים על משבצת פנויה, כותבים שם מלא וטלפון – והשם נכנס ישר ללוח.</p>' +
-        '<p class="muted">לשינוי או ביטול שיבוץ יש לפנות למנהל.</p>' +
+        '<p class="muted">לשינוי או ביטול שיבוץ יש לפנות לאחד ממנהלי הקלפיות (כפתור הוואטסאפ שליד כל קלפי).</p>' +
         '<div class="progress"><div class="progress-bar" style="width:' + (total ? ((total - free) / total) * 100 : 0) + '%"></div></div>' +
         '<div class="muted small">' + free + ' משבצות פנויות מתוך ' + total + '</div>' +
       '</div>' + toolbar(free, state.stations);
@@ -331,14 +331,14 @@
       } else {
         html += '<div class="slots">';
         slots.forEach(s => {
-          // Up to 2 volunteers per hour: the first fills the cell, then "+ הוסף נציג" offers a second place.
+          // Up to 2 volunteers per hour: the first fills the cell, then "+ הוסף פעיל" offers a second place.
           const key = st.id + '|' + s.slot;
           let cells = s.names.map(n => '<div class="cell cell-taken"><span class="check">✓</span>' + esc(n) + '</div>').join('');
           if (s.names.length < MAX_PER_SLOT) {
             if (state.openCell === key) {
               cells += '<div class="cell cell-open">' + cellForm(key, me.name || '', me.phone || '', s.names.length ? 'הוספה' : 'שבצו אותי') + '</div>';
             } else if (s.names.length) {
-              cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף נציג</button>';
+              cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף פעיל</button>';
             } else {
               cells += '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – לחצו לשיבוץ</button>';
             }
@@ -503,7 +503,7 @@
           } else if (seat === 1) {
             cells += '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – שיבוץ ידני</button>';
           } else if (seats[0]) {
-            cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף נציג</button>';
+            cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף פעיל</button>';
           }
         }
         html += '<div class="slot-row">' + slotTime(slot) + '<div class="cell-stack">' + cells + '</div></div>';

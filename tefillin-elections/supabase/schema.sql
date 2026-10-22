@@ -1,5 +1,5 @@
 -- Mivtza Tefillin election-day scheduler – Supabase schema (project "toranim-system").
--- Applied as migrations tefillin_1 … tefillin_10. Kept here as the readable reference.
+-- Applied as migrations tefillin_1 … tefillin_11. Kept here as the readable reference.
 --
 -- Security model:
 --   * All objects are prefixed tefillin_ and isolated from the project's other tables.
@@ -116,7 +116,7 @@ begin
   end if;
   select min(x) into v_seat from unnest(array[1, 2]::smallint[]) x
   where not exists (select 1 from tefillin_signups where station_id = p_station_id and slot = p_slot and seat = x);
-  if v_seat is null then raise exception 'המשמרת הזו כבר מלאה (2 נציגים). אנא בחרו משמרת אחרת.'; end if;
+  if v_seat is null then raise exception 'המשמרת הזו כבר מלאה (2 פעילים). אנא בחרו משמרת אחרת.'; end if;
   begin
     insert into tefillin_signups (station_id, slot, seat, name, phone) values (p_station_id, p_slot, v_seat, v.name, v.phone);
   exception when unique_violation then
