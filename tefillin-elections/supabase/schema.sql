@@ -1,5 +1,5 @@
 -- Mivtza Tefillin election-day scheduler – Supabase schema (project "toranim-system").
--- Applied as migrations tefillin_1 … tefillin_9. Kept here as the readable reference.
+-- Applied as migrations tefillin_1 … tefillin_10. Kept here as the readable reference.
 --
 -- Security model:
 --   * All objects are prefixed tefillin_ and isolated from the project's other tables.
@@ -101,6 +101,8 @@ language sql stable set search_path = public as $$
 $$;
 
 -- Guest signup: takes the first free seat (1, then 2) in the hour.
+-- A person may sign up any number of times, at the same or other stations; only the same phone
+-- taking both places of the same hour at the same station is blocked.
 create function public.tefillin_signup(p_station_id uuid, p_slot text, p_name text, p_phone text) returns jsonb
 language plpgsql set search_path = public as $$
 declare v record; v_station tefillin_stations; v_seat smallint;
@@ -109,8 +111,8 @@ begin
   select * into v_station from tefillin_stations where id = p_station_id;
   if not found then raise exception 'הקלפי לא נמצאה'; end if;
   if not (p_slot = any (v_station.slots)) then raise exception 'המשמרת אינה פעילה בקלפי זו'; end if;
-  if exists (select 1 from tefillin_signups where phone = v.phone and slot = p_slot) then
-    raise exception 'מספר הטלפון הזה כבר רשום למשמרת בשעה זו';
+  if exists (select 1 from tefillin_signups where station_id = p_station_id and slot = p_slot and phone = v.phone) then
+    raise exception 'כבר נרשמת למשמרת הזו בקלפי הזו';
   end if;
   select min(x) into v_seat from unnest(array[1, 2]::smallint[]) x
   where not exists (select 1 from tefillin_signups where station_id = p_station_id and slot = p_slot and seat = x);
