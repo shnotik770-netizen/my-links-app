@@ -135,6 +135,15 @@ a { color: var(--navy-2); }
 .slot-time span { font-size: .75rem; opacity: .75; }
 
 /* ===== Cells ===== */
+.cell-stack { display: grid; gap: 6px; min-width: 0; }
+.add-seat {
+  font: inherit; font-weight: 700; font-size: .9rem;
+  justify-self: start;
+  padding: 4px 12px; border-radius: 999px;
+  border: 1.5px dashed var(--free-line); background: #fff; color: var(--free-text);
+  cursor: pointer;
+}
+.add-seat:hover { background: var(--free); }
 .cell {
   min-height: 48px;
   border-radius: 10px;

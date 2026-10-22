@@ -2,6 +2,7 @@
   // Possible shift hours 08:00-18:00; each station turns on the ones it runs (new stations: 09-13).
   const ALL_SLOTS = Array.from({ length: 10 }, (_, i) => pad(8 + i) + ':00-' + pad(9 + i) + ':00');
   const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
+  const MAX_PER_SLOT = 2;
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
@@ -301,7 +302,7 @@
 
   function renderPublic() {
     const total = state.stations.reduce((n, st) => n + st.slots.length, 0);
-    const free = state.stations.reduce((n, st) => n + st.slots.filter(s => !s.name).length, 0);
+    const free = state.stations.reduce((n, st) => n + st.slots.filter(s => !s.names.length).length, 0);
 
     app.innerHTML =
       '<div class="intro card">' +
@@ -320,7 +321,7 @@
     if (!state.stations.length) html += '<div class="card muted">עדיין לא הוגדרו קלפיות.</div>';
 
     state.stations.forEach(st => {
-      const slots = filterSlots(st, st.slots, s => !s.name, s => s.name);
+      const slots = filterSlots(st, st.slots, s => !s.names.length, s => s.names.join(' '));
       if (!slots) return;
       html += '<section class="card station" id="st-' + esc(st.id) + '"><h2>' + esc(st.name) + '</h2>' + stationMeta(st);
       if (!slots.length) {
@@ -328,16 +329,19 @@
       } else {
         html += '<div class="slots">';
         slots.forEach(s => {
+          // Up to 2 volunteers per hour: the first fills the cell, then "+ הוסף נציג" offers a second place.
           const key = st.id + '|' + s.slot;
-          let cell;
-          if (s.name) {
-            cell = '<div class="cell cell-taken"><span class="check">✓</span>' + esc(s.name) + '</div>';
-          } else if (state.openCell === key) {
-            cell = '<div class="cell cell-open">' + cellForm(key, me.name || '', me.phone || '', 'שבצו אותי') + '</div>';
-          } else {
-            cell = '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – לחצו לשיבוץ</button>';
+          let cells = s.names.map(n => '<div class="cell cell-taken"><span class="check">✓</span>' + esc(n) + '</div>').join('');
+          if (s.names.length < MAX_PER_SLOT) {
+            if (state.openCell === key) {
+              cells += '<div class="cell cell-open">' + cellForm(key, me.name || '', me.phone || '', s.names.length ? 'הוספה' : 'שבצו אותי') + '</div>';
+            } else if (s.names.length) {
+              cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף נציג</button>';
+            } else {
+              cells += '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – לחצו לשיבוץ</button>';
+            }
           }
-          html += '<div class="slot-row">' + slotTime(s.slot) + cell + '</div>';
+          html += '<div class="slot-row">' + slotTime(s.slot) + '<div class="cell-stack">' + cells + '</div></div>';
         });
         html += '</div>';
       }
@@ -359,13 +363,13 @@
       await Api.signup(stationId, slot, v.name, v.phone);
       save('local', ME_KEY, { name: v.name, phone: v.phone });
       const st = state.stations.find(x => x.id === stationId);
-      st.slots.find(x => x.slot === slot).name = v.name;
+      st.slots.find(x => x.slot === slot).names.push(v.name);
       state.openCell = null;
       renderPublic();
       toast('שובצת בהצלחה! ' + st.name + ', ' + slotLabel(slot) + '. תודה ובהצלחה!');
     } catch (err) {
       toast(err.message, 'error');
-      if (/נתפסה/.test(err.message)) { state.openCell = null; loadPublic(); }
+      if (/נתפס|מלאה/.test(err.message)) { state.openCell = null; loadPublic(); }
     } finally {
       setBusy(form, false);
     }
@@ -412,17 +416,25 @@
     }
   }
 
+  // "stationId|slot" -> [seat 1 signup, seat 2 signup] (either may be missing)
   function adminIndex() {
     const bySlot = {};
-    state.admin.signups.forEach(s => { bySlot[s.stationId + '|' + s.slot] = s; });
+    state.admin.signups.forEach(s => {
+      const k = s.stationId + '|' + s.slot;
+      (bySlot[k] = bySlot[k] || [])[s.seat - 1] = s;
+    });
     return bySlot;
+  }
+
+  function adminPeople(bySlot, key) {
+    return (bySlot[key] || []).filter(Boolean);
   }
 
   function renderAdmin() {
     const { stations, signups } = state.admin;
     const bySlot = adminIndex();
     const totalSlots = stations.reduce((n, st) => n + st.slots.length, 0);
-    const filled = stations.reduce((n, st) => n + st.slots.filter(sl => bySlot[st.id + '|' + sl]).length, 0);
+    const filled = stations.reduce((n, st) => n + st.slots.filter(sl => adminPeople(bySlot, st.id + '|' + sl).length).length, 0);
 
     app.innerHTML =
       '<div class="admin-bar card">' +
@@ -451,9 +463,9 @@
     stations.forEach(st => {
       const slots = filterSlots(st,
         // Active hours, plus any inactive hour that still has a volunteer in it.
-        ALL_SLOTS.filter(slot => st.slots.indexOf(slot) !== -1 || bySlot[st.id + '|' + slot]),
-        slot => st.slots.indexOf(slot) !== -1 && !bySlot[st.id + '|' + slot],
-        slot => { const s = bySlot[st.id + '|' + slot]; return s ? s.name + ' ' + s.phone : ''; });
+        ALL_SLOTS.filter(slot => st.slots.indexOf(slot) !== -1 || adminPeople(bySlot, st.id + '|' + slot).length),
+        slot => st.slots.indexOf(slot) !== -1 && !adminPeople(bySlot, st.id + '|' + slot).length,
+        slot => adminPeople(bySlot, st.id + '|' + slot).map(s => s.name + ' ' + s.phone).join(' '));
       if (!slots) return;
       html +=
         '<section class="card station" id="st-' + esc(st.id) + '">' +
@@ -465,29 +477,34 @@
           '</div>' + stationMeta(st) + '<div class="slots">';
 
       slots.forEach(slot => {
-        const key = st.id + '|' + slot;
         const active = st.slots.indexOf(slot) !== -1;
-        const s = bySlot[key];
-        let cell;
-        if (state.openCell === key) {
-          cell = '<div class="cell cell-open">' + cellForm(key, s ? s.name : '', s ? s.phone : '', s ? 'שמירה' : 'שיבוץ') + '</div>';
-        } else if (s) {
-          cell =
-            '<div class="cell cell-taken admin">' +
-              '<div class="who"><b>' + esc(s.name) + '</b>' +
-                '<a href="tel:' + esc(s.phone) + '">' + esc(formatPhone(s.phone)) + '</a>' +
-                '<a href="' + esc(waLink(s.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a>' +
-                (active ? '' : '<span class="tag">משמרת לא פעילה</span>') +
-              '</div>' +
-              '<div class="cell-tools">' +
-                '<button class="icon-btn" title="שינוי שיבוץ" data-action="open-cell" data-key="' + esc(key) + '">✎</button>' +
-                '<button class="icon-btn danger" title="ביטול שיבוץ" data-action="cancel-signup" data-id="' + esc(s.id) + '">✕</button>' +
-              '</div>' +
-            '</div>';
-        } else {
-          cell = '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – שיבוץ ידני</button>';
+        const seats = bySlot[st.id + '|' + slot] || [];
+        let cells = '';
+        for (let seat = 1; seat <= MAX_PER_SLOT; seat++) {
+          const key = st.id + '|' + slot + '|' + seat;
+          const s = seats[seat - 1];
+          if (state.openCell === key) {
+            cells += '<div class="cell cell-open">' + cellForm(key, s ? s.name : '', s ? s.phone : '', s ? 'שמירה' : 'שיבוץ') + '</div>';
+          } else if (s) {
+            cells +=
+              '<div class="cell cell-taken admin">' +
+                '<div class="who"><b>' + esc(s.name) + '</b>' +
+                  '<a href="tel:' + esc(s.phone) + '">' + esc(formatPhone(s.phone)) + '</a>' +
+                  '<a href="' + esc(waLink(s.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a>' +
+                  (active ? '' : '<span class="tag">משמרת לא פעילה</span>') +
+                '</div>' +
+                '<div class="cell-tools">' +
+                  '<button class="icon-btn" title="שינוי שיבוץ" data-action="open-cell" data-key="' + esc(key) + '">✎</button>' +
+                  '<button class="icon-btn danger" title="ביטול שיבוץ" data-action="cancel-signup" data-id="' + esc(s.id) + '">✕</button>' +
+                '</div>' +
+              '</div>';
+          } else if (seat === 1) {
+            cells += '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – שיבוץ ידני</button>';
+          } else if (seats[0]) {
+            cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף נציג</button>';
+          }
         }
-        html += '<div class="slot-row">' + slotTime(slot) + cell + '</div>';
+        html += '<div class="slot-row">' + slotTime(slot) + '<div class="cell-stack">' + cells + '</div></div>';
       });
       html += '</div></section>';
     });
@@ -499,12 +516,12 @@
   }
 
   async function submitAdminSlot(form, key) {
-    const [stationId, slot] = key.split('|');
+    const [stationId, slot, seat] = key.split('|');
     const v = validatePerson(form.elements.name.value, form.elements.phone.value);
     if (v.error) return toast(v.error, 'error');
     setBusy(form, true);
     try {
-      await Api.adminSetSlot(password(), stationId, slot, v.name, v.phone);
+      await Api.adminSetSeat(password(), stationId, slot, Number(seat), v.name, v.phone);
       state.openCell = null;
       toast('השיבוץ נשמר');
       loadAdmin(true);

@@ -20,6 +20,7 @@ const RPC: Record<string, [string, string[]]> = {
   getAdmin: ["tefillin_get_admin", ["password"]],
   saveStation: ["tefillin_save_station", ["password", "station"]],
   adminSetSlot: ["tefillin_admin_set_slot", ["password", "stationId", "slot", "name", "phone"]],
+  adminSetSeat: ["tefillin_admin_set_seat", ["password", "stationId", "slot", "seat", "name", "phone"]],
   changePassword: ["tefillin_change_password", ["password", "newPassword"]],
   saveTicker: ["tefillin_save_ticker", ["password", "lines"]],
   setSlotsAll: ["tefillin_set_slots_all", ["password", "add", "remove"]],

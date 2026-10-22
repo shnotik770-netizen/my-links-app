@@ -28,8 +28,8 @@ window.Api = (function () {
     getAdmin: (password) => call('getAdmin', { password }),
     saveStation: (password, station) => call('saveStation', { password, station }),
     deleteStation: (password, id) => call('deleteStation', { password, id }),
-    adminSetSlot: (password, stationId, slot, name, phone) =>
-      call('adminSetSlot', { password, stationId, slot, name, phone }),
+    adminSetSeat: (password, stationId, slot, seat, name, phone) =>
+      call('adminSetSeat', { password, stationId, slot, seat, name, phone }),
     cancelSignup: (password, id) => call('cancelSignup', { password, id }),
     changePassword: (password, newPassword) => call('changePassword', { password, newPassword }),
     saveTicker: (password, lines) => call('saveTicker', { password, lines }),
