@@ -1,5 +1,5 @@
 -- Mivtza Tefillin election-day scheduler – Supabase schema (project "toranim-system").
--- Applied as migrations tefillin_1 … tefillin_7. Kept here as the readable reference.
+-- Applied as migrations tefillin_1 … tefillin_9. Kept here as the readable reference.
 --
 -- Security model:
 --   * All objects are prefixed tefillin_ and isolated from the project's other tables.
@@ -27,10 +27,11 @@ create table public.tefillin_signups (
   id uuid primary key default gen_random_uuid(),
   station_id uuid not null references public.tefillin_stations(id) on delete cascade,
   slot text not null,
+  seat smallint not null default 1 check (seat in (1, 2)), -- up to 2 volunteers per station per hour
   name text not null,
   phone text not null,
   created_at timestamptz not null default now(),
-  unique (station_id, slot) -- one volunteer per station per hour; also blocks double-booking races
+  unique (station_id, slot, seat) -- also blocks double-booking races
 );
 create index tefillin_signups_phone_slot_idx on public.tefillin_signups (phone, slot);
 
@@ -88,32 +89,38 @@ language sql stable set search_path = public as $$
     -- The station manager's contact is public on purpose (WhatsApp button for volunteers).
     'managerName', s.manager_name, 'managerPhone', s.manager_phone,
     'slots', (
-      -- Only the volunteer's name is public; volunteer phone numbers are admin-only.
-      select coalesce(jsonb_agg(jsonb_build_object('slot', sl, 'name', coalesce(g.name, '')) order by sl), '[]'::jsonb)
+      -- Only volunteers' names are public (up to 2 per hour, by seat); their phones are admin-only.
+      select coalesce(jsonb_agg(jsonb_build_object('slot', sl, 'names', (
+        select coalesce(jsonb_agg(g.name order by g.seat), '[]'::jsonb)
+        from tefillin_signups g where g.station_id = s.id and g.slot = sl
+      )) order by sl), '[]'::jsonb)
       from unnest(s.slots) sl
-      left join tefillin_signups g on g.station_id = s.id and g.slot = sl
     )
   ) order by s.position, s.created_at), '[]'::jsonb))
   from tefillin_stations s
 $$;
 
+-- Guest signup: takes the first free seat (1, then 2) in the hour.
 create function public.tefillin_signup(p_station_id uuid, p_slot text, p_name text, p_phone text) returns jsonb
 language plpgsql set search_path = public as $$
-declare v record; v_station tefillin_stations;
+declare v record; v_station tefillin_stations; v_seat smallint;
 begin
   v := tefillin_clean_person(p_name, p_phone);
   select * into v_station from tefillin_stations where id = p_station_id;
   if not found then raise exception 'הקלפי לא נמצאה'; end if;
   if not (p_slot = any (v_station.slots)) then raise exception 'המשמרת אינה פעילה בקלפי זו'; end if;
   if exists (select 1 from tefillin_signups where phone = v.phone and slot = p_slot) then
-    raise exception 'מספר הטלפון הזה כבר רשום למשמרת בשעה זו בקלפי אחרת';
+    raise exception 'מספר הטלפון הזה כבר רשום למשמרת בשעה זו';
   end if;
+  select min(x) into v_seat from unnest(array[1, 2]::smallint[]) x
+  where not exists (select 1 from tefillin_signups where station_id = p_station_id and slot = p_slot and seat = x);
+  if v_seat is null then raise exception 'המשמרת הזו כבר מלאה (2 נציגים). אנא בחרו משמרת אחרת.'; end if;
   begin
-    insert into tefillin_signups (station_id, slot, name, phone) values (p_station_id, p_slot, v.name, v.phone);
+    insert into tefillin_signups (station_id, slot, seat, name, phone) values (p_station_id, p_slot, v_seat, v.name, v.phone);
   exception when unique_violation then
-    raise exception 'מצטערים, המשמרת הזו נתפסה כרגע. אנא בחרו משמרת אחרת.';
+    raise exception 'מצטערים, המקום הזה נתפס כרגע. נסו שוב.';
   end;
-  return jsonb_build_object('station', v_station.name, 'slot', p_slot);
+  return jsonb_build_object('station', v_station.name, 'slot', p_slot, 'seat', v_seat);
 end $$;
 
 -- ===== Admin actions (all check the password first) =====
@@ -138,7 +145,7 @@ begin
         'managerName', manager_name, 'managerPhone', manager_phone
       ) order by position, created_at), '[]'::jsonb) from tefillin_stations),
     'signups', (select coalesce(jsonb_agg(jsonb_build_object(
-        'id', id, 'stationId', station_id, 'slot', slot, 'name', name, 'phone', phone,
+        'id', id, 'stationId', station_id, 'slot', slot, 'seat', seat, 'name', name, 'phone', phone,
         'createdAt', to_char(created_at at time zone 'Asia/Jerusalem', 'DD/MM/YYYY HH24:MI')
       ) order by created_at), '[]'::jsonb) from tefillin_signups)
   );
@@ -179,8 +186,8 @@ begin
   return jsonb_build_object('id', v_id);
 end $$;
 
--- Put a volunteer in a slot, replacing whoever is there (assign + edit).
-create function public.tefillin_admin_set_slot(p_password text, p_station_id uuid, p_slot text, p_name text, p_phone text) returns jsonb
+-- Put a volunteer in a specific seat (1 or 2), replacing whoever is there (assign + edit).
+create function public.tefillin_admin_set_seat(p_password text, p_station_id uuid, p_slot text, p_seat int, p_name text, p_phone text) returns jsonb
 language plpgsql set search_path = public as $$
 declare v record;
 begin
@@ -188,10 +195,17 @@ begin
   v := tefillin_clean_person(p_name, p_phone);
   if not exists (select 1 from tefillin_stations where id = p_station_id) then raise exception 'הקלפי לא נמצאה'; end if;
   if not (p_slot = any (tefillin_all_slots())) then raise exception 'משמרת לא תקינה'; end if;
-  insert into tefillin_signups (station_id, slot, name, phone) values (p_station_id, p_slot, v.name, v.phone)
-  on conflict (station_id, slot) do update set name = excluded.name, phone = excluded.phone, created_at = now();
+  if coalesce(p_seat, 0) not in (1, 2) then raise exception 'בקשה לא תקינה'; end if;
+  insert into tefillin_signups (station_id, slot, seat, name, phone) values (p_station_id, p_slot, p_seat, v.name, v.phone)
+  on conflict (station_id, slot, seat) do update set name = excluded.name, phone = excluded.phone, created_at = now();
   return '{}'::jsonb;
 end $$;
+
+-- Older single-seat entry point (seat 1), kept for compatibility.
+create function public.tefillin_admin_set_slot(p_password text, p_station_id uuid, p_slot text, p_name text, p_phone text) returns jsonb
+language sql set search_path = public as $$
+  select tefillin_admin_set_seat(p_password, p_station_id, p_slot, 1, p_name, p_phone)
+$$;
 
 create function public.tefillin_change_password(p_password text, p_new_password text) returns jsonb
 language plpgsql set search_path = public, extensions as $$
