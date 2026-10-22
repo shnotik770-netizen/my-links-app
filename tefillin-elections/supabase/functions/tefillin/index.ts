@@ -22,6 +22,7 @@ const RPC: Record<string, [string, string[]]> = {
   adminSetSlot: ["tefillin_admin_set_slot", ["password", "stationId", "slot", "name", "phone"]],
   changePassword: ["tefillin_change_password", ["password", "newPassword"]],
   saveTicker: ["tefillin_save_ticker", ["password", "lines"]],
+  setSlotsAll: ["tefillin_set_slots_all", ["password", "add", "remove"]],
 };
 
 // action -> table whose row (by id) an admin may delete

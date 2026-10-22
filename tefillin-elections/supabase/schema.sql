@@ -1,5 +1,5 @@
 -- Mivtza Tefillin election-day scheduler – Supabase schema (project "toranim-system").
--- Applied as migrations tefillin_1 … tefillin_6. Kept here as the readable reference.
+-- Applied as migrations tefillin_1 … tefillin_7. Kept here as the readable reference.
 --
 -- Security model:
 --   * All objects are prefixed tefillin_ and isolated from the project's other tables.
@@ -44,9 +44,10 @@ revoke all on public.tefillin_stations, public.tefillin_signups, public.tefillin
 
 -- ===== Helpers =====
 
+-- Possible shift hours: 08:00-18:00 in 1-hour slots. Each station enables a subset (new stations: 09-13).
 create function public.tefillin_all_slots() returns text[]
 language sql immutable set search_path = '' as $$
-  select array['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00']
+  select array(select lpad(h::text, 2, '0') || ':00-' || lpad((h + 1)::text, 2, '0') || ':00' from generate_series(8, 17) h)
 $$;
 
 create function public.tefillin_check_admin(p_password text) returns void
@@ -214,6 +215,19 @@ begin
   return jsonb_build_object('ticker', v_lines);
 end $$;
 
+-- Turn hours on/off for every station at once. Existing signups are kept.
+create function public.tefillin_set_slots_all(p_password text, p_add jsonb, p_remove jsonb) returns jsonb
+language plpgsql set search_path = public as $$
+begin
+  perform tefillin_check_admin(p_password);
+  update tefillin_stations s set slots = array(
+    select x from unnest(tefillin_all_slots()) x
+    where (x = any (s.slots) or x in (select jsonb_array_elements_text(coalesce(p_add, '[]'::jsonb))))
+      and x not in (select jsonb_array_elements_text(coalesce(p_remove, '[]'::jsonb)))
+  );
+  return '{}'::jsonb;
+end $$;
+
 -- ===== Lock every function to the service role =====
 
 do $$
@@ -231,13 +245,13 @@ end $$;
 -- ===== Initial data =====
 
 insert into public.tefillin_stations (name, address, notes, slots, position) values
-  ('אולפנת צביה', '', '', public.tefillin_all_slots(), 0),
-  ('ביה"ס בית זאב', '', '', public.tefillin_all_slots(), 1),
-  ('ביה"ס אהל מאיר', '', '', public.tefillin_all_slots(), 2),
-  ('ביה"ס אלון יזרעאל', '', '', public.tefillin_all_slots(), 3),
-  ('אורט אלון', 'רח'' האגס 4', '', public.tefillin_all_slots(), 4),
-  ('בי"ס גוונים', 'רחוב וולפסון', 'מול הבית של קרץ', public.tefillin_all_slots(), 5),
-  ('בית ספר יהודה', '', '', public.tefillin_all_slots(), 6);
+  ('אולפנת צביה', '', '', public.tefillin_all_slots()[2:5], 0),
+  ('ביה"ס בית זאב', '', '', public.tefillin_all_slots()[2:5], 1),
+  ('ביה"ס אהל מאיר', '', '', public.tefillin_all_slots()[2:5], 2),
+  ('ביה"ס אלון יזרעאל', '', '', public.tefillin_all_slots()[2:5], 3),
+  ('אורט אלון', 'רח'' האגס 4', '', public.tefillin_all_slots()[2:5], 4),
+  ('בי"ס גוונים', 'רחוב וולפסון', 'מול הבית של קרץ', public.tefillin_all_slots()[2:5], 5),
+  ('בית ספר יהודה', '', '', public.tefillin_all_slots()[2:5], 6);
 
 insert into public.tefillin_settings (key, value) values ('ticker', $j$[
   "זכות עצומה נפלה בחלקנו להיות שלוחי הרבי ולהאיר את העיר במבצע תפילין.",

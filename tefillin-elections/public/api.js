@@ -33,5 +33,6 @@ window.Api = (function () {
     cancelSignup: (password, id) => call('cancelSignup', { password, id }),
     changePassword: (password, newPassword) => call('changePassword', { password, newPassword }),
     saveTicker: (password, lines) => call('saveTicker', { password, lines }),
+    setSlotsAll: (password, add, remove) => call('setSlotsAll', { password, add, remove }),
   };
 })();

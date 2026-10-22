@@ -157,7 +157,6 @@ a { color: var(--navy-2); }
 .cell-taken { background: var(--taken); color: var(--taken-text); font-weight: 700; border: 2px solid transparent; }
 .cell-taken .check { color: var(--gold-dark); font-size: 1.1rem; }
 .cell-taken.admin { justify-content: space-between; font-weight: 400; }
-.cell-off { background: #f8fafc; color: #94a3b8; border: 2px solid var(--line); }
 .cell-open { background: #fffbeb; border: 2px solid var(--gold); padding: 10px; }
 
 .who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }

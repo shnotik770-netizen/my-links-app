@@ -1,5 +1,7 @@
 (function () {
-  const ALL_SLOTS = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00'];
+  // Possible shift hours 08:00-18:00; each station turns on the ones it runs (new stations: 09-13).
+  const ALL_SLOTS = Array.from({ length: 10 }, (_, i) => pad(8 + i) + ':00-' + pad(9 + i) + ':00');
+  const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
@@ -20,6 +22,10 @@
   };
 
   // ===== Utilities =====
+
+  function pad(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
@@ -145,6 +151,55 @@
       renderTicker(res.ticker);
       closeModal();
       toast('הבאנר עודכן');
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setBusy(form, false);
+    }
+  }
+
+  // ===== Hours for all stations at once =====
+
+  function openHoursModal() {
+    const stations = state.admin.stations;
+    modalCard.innerHTML =
+      '<form data-form="hours" class="station-form">' +
+        '<h2>שעות משמרת לכל הקלפיות</h2>' +
+        '<p class="muted small">סימון מוסיף את השעה לכל הקלפיות, ביטול סימון מסיר אותה מכולן. ' +
+          'שעה שפעילה רק בחלק מהקלפיות מסומנת חלקית ולא תשתנה אם לא תלחצו עליה.</p>' +
+        '<fieldset><legend>שעות</legend>' +
+          ALL_SLOTS.map(slot => {
+            const n = stations.filter(st => st.slots.indexOf(slot) !== -1).length;
+            const initial = n === 0 ? 'none' : n === stations.length ? 'all' : 'some';
+            return '<label class="check-label"><input type="checkbox" name="slots" value="' + slot + '" data-initial="' + initial + '"' +
+              (initial === 'all' ? ' checked' : '') + '> ' + slotLabel(slot) + '</label>';
+          }).join('') +
+        '</fieldset>' +
+        '<div class="modal-actions">' +
+          '<button type="submit" class="btn btn-gold">שמירה</button>' +
+          '<button type="button" class="btn btn-ghost" data-action="close-modal">ביטול</button>' +
+        '</div>' +
+      '</form>';
+    modalCard.querySelectorAll('input[data-initial=some]').forEach(el => { el.indeterminate = true; });
+    modal.classList.remove('hidden');
+  }
+
+  async function submitHours(form) {
+    const add = [], removeSlots = [];
+    form.querySelectorAll('input[name=slots]').forEach(el => {
+      if (el.indeterminate) return; // untouched partial hour
+      if (el.checked && el.dataset.initial !== 'all') add.push(el.value);
+      if (!el.checked && el.dataset.initial !== 'none') removeSlots.push(el.value);
+    });
+    if (!add.length && !removeSlots.length) return closeModal();
+    const affected = state.admin.signups.filter(s => removeSlots.indexOf(s.slot) !== -1).length;
+    if (affected && !confirm('יש ' + affected + ' משובצים בשעות שמוסרות. השיבוצים יישמרו ויוצגו למנהל כ"משמרת לא פעילה". להמשיך?')) return;
+    setBusy(form, true);
+    try {
+      await Api.setSlotsAll(password(), add, removeSlots);
+      closeModal();
+      toast('השעות עודכנו בכל הקלפיות');
+      loadAdmin(true);
     } catch (err) {
       toast(err.message, 'error');
     } finally {
@@ -379,6 +434,7 @@
         '<div class="admin-actions">' +
           '<button class="btn btn-gold" data-action="add-station">+ הוספת קלפי</button>' +
           '<button class="btn btn-ghost" data-action="refresh">רענון</button>' +
+          '<button class="btn btn-ghost" data-action="edit-hours">שעות לכל הקלפיות</button>' +
           '<button class="btn btn-ghost" data-action="edit-ticker">משפטי הבאנר</button>' +
           '<button class="btn btn-ghost" data-action="change-password">שינוי סיסמה</button>' +
           '<button class="btn btn-ghost" data-action="logout">יציאה</button>' +
@@ -394,7 +450,8 @@
 
     stations.forEach(st => {
       const slots = filterSlots(st,
-        ALL_SLOTS.filter(slot => st.slots.indexOf(slot) !== -1 || bySlot[st.id + '|' + slot] || !(state.query || state.freeOnly)),
+        // Active hours, plus any inactive hour that still has a volunteer in it.
+        ALL_SLOTS.filter(slot => st.slots.indexOf(slot) !== -1 || bySlot[st.id + '|' + slot]),
         slot => st.slots.indexOf(slot) !== -1 && !bySlot[st.id + '|' + slot],
         slot => { const s = bySlot[st.id + '|' + slot]; return s ? s.name + ' ' + s.phone : ''; });
       if (!slots) return;
@@ -427,10 +484,8 @@
                 '<button class="icon-btn danger" title="ביטול שיבוץ" data-action="cancel-signup" data-id="' + esc(s.id) + '">✕</button>' +
               '</div>' +
             '</div>';
-        } else if (active) {
-          cell = '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – שיבוץ ידני</button>';
         } else {
-          cell = '<div class="cell cell-off">לא פעיל</div>';
+          cell = '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – שיבוץ ידני</button>';
         }
         html += '<div class="slot-row">' + slotTime(slot) + cell + '</div>';
       });
@@ -461,7 +516,7 @@
   }
 
   function openStationModal(station) {
-    const st = station || { id: '', name: '', address: '', notes: '', managerName: '', managerPhone: '', slots: ALL_SLOTS.slice() };
+    const st = station || { id: '', name: '', address: '', notes: '', managerName: '', managerPhone: '', slots: DEFAULT_SLOTS.slice() };
     modalCard.innerHTML =
       '<form data-form="station" class="station-form">' +
         '<h2>' + (station ? 'עריכת קלפי' : 'הוספת קלפי') + '</h2>' +
@@ -593,6 +648,8 @@
         return changePassword();
       case 'edit-ticker':
         return openTickerModal();
+      case 'edit-hours':
+        return openHoursModal();
       case 'jump':
         return jumpTo(id);
       case 'refresh':
@@ -613,6 +670,7 @@
     if (kind === 'login') return submitLogin(form);
     if (kind === 'station') return submitStation(form);
     if (kind === 'ticker') return submitTicker(form);
+    if (kind === 'hours') return submitHours(form);
     return state.view === 'admin' ? submitAdminSlot(form, kind) : submitSignup(form, kind);
   });
 
