@@ -172,6 +172,8 @@ a { color: var(--navy-2); }
 .who b { color: var(--navy); }
 .who a { font-size: .95rem; direction: ltr; }
 .tag { font-size: .8rem; background: #fee2e2; color: var(--danger); padding: 1px 8px; border-radius: 99px; }
+.tag-manager { background: #fef3c7; color: var(--gold-dark); }
+.send-login { margin-top: 8px; font-size: .9rem; padding: 7px 12px; }
 
 .cell-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; width: 100%; }
 .cell-form-actions { display: flex; gap: 6px; }

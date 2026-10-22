@@ -4,7 +4,7 @@
   const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
   const MAX_PER_SLOT = 2;
   // Must match public/version.json (both are set by bump-version.sh).
-  const VERSION = '2026.10.22-152721';
+  const VERSION = '2026.10.22-152858';
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
@@ -159,6 +159,30 @@
     } finally {
       setBusy(form, false);
     }
+  }
+
+  // ===== Station managers =====
+
+  // Copies an activist's name and phone into their station's manager fields.
+  function makeManager(signupId) {
+    const s = state.admin.signups.find(x => x.id === signupId);
+    const st = state.admin.stations.find(x => x.id === s.stationId);
+    const replacing = st.managerName && st.managerPhone !== s.phone ? ' (במקום ' + st.managerName + ')' : '';
+    adminAction(() => Api.saveStation(password(), Object.assign({}, st, { managerName: s.name, managerPhone: s.phone })),
+      'להגדיר את ' + s.name + ' כמנהל ' + st.name + replacing + '?', s.name + ' הוגדר כמנהל הקלפי');
+  }
+
+  // Opens WhatsApp to the station manager with the admin address and the password used to log in.
+  function sendLogin(stationId) {
+    const st = state.admin.stations.find(x => x.id === stationId);
+    const adminUrl = location.origin + location.pathname + '#/admin';
+    const text =
+      'שלום ' + (st.managerName || '') + ',\n' +
+      'מונית כמנהל קלפי ' + st.name + ' במבצע תפילין בקלפיות.\n\n' +
+      'כניסת מנהל: ' + adminUrl + '\n' +
+      'סיסמה: ' + password() + '\n\n' +
+      'במסך הניהול אפשר לראות את כל השיבוצים, לשבץ, לשנות ולבטל. בהצלחה!';
+    window.open(waLink(st.managerPhone, text), '_blank', 'noopener');
   }
 
   // ===== Hours for all stations at once =====
@@ -476,7 +500,11 @@
               '<button class="icon-btn" title="עריכה" data-action="edit-station" data-id="' + esc(st.id) + '">✎</button>' +
               '<button class="icon-btn danger" title="מחיקה" data-action="delete-station" data-id="' + esc(st.id) + '">🗑</button>' +
             '</div>' +
-          '</div>' + stationMeta(st) + '<div class="slots">';
+          '</div>' + stationMeta(st) +
+          (st.managerPhone
+            ? '<button class="btn btn-ghost send-login" data-action="send-login" data-id="' + esc(st.id) + '">📲 שליחת פרטי כניסה למנהל הקלפי בוואטסאפ</button>'
+            : '') +
+          '<div class="slots">';
 
       slots.forEach(slot => {
         const active = st.slots.indexOf(slot) !== -1;
@@ -494,8 +522,11 @@
                   '<a href="tel:' + esc(s.phone) + '">' + esc(formatPhone(s.phone)) + '</a>' +
                   '<a href="' + esc(waLink(s.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a>' +
                   (active ? '' : '<span class="tag">משמרת לא פעילה</span>') +
+                  (s.phone === st.managerPhone ? '<span class="tag tag-manager">מנהל הקלפי</span>' : '') +
                 '</div>' +
                 '<div class="cell-tools">' +
+                  (s.phone === st.managerPhone ? '' :
+                    '<button class="icon-btn" title="הפוך למנהל הקלפי" data-action="make-manager" data-id="' + esc(s.id) + '">👤</button>') +
                   '<button class="icon-btn" title="שינוי שיבוץ" data-action="open-cell" data-key="' + esc(key) + '">✎</button>' +
                   '<button class="icon-btn danger" title="ביטול שיבוץ" data-action="cancel-signup" data-id="' + esc(s.id) + '">✕</button>' +
                 '</div>' +
@@ -669,6 +700,10 @@
         return openTickerModal();
       case 'edit-hours':
         return openHoursModal();
+      case 'make-manager':
+        return makeManager(id);
+      case 'send-login':
+        return sendLogin(id);
       case 'jump':
         return jumpTo(id);
       case 'refresh':
