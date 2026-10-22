@@ -52,3 +52,7 @@ tefillin-elections/
 ## עדכון השרת
 
 אחרי שינוי ב-`supabase/functions/tefillin/index.ts` צריך לפרסם מחדש את הפונקציה (Supabase CLI: `supabase functions deploy tefillin --no-verify-jwt`), או לבקש מ-Claude.
+
+## עדכון האתר
+
+אחרי כל שינוי בקבצים שב-`public/` מריצים `./bump-version.sh` לפני הדחיפה ל-`main`. הסקריפט נותן לקבצים מספר גרסה חדש, כך שדפדפנים לא ימשיכו להשתמש בעותק ישן מהזיכרון. דף שכבר פתוח אצל מישהו יזהה שיש גרסה חדשה (דרך `version.json`) ויתרענן לבד.
