@@ -1,6 +1,7 @@
 (function () {
   const ALL_SLOTS = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00'];
   const PASS_KEY = 'tefillin_admin_pass';
+  const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
 
   const app = document.getElementById('app');
@@ -13,6 +14,8 @@
     stations: [],   // public: [{id,name,address,notes,slots:[{slot,name}]}]
     admin: null,    // admin: {stations, signups}
     openCell: null, // "stationId|slot" of the cell whose inline form is open
+    query: '',      // search text (station or volunteer name)
+    freeOnly: false, // show only unassigned hours
     busy: false,
   };
 
@@ -66,11 +69,24 @@
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address);
   }
 
+  function waLink(phone, text) {
+    return 'https://wa.me/972' + phone.replace(/^0/, '') + (text ? '?text=' + encodeURIComponent(text) : '');
+  }
+
   function stationMeta(st) {
     const parts = [];
     if (st.address) parts.push('<a href="' + mapsLink(st.address) + '" target="_blank" rel="noopener">📍 ' + esc(st.address) + '</a>');
     if (st.notes) parts.push('<span>📝 ' + esc(st.notes) + '</span>');
-    return parts.length ? '<div class="station-meta">' + parts.join('') + '</div>' : '';
+    let html = parts.length ? '<div class="station-meta">' + parts.join('') + '</div>' : '';
+    if (st.managerName || st.managerPhone) {
+      html += '<div class="manager"><span>👤 מנהל הקלפי: <b>' + esc(st.managerName || '—') + '</b></span>';
+      if (st.managerPhone) {
+        html += '<a class="wa-btn" href="' + esc(waLink(st.managerPhone, 'שלום, לגבי מבצע תפילין בקלפי ' + st.name)) +
+          '" target="_blank" rel="noopener">' + WA_ICON + ' יצירת קשר בוואטסאפ</a>';
+      }
+      html += '</div>';
+    }
+    return html;
   }
 
   function cellForm(key, name, phone, submitLabel) {
@@ -89,6 +105,51 @@
   function setBusy(form, busy) {
     state.busy = busy;
     if (form) form.querySelectorAll('button, input').forEach(el => { el.disabled = busy; });
+  }
+
+  // ===== Running banner (sentences are editable by the admin) =====
+
+  function renderTicker(lines) {
+    const bar = document.getElementById('ticker');
+    const track = document.getElementById('ticker-track');
+    lines = (lines || []).filter(Boolean);
+    bar.classList.toggle('hidden', !lines.length);
+    if (!lines.length) return;
+    const run = '<span class="ticker-run">' + lines.map(l => '<span>' + esc(l) + '</span>').join('<i>✦</i>') + '<i>✦</i></span>';
+    // Two identical copies so the loop is seamless; speed is based on text length.
+    track.innerHTML = run + run.replace('class="ticker-run"', 'class="ticker-run" aria-hidden="true"');
+    track.style.animationDuration = Math.max(20, lines.join('').length / 6) + 's';
+  }
+
+  function openTickerModal() {
+    modalCard.innerHTML =
+      '<form data-form="ticker" class="station-form">' +
+        '<h2>משפטי הבאנר הרץ</h2>' +
+        '<p class="muted small">משפט אחד בכל שורה. שורה ריקה = נמחקת. עד 20 משפטים.</p>' +
+        '<textarea name="lines" rows="9">' + esc((state.admin.ticker || []).join('\n')) + '</textarea>' +
+        '<div class="modal-actions">' +
+          '<button type="submit" class="btn btn-gold">שמירה</button>' +
+          '<button type="button" class="btn btn-ghost" data-action="close-modal">ביטול</button>' +
+        '</div>' +
+      '</form>';
+    modal.classList.remove('hidden');
+    modalCard.querySelector('textarea').focus();
+  }
+
+  async function submitTicker(form) {
+    const lines = form.elements.lines.value.split('\n').map(l => l.trim()).filter(Boolean);
+    setBusy(form, true);
+    try {
+      const res = await Api.saveTicker(password(), lines);
+      state.admin.ticker = res.ticker;
+      renderTicker(res.ticker);
+      closeModal();
+      toast('הבאנר עודכן');
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setBusy(form, false);
+    }
   }
 
   // ===== Routing =====
@@ -112,34 +173,106 @@
     try {
       const data = await Api.getPublic();
       state.stations = data.stations;
+      renderTicker(data.ticker);
       renderPublic();
     } catch (err) {
       app.innerHTML = '<div class="card error">' + esc(err.message) + '</div>';
     }
   }
 
+  // ===== Search & "free hours only" filter (shared by both views) =====
+
+  function normalize(s) {
+    return String(s || '').toLowerCase().replace(/["'״׳`]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function toolbar(freeCount, stations) {
+    return (
+      '<div class="toolbar">' +
+        '<div class="toolbar-row">' +
+          '<input type="search" id="search" placeholder="🔍 חיפוש קלפי או שם משובץ…" value="' + esc(state.query) + '" aria-label="חיפוש">' +
+          '<button class="chip' + (state.freeOnly ? ' active' : '') + '" data-action="toggle-free" aria-pressed="' + state.freeOnly + '">' +
+            'רק פנויות <span class="chip-count">' + freeCount + '</span>' +
+          '</button>' +
+        '</div>' +
+        // Quick jump: one button per station, scrolls straight to its card.
+        '<nav class="jump" aria-label="מעבר מהיר לקלפי">' +
+          stations.map(st => '<button class="jump-btn" data-action="jump" data-id="' + esc(st.id) + '">' + esc(st.name) + '</button>').join('') +
+        '</nav>' +
+      '</div>' +
+      '<div id="list"></div>'
+    );
+  }
+
+  function slotTime(slot) {
+    const [from, to] = slot.split('-');
+    return '<div class="slot-time"><b>' + from + '</b><span>עד ' + to + '</span></div>';
+  }
+
+  function jumpTo(id) {
+    let card = document.getElementById('st-' + id);
+    if (!card && (state.query || state.freeOnly)) {
+      // The station is hidden by the search/filter – clear them so it can be shown.
+      state.query = '';
+      state.freeOnly = false;
+      document.getElementById('search').value = '';
+      const chip = app.querySelector('[data-action=toggle-free]');
+      chip.classList.remove('active');
+      chip.setAttribute('aria-pressed', 'false');
+      rerender();
+      card = document.getElementById('st-' + id);
+    }
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    card.classList.remove('flash');
+    void card.offsetWidth; // restart the highlight animation
+    card.classList.add('flash');
+  }
+
+  // Returns the slots of a station that pass the current search/filter (null = hide the station).
+  function filterSlots(station, slots, isFree, personText) {
+    const q = normalize(state.query);
+    const stationHit = !q || normalize([station.name, station.address, station.notes, station.managerName].join(' ')).includes(q);
+    const visible = slots.filter(s =>
+      (!state.freeOnly || isFree(s)) && (stationHit || normalize(personText(s)).includes(q)));
+    if (!visible.length && (q || state.freeOnly)) return null;
+    return visible;
+  }
+
+  function noResults() {
+    return '<div class="card muted empty">לא נמצאו ' + (state.freeOnly ? 'שעות פנויות' : 'תוצאות') +
+      (state.query ? ' עבור "' + esc(state.query) + '"' : '') + '</div>';
+  }
+
   function renderPublic() {
     const total = state.stations.reduce((n, st) => n + st.slots.length, 0);
     const free = state.stations.reduce((n, st) => n + st.slots.filter(s => !s.name).length, 0);
-    const me = load('local', ME_KEY) || {};
 
-    let html =
+    app.innerHTML =
       '<div class="intro card">' +
         '<p><strong>איך משתבצים?</strong> לוחצים על משבצת פנויה, כותבים שם מלא וטלפון – והשם נכנס ישר ללוח.</p>' +
         '<p class="muted">לשינוי או ביטול שיבוץ יש לפנות למנהל.</p>' +
         '<div class="progress"><div class="progress-bar" style="width:' + (total ? ((total - free) / total) * 100 : 0) + '%"></div></div>' +
         '<div class="muted small">' + free + ' משבצות פנויות מתוך ' + total + '</div>' +
-      '</div>';
+      '</div>' + toolbar(free, state.stations);
+    renderPublicList();
+  }
+
+  function renderPublicList() {
+    const me = load('local', ME_KEY) || {};
+    let html = '';
 
     if (!state.stations.length) html += '<div class="card muted">עדיין לא הוגדרו קלפיות.</div>';
 
     state.stations.forEach(st => {
-      html += '<section class="card station"><h2>' + esc(st.name) + '</h2>' + stationMeta(st);
-      if (!st.slots.length) {
+      const slots = filterSlots(st, st.slots, s => !s.name, s => s.name);
+      if (!slots) return;
+      html += '<section class="card station" id="st-' + esc(st.id) + '"><h2>' + esc(st.name) + '</h2>' + stationMeta(st);
+      if (!slots.length) {
         html += '<div class="muted">אין משמרות פעילות בקלפי זו</div>';
       } else {
         html += '<div class="slots">';
-        st.slots.forEach(s => {
+        slots.forEach(s => {
           const key = st.id + '|' + s.slot;
           let cell;
           if (s.name) {
@@ -149,14 +282,15 @@
           } else {
             cell = '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – לחצו לשיבוץ</button>';
           }
-          html += '<div class="slot-row"><div class="slot-time">' + slotLabel(s.slot) + '</div>' + cell + '</div>';
+          html += '<div class="slot-row">' + slotTime(s.slot) + cell + '</div>';
         });
         html += '</div>';
       }
       html += '</section>';
     });
 
-    app.innerHTML = html;
+    if (state.stations.length && !html) html = noResults();
+    document.getElementById('list').innerHTML = html;
     focusOpenForm();
   }
 
@@ -215,6 +349,7 @@
     if (!quiet) app.innerHTML = '<div class="loader">טוען נתוני מנהל…</div>';
     try {
       state.admin = await Api.getAdmin(password());
+      renderTicker(state.admin.ticker);
       renderAdmin();
     } catch (err) {
       if (/סיסמה/.test(err.message)) { remove('session', PASS_KEY); renderLogin(); }
@@ -222,14 +357,19 @@
     }
   }
 
+  function adminIndex() {
+    const bySlot = {};
+    state.admin.signups.forEach(s => { bySlot[s.stationId + '|' + s.slot] = s; });
+    return bySlot;
+  }
+
   function renderAdmin() {
     const { stations, signups } = state.admin;
-    const bySlot = {};
-    signups.forEach(s => { bySlot[s.stationId + '|' + s.slot] = s; });
+    const bySlot = adminIndex();
     const totalSlots = stations.reduce((n, st) => n + st.slots.length, 0);
     const filled = stations.reduce((n, st) => n + st.slots.filter(sl => bySlot[st.id + '|' + sl]).length, 0);
 
-    let html =
+    app.innerHTML =
       '<div class="admin-bar card">' +
         '<div class="stats">' +
           '<div><b>' + stations.length + '</b><span>קלפיות</span></div>' +
@@ -239,13 +379,27 @@
         '<div class="admin-actions">' +
           '<button class="btn btn-gold" data-action="add-station">+ הוספת קלפי</button>' +
           '<button class="btn btn-ghost" data-action="refresh">רענון</button>' +
+          '<button class="btn btn-ghost" data-action="edit-ticker">משפטי הבאנר</button>' +
+          '<button class="btn btn-ghost" data-action="change-password">שינוי סיסמה</button>' +
           '<button class="btn btn-ghost" data-action="logout">יציאה</button>' +
         '</div>' +
-      '</div>';
+      '</div>' + toolbar(totalSlots - filled, stations);
+    renderAdminList();
+  }
+
+  function renderAdminList() {
+    const { stations } = state.admin;
+    const bySlot = adminIndex();
+    let html = '';
 
     stations.forEach(st => {
+      const slots = filterSlots(st,
+        ALL_SLOTS.filter(slot => st.slots.indexOf(slot) !== -1 || bySlot[st.id + '|' + slot] || !(state.query || state.freeOnly)),
+        slot => st.slots.indexOf(slot) !== -1 && !bySlot[st.id + '|' + slot],
+        slot => { const s = bySlot[st.id + '|' + slot]; return s ? s.name + ' ' + s.phone : ''; });
+      if (!slots) return;
       html +=
-        '<section class="card station">' +
+        '<section class="card station" id="st-' + esc(st.id) + '">' +
           '<div class="station-head"><h2>' + esc(st.name) + '</h2>' +
             '<div class="station-tools">' +
               '<button class="icon-btn" title="עריכה" data-action="edit-station" data-id="' + esc(st.id) + '">✎</button>' +
@@ -253,7 +407,7 @@
             '</div>' +
           '</div>' + stationMeta(st) + '<div class="slots">';
 
-      ALL_SLOTS.forEach(slot => {
+      slots.forEach(slot => {
         const key = st.id + '|' + slot;
         const active = st.slots.indexOf(slot) !== -1;
         const s = bySlot[key];
@@ -265,7 +419,7 @@
             '<div class="cell cell-taken admin">' +
               '<div class="who"><b>' + esc(s.name) + '</b>' +
                 '<a href="tel:' + esc(s.phone) + '">' + esc(formatPhone(s.phone)) + '</a>' +
-                '<a href="https://wa.me/972' + esc(s.phone.replace(/^0/, '')) + '" target="_blank" rel="noopener">וואטסאפ</a>' +
+                '<a href="' + esc(waLink(s.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a>' +
                 (active ? '' : '<span class="tag">משמרת לא פעילה</span>') +
               '</div>' +
               '<div class="cell-tools">' +
@@ -278,13 +432,14 @@
         } else {
           cell = '<div class="cell cell-off">לא פעיל</div>';
         }
-        html += '<div class="slot-row"><div class="slot-time">' + slotLabel(slot) + '</div>' + cell + '</div>';
+        html += '<div class="slot-row">' + slotTime(slot) + cell + '</div>';
       });
       html += '</div></section>';
     });
 
-    if (!stations.length) html += '<div class="card muted">אין קלפיות. הוסיפו קלפי ראשונה.</div>';
-    app.innerHTML = html;
+    if (!stations.length) html = '<div class="card muted">אין קלפיות. הוסיפו קלפי ראשונה.</div>';
+    else if (!html) html = noResults();
+    document.getElementById('list').innerHTML = html;
     focusOpenForm();
   }
 
@@ -306,7 +461,7 @@
   }
 
   function openStationModal(station) {
-    const st = station || { id: '', name: '', address: '', notes: '', slots: ALL_SLOTS.slice() };
+    const st = station || { id: '', name: '', address: '', notes: '', managerName: '', managerPhone: '', slots: ALL_SLOTS.slice() };
     modalCard.innerHTML =
       '<form data-form="station" class="station-form">' +
         '<h2>' + (station ? 'עריכת קלפי' : 'הוספת קלפי') + '</h2>' +
@@ -314,6 +469,10 @@
         '<label>שם הקלפי<input name="name" required value="' + esc(st.name) + '"></label>' +
         '<label>כתובת<input name="address" value="' + esc(st.address) + '"></label>' +
         '<label>הערות<textarea name="notes" rows="2">' + esc(st.notes) + '</textarea></label>' +
+        '<div class="form-row">' +
+          '<label>שם מנהל הקלפי<input name="managerName" value="' + esc(st.managerName || '') + '"></label>' +
+          '<label>טלפון מנהל הקלפי<input name="managerPhone" type="tel" inputmode="tel" value="' + esc(st.managerPhone || '') + '"></label>' +
+        '</div>' +
         '<fieldset><legend>שעות פעילות</legend>' +
           ALL_SLOTS.map(slot =>
             '<label class="check-label"><input type="checkbox" name="slots" value="' + slot + '"' +
@@ -340,9 +499,12 @@
       name: form.elements.name.value.trim(),
       address: form.elements.address.value.trim(),
       notes: form.elements.notes.value.trim(),
+      managerName: form.elements.managerName.value.trim(),
+      managerPhone: form.elements.managerPhone.value.replace(/\D/g, ''),
       slots: Array.from(form.querySelectorAll('input[name=slots]:checked')).map(el => el.value),
     };
     if (!station.name) return toast('יש להזין שם לקלפי', 'error');
+    if (station.managerPhone && !/^0\d{8,9}$/.test(station.managerPhone)) return toast('מספר הטלפון של מנהל הקלפי לא תקין', 'error');
     setBusy(form, true);
     try {
       await Api.saveStation(password(), station);
@@ -375,8 +537,21 @@
     (input.value ? app.querySelector('.cell-form button[type=submit]') : input).focus();
   }
 
+  // Redraws only the station list, so the search box keeps focus while typing.
   function rerender() {
-    state.view === 'admin' ? renderAdmin() : renderPublic();
+    state.view === 'admin' ? renderAdminList() : renderPublicList();
+  }
+
+  async function changePassword() {
+    const next = prompt('סיסמה חדשה (לפחות 6 תווים):');
+    if (next == null) return;
+    try {
+      await Api.changePassword(password(), next);
+      save('session', PASS_KEY, next);
+      toast('הסיסמה עודכנה');
+    } catch (err) {
+      toast(err.message, 'error');
+    }
   }
 
   document.addEventListener('click', e => {
@@ -408,6 +583,18 @@
         return adminAction(() => Api.cancelSignup(password(), id),
           'לבטל את השיבוץ של ' + s.name + ' (' + slotLabel(s.slot) + ')?', 'השיבוץ בוטל');
       }
+      case 'toggle-free':
+        state.freeOnly = !state.freeOnly;
+        state.openCell = null;
+        el.classList.toggle('active', state.freeOnly);
+        el.setAttribute('aria-pressed', state.freeOnly);
+        return rerender();
+      case 'change-password':
+        return changePassword();
+      case 'edit-ticker':
+        return openTickerModal();
+      case 'jump':
+        return jumpTo(id);
       case 'refresh':
         return loadAdmin();
       case 'logout':
@@ -425,7 +612,15 @@
     const kind = form.dataset.form;
     if (kind === 'login') return submitLogin(form);
     if (kind === 'station') return submitStation(form);
+    if (kind === 'ticker') return submitTicker(form);
     return state.view === 'admin' ? submitAdminSlot(form, kind) : submitSignup(form, kind);
+  });
+
+  document.addEventListener('input', e => {
+    if (e.target.id !== 'search') return;
+    state.query = e.target.value;
+    state.openCell = null;
+    rerender();
   });
 
   document.addEventListener('keydown', e => {
