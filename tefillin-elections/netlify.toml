@@ -1,0 +1,10 @@
+# Set "Base directory" to tefillin-elections in Netlify; this file is read from there.
+[build]
+  publish = "public"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

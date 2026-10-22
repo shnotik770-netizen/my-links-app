@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מבצע תפילין בקלפיות</title>
+  <meta name="description" content="שיבוץ אנ״ש למבצע תפילין בקלפיות ביום הבחירות">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <a href="#/" class="hero-title" id="event-title">מבצע תפילין בקלפיות</a>
+      <div class="hero-date" id="event-date"></div>
+    </div>
+  </header>
+
+  <main id="app" class="container">
+    <div class="loader">טוען…</div>
+  </main>
+
+  <footer class="footer">
+    <a href="#/admin" id="admin-link">כניסת מנהל</a>
+  </footer>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card" id="modal-card"></div>
+  </div>
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
