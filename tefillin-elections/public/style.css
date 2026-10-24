@@ -39,17 +39,37 @@ a { color: var(--navy-2); }
 .hero {
   background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
   color: #fff;
-  padding: 28px 16px 40px;
+  padding: 40px 16px 56px;
   border-radius: 0 0 28px 28px;
   box-shadow: 0 10px 25px -10px rgba(15, 23, 42, .5);
 }
-.hero-inner { max-width: 760px; margin: 0 auto; text-align: center; }
+.hero { position: relative; overflow: hidden; }
+.hero-inner { position: relative; max-width: 760px; margin: 0 auto; text-align: center; }
+/* Illustrated scenes of tefillin stands at polling stations, crossfading behind the title. */
+.hero-slides, .hero-slides div { position: absolute; inset: 0; }
+.hero-slides div { background: center / cover no-repeat; opacity: 0; animation: hero-fade 18s infinite; }
+.hero-slides div:nth-child(1) { background-image: url('img/scene-1.svg'); }
+.hero-slides div:nth-child(2) { background-image: url('img/scene-2.svg'); animation-delay: 6s; }
+.hero-slides div:nth-child(3) { background-image: url('img/scene-3.svg'); animation-delay: 12s; }
+/* dark overlay so the title stays readable */
+.hero-slides::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(15, 23, 42, .62) 0%, rgba(30, 58, 138, .42) 100%);
+}
+@keyframes hero-fade {
+  0% { opacity: 0; } 6% { opacity: 1; } 33% { opacity: 1; } 40% { opacity: 0; } 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-slides div { animation: none; }
+  .hero-slides div:nth-child(1) { opacity: 1; }
+}
 .hero-title {
   display: block;
   color: #fff;
   text-decoration: none;
   font-size: clamp(1.6rem, 6vw, 2.3rem);
   font-weight: 800;
+  text-shadow: 0 2px 10px rgba(15, 23, 42, .85);
 }
 .hero-date {
   display: inline-block;

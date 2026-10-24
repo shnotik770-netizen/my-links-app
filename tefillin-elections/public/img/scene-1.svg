@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice">
+  <!-- Scene 1: tefillin stand outside a school used as a polling station -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7cc4f2"/>
+      <stop offset="1" stop-color="#fde7b5"/>
+    </linearGradient>
+    <pattern id="cloth" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="#ffffff"/>
+      <rect y="0" width="40" height="8" fill="#1e3a8a"/>
+      <rect y="24" width="40" height="4" fill="#1e3a8a"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="400" fill="url(#sky)"/>
+  <circle cx="480" cy="66" r="40" fill="#ffd166"/>
+  <g fill="#ffffff" opacity=".85">
+    <ellipse cx="200" cy="70" rx="70" ry="22"/><ellipse cx="250" cy="60" rx="50" ry="24"/>
+    <ellipse cx="760" cy="55" rx="80" ry="20"/><ellipse cx="820" cy="48" rx="46" ry="20"/>
+  </g>
+  <!-- ground and sidewalk -->
+  <rect y="330" width="1200" height="70" fill="#9bbf6b"/>
+  <rect y="318" width="1200" height="22" fill="#d6cfc2"/>
+
+  <!-- school building -->
+  <rect x="560" y="120" width="460" height="200" fill="#efe2c8"/>
+  <rect x="540" y="104" width="500" height="22" fill="#c9a66b"/>
+  <g fill="#7fb3d5" stroke="#8a6d45" stroke-width="4">
+    <rect x="590" y="150" width="60" height="50"/><rect x="680" y="150" width="60" height="50"/>
+    <rect x="860" y="150" width="60" height="50"/><rect x="940" y="150" width="60" height="50"/>
+    <rect x="590" y="230" width="60" height="50"/><rect x="940" y="230" width="60" height="50"/>
+  </g>
+  <rect x="760" y="220" width="80" height="100" fill="#8a6d45"/>
+  <circle cx="826" cy="272" r="4" fill="#f2d398"/>
+  <!-- "קלפי" sign above the door -->
+  <rect x="745" y="170" width="110" height="40" rx="6" fill="#1e3a8a"/>
+  <text x="800" y="199" text-anchor="middle" font-family="Assistant, Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff">קלפי</text>
+  <!-- flag -->
+  <rect x="1040" y="40" width="5" height="280" fill="#8d8d8d"/>
+  <rect x="1045" y="44" width="80" height="54" fill="#ffffff" stroke="#d0d7e5"/>
+  <rect x="1045" y="50" width="80" height="7" fill="#1d4ed8"/><rect x="1045" y="85" width="80" height="7" fill="#1d4ed8"/>
+  <path d="M1085 61 l9 15 h-18 z M1085 81 l9 -15 h-18 z" fill="none" stroke="#1d4ed8" stroke-width="2.5"/>
+
+  <!-- tefillin stand -->
+  <rect x="236" y="150" width="6" height="110" fill="#5b4a33"/>
+  <rect x="454" y="150" width="6" height="110" fill="#5b4a33"/>
+  <rect x="220" y="130" width="256" height="62" rx="8" fill="#f59e0b"/>
+  <text x="348" y="173" text-anchor="middle" font-family="Assistant, Arial, sans-serif" font-size="32" font-weight="800" fill="#0f172a">הנחת תפילין</text>
+  <rect x="210" y="258" width="276" height="16" fill="#5b4a33"/>
+  <rect x="214" y="270" width="268" height="58" fill="url(#cloth)"/>
+  <rect x="232" y="328" width="8" height="10" fill="#5b4a33"/><rect x="456" y="328" width="8" height="10" fill="#5b4a33"/>
+  <!-- tefillin on the table -->
+  <g>
+    <rect x="300" y="236" width="22" height="22" fill="#111111"/>
+    <rect x="296" y="254" width="30" height="5" fill="#111111"/>
+    <path d="M326 256 q30 -6 40 2 q10 8 -6 10 q-14 2 -10 -6" fill="none" stroke="#111111" stroke-width="4"/>
+    <rect x="390" y="240" width="18" height="18" fill="#111111" transform="rotate(-8 399 249)"/>
+    <path d="M388 258 q-12 0 -16 6 M410 256 q16 4 20 10" fill="none" stroke="#111111" stroke-width="4"/>
+  </g>
+
+  <!-- chassid at the stand -->
+  <g>
+    <rect x="150" y="240" width="56" height="88" rx="18" fill="#1f2937"/>
+    <rect x="160" y="318" width="14" height="22" fill="#111827"/><rect x="182" y="318" width="14" height="22" fill="#111827"/>
+    <circle cx="178" cy="214" r="22" fill="#f1c9a5"/>
+    <path d="M160 222 q18 34 36 0 q-2 22 -18 26 q-16 -4 -18 -26z" fill="#3f2a1c"/>
+    <ellipse cx="178" cy="196" rx="34" ry="7" fill="#111111"/>
+    <rect x="160" y="176" width="36" height="22" rx="5" fill="#111111"/>
+    <rect x="204" y="252" width="24" height="10" rx="5" fill="#1f2937" transform="rotate(-25 204 257)"/>
+  </g>
+  <!-- passer-by heading to vote, invited to the stand -->
+  <g>
+    <rect x="500" y="246" width="50" height="82" rx="16" fill="#2563eb"/>
+    <rect x="508" y="318" width="13" height="22" fill="#334155"/><rect x="529" y="318" width="13" height="22" fill="#334155"/>
+    <circle cx="525" cy="222" r="20" fill="#e8b98f"/>
+    <path d="M507 214 q18 -22 36 0 q-6 -8 -18 -8 q-12 0 -18 8z" fill="#4b3621"/>
+    <rect x="474" y="262" width="32" height="10" rx="5" fill="#2563eb" transform="rotate(20 490 267)"/>
+    <rect x="452" y="270" width="20" height="14" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+</svg>
