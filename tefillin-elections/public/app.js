@@ -4,10 +4,11 @@
   const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
   const MAX_PER_SLOT = 2;
   // Must match public/version.json (both are set by bump-version.sh).
-  const VERSION = '2026.10.22-152858';
+  const VERSION = '2026.10.24-182258';
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
+  const HELP_KEY = 'tefillin_help_seen';
 
   const app = document.getElementById('app');
   const modal = document.getElementById('modal');
@@ -21,6 +22,7 @@
     openCell: null, // "stationId|slot" of the cell whose inline form is open
     query: '',      // search text (station or volunteer name)
     freeOnly: false, // show only unassigned hours
+    helpOpen: false, // how-to bubble (set on first visit below)
     busy: false,
   };
 
@@ -82,9 +84,21 @@
     return 'https://wa.me/972' + phone.replace(/^0/, '') + (text ? '?text=' + encodeURIComponent(text) : '');
   }
 
+  // Accepts "32.602403,35.286722" as copied from Google Maps, or a Google Maps link containing it.
+  // Returns "lat,lng", '' for empty input, or null if no coordinates were found.
+  function parseCoords(text) {
+    text = String(text || '').trim();
+    if (!text) return '';
+    const m = text.match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+    return m ? m[1] + ',' + m[2] : null;
+  }
+
   function stationMeta(st) {
     const parts = [];
-    if (st.address) parts.push('<a href="' + mapsLink(st.address) + '" target="_blank" rel="noopener">📍 ' + esc(st.address) + '</a>');
+    // Exact coordinates (when set) beat a text address search.
+    const nav = st.coords ? 'https://www.google.com/maps/search/?api=1&query=' + st.coords : st.address ? mapsLink(st.address) : '';
+    if (nav) parts.push('<a href="' + esc(nav) + '" target="_blank" rel="noopener">📍 ' + esc(st.address || 'ניווט לקלפי') + '</a>');
+    if (st.coords) parts.push('<a href="https://waze.com/ul?ll=' + esc(st.coords) + '&navigate=yes" target="_blank" rel="noopener">🚗 Waze</a>');
     if (st.notes) parts.push('<span>📝 ' + esc(st.notes) + '</span>');
     let html = parts.length ? '<div class="station-meta">' + parts.join('') + '</div>' : '';
     if (st.managerName || st.managerPhone) {
@@ -268,15 +282,17 @@
     return String(s || '').toLowerCase().replace(/["'״׳`]/g, '').replace(/\s+/g, ' ').trim();
   }
 
-  function toolbar(freeCount, stations) {
+  function toolbar(freeCount, stations, help) {
     return (
       '<div class="toolbar">' +
         '<div class="toolbar-row">' +
-          '<input type="search" id="search" placeholder="🔍 חיפוש קלפי או שם משובץ…" value="' + esc(state.query) + '" aria-label="חיפוש">' +
+          (help ? '<button class="help-btn" data-action="toggle-help" aria-label="איך נרשמים?" aria-expanded="' + state.helpOpen + '">?</button>' : '') +
+          '<input type="search" id="search" placeholder="🔍 חיפוש קלפי או שם…" value="' + esc(state.query) + '" aria-label="חיפוש">' +
           '<button class="chip' + (state.freeOnly ? ' active' : '') + '" data-action="toggle-free" aria-pressed="' + state.freeOnly + '">' +
             'רק פנויות <span class="chip-count">' + freeCount + '</span>' +
           '</button>' +
         '</div>' +
+        (help ? helpBubble() : '') +
         // Quick jump: one button per station, scrolls straight to its card.
         '<nav class="jump" aria-label="מעבר מהיר לקלפי">' +
           stations.map(st => '<button class="jump-btn" data-action="jump" data-id="' + esc(st.id) + '">' + esc(st.name) + '</button>').join('') +
@@ -326,17 +342,28 @@
       (state.query ? ' עבור "' + esc(state.query) + '"' : '') + '</div>';
   }
 
-  function renderPublic() {
-    const total = state.stations.reduce((n, st) => n + st.slots.length, 0);
-    const free = state.stations.reduce((n, st) => n + st.slots.filter(s => !s.names.length).length, 0);
+  // How-to instructions live in a bubble behind the "?" button (open by itself on the first visit only).
+  function helpBubble() {
+    return (
+      '<div class="help-bubble" id="help"' + (state.helpOpen ? '' : ' hidden') + '>' +
+        '<p><strong>איך משתבצים?</strong> לוחצים על משבצת פנויה, כותבים שם מלא וטלפון – והשם נכנס ישר ללוח. ' +
+          'אחרי שיש פעיל בשעה אפשר להוסיף פעיל שני ב"+ הוסף פעיל".</p>' +
+        '<p><strong>שינוי או ביטול:</strong> פונים לאחד ממנהלי הקלפיות (כפתור הוואטסאפ שליד כל קלפי).</p>' +
+        '<button class="btn btn-gold" data-action="toggle-help">הבנתי</button>' +
+      '</div>'
+    );
+  }
 
-    app.innerHTML =
-      '<div class="intro card">' +
-        '<p><strong>איך משתבצים?</strong> לוחצים על משבצת פנויה, כותבים שם מלא וטלפון – והשם נכנס ישר ללוח.</p>' +
-        '<p class="muted">לשינוי או ביטול שיבוץ יש לפנות לאחד ממנהלי הקלפיות (כפתור הוואטסאפ שליד כל קלפי).</p>' +
-        '<div class="progress"><div class="progress-bar" style="width:' + (total ? ((total - free) / total) * 100 : 0) + '%"></div></div>' +
-        '<div class="muted small">' + free + ' משבצות פנויות מתוך ' + total + '</div>' +
-      '</div>' + toolbar(free, state.stations);
+  function toggleHelp() {
+    state.helpOpen = !state.helpOpen;
+    save('local', HELP_KEY, true);
+    document.getElementById('help').hidden = !state.helpOpen;
+    app.querySelector('.help-btn').setAttribute('aria-expanded', state.helpOpen);
+  }
+
+  function renderPublic() {
+    const free = state.stations.reduce((n, st) => n + st.slots.filter(s => !s.names.length).length, 0);
+    app.innerHTML = toolbar(free, state.stations, true);
     renderPublicList();
   }
 
@@ -573,6 +600,10 @@
         '<input type="hidden" name="id" value="' + esc(st.id) + '">' +
         '<label>שם הקלפי<input name="name" required value="' + esc(st.name) + '"></label>' +
         '<label>כתובת<input name="address" value="' + esc(st.address) + '"></label>' +
+        '<label>נ.צ. מגוגל מפות (למיקום מדויק)' +
+          '<input name="coords" dir="ltr" placeholder="32.602403,35.286722" value="' + esc(st.coords || '') + '">' +
+          '<span class="hint">בגוגל מפות: לחיצה ארוכה על המקום ← העתקת המספרים שמופיעים למעלה ← הדבקה כאן</span>' +
+        '</label>' +
         '<label>הערות<textarea name="notes" rows="2">' + esc(st.notes) + '</textarea></label>' +
         '<div class="form-row">' +
           '<label>שם מנהל הקלפי<input name="managerName" value="' + esc(st.managerName || '') + '"></label>' +
@@ -606,9 +637,11 @@
       notes: form.elements.notes.value.trim(),
       managerName: form.elements.managerName.value.trim(),
       managerPhone: form.elements.managerPhone.value.replace(/\D/g, ''),
+      coords: parseCoords(form.elements.coords.value),
       slots: Array.from(form.querySelectorAll('input[name=slots]:checked')).map(el => el.value),
     };
     if (!station.name) return toast('יש להזין שם לקלפי', 'error');
+    if (station.coords === null) return toast('נ.צ. לא תקין. יש להדביק מגוגל מפות בפורמט 32.602403,35.286722', 'error');
     if (station.managerPhone && !/^0\d{8,9}$/.test(station.managerPhone)) return toast('מספר הטלפון של מנהל הקלפי לא תקין', 'error');
     setBusy(form, true);
     try {
@@ -704,6 +737,8 @@
         return makeManager(id);
       case 'send-login':
         return sendLogin(id);
+      case 'toggle-help':
+        return toggleHelp();
       case 'jump':
         return jumpTo(id);
       case 'refresh':
@@ -762,6 +797,8 @@
       }
     } catch (e) { /* offline or storage blocked – keep running the current version */ }
   }
+
+  state.helpOpen = !load('local', HELP_KEY);
 
   window.addEventListener('hashchange', route);
   route();

@@ -1,5 +1,5 @@
 -- Mivtza Tefillin election-day scheduler – Supabase schema (project "toranim-system").
--- Applied as migrations tefillin_1 … tefillin_11. Kept here as the readable reference.
+-- Applied as migrations tefillin_1 … tefillin_12. Kept here as the readable reference.
 --
 -- Security model:
 --   * All objects are prefixed tefillin_ and isolated from the project's other tables.
@@ -19,6 +19,8 @@ create table public.tefillin_stations (
   slots text[] not null default '{}',
   manager_name text not null default '' check (length(manager_name) <= 60),
   manager_phone text not null default '' check (manager_phone = '' or manager_phone ~ '^0\d{8,9}$'),
+  -- exact location from Google Maps ("lat,lng"), used for the navigation links
+  coords text not null default '' check (coords = '' or coords ~ '^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$'),
   position int not null default 0,
   created_at timestamptz not null default now()
 );
@@ -85,7 +87,7 @@ $$;
 create function public.tefillin_get_public() returns jsonb
 language sql stable set search_path = public as $$
   select jsonb_build_object('ticker', tefillin_ticker(), 'stations', coalesce(jsonb_agg(jsonb_build_object(
-    'id', s.id, 'name', s.name, 'address', s.address, 'notes', s.notes,
+    'id', s.id, 'name', s.name, 'address', s.address, 'notes', s.notes, 'coords', s.coords,
     -- The station manager's contact is public on purpose (WhatsApp button for volunteers).
     'managerName', s.manager_name, 'managerPhone', s.manager_phone,
     'slots', (
@@ -143,7 +145,7 @@ begin
     'allSlots', to_jsonb(tefillin_all_slots()),
     'ticker', tefillin_ticker(),
     'stations', (select coalesce(jsonb_agg(jsonb_build_object(
-        'id', id, 'name', name, 'address', address, 'notes', notes, 'slots', to_jsonb(slots),
+        'id', id, 'name', name, 'address', address, 'notes', notes, 'coords', coords, 'slots', to_jsonb(slots),
         'managerName', manager_name, 'managerPhone', manager_phone
       ) order by position, created_at), '[]'::jsonb) from tefillin_stations),
     'signups', (select coalesce(jsonb_agg(jsonb_build_object(
@@ -164,14 +166,18 @@ declare
   );
   v_mgr_name text := left(btrim(coalesce(p_station->>'managerName', '')), 60);
   v_mgr_phone text := regexp_replace(coalesce(p_station->>'managerPhone', ''), '\D', '', 'g');
+  v_coords text := regexp_replace(coalesce(p_station->>'coords', ''), '\s', '', 'g');
 begin
   perform tefillin_check_admin(p_password);
   if v_name = '' then raise exception 'יש להזין שם לקלפי'; end if;
   if v_mgr_phone <> '' and v_mgr_phone !~ '^0\d{8,9}$' then raise exception 'מספר הטלפון של מנהל הקלפי לא תקין'; end if;
+  if v_coords <> '' and v_coords !~ '^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$' then
+    raise exception 'נ.צ. לא תקין. יש להדביק מגוגל מפות בפורמט 32.602403,35.286722';
+  end if;
   if v_id is null then
-    insert into tefillin_stations (name, address, notes, slots, manager_name, manager_phone, position)
+    insert into tefillin_stations (name, address, notes, slots, manager_name, manager_phone, coords, position)
     values (left(v_name, 100), left(btrim(coalesce(p_station->>'address', '')), 200),
-            left(btrim(coalesce(p_station->>'notes', '')), 500), v_slots, v_mgr_name, v_mgr_phone,
+            left(btrim(coalesce(p_station->>'notes', '')), 500), v_slots, v_mgr_name, v_mgr_phone, v_coords,
             coalesce((select max(position) + 1 from tefillin_stations), 0))
     returning id into v_id;
   else
@@ -181,7 +187,8 @@ begin
       notes = left(btrim(coalesce(p_station->>'notes', '')), 500),
       slots = v_slots,
       manager_name = v_mgr_name,
-      manager_phone = v_mgr_phone
+      manager_phone = v_mgr_phone,
+      coords = v_coords
     where id = v_id;
     if not found then raise exception 'הקלפי לא נמצאה'; end if;
   end if;

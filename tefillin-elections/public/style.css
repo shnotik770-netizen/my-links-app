@@ -62,7 +62,7 @@ a { color: var(--navy-2); }
 }
 
 /* ===== Layout ===== */
-.container { max-width: 760px; margin: -20px auto 0; padding: 0 16px 24px; }
+.container { max-width: 760px; margin: 6px auto 0; padding: 0 16px 24px; }
 .card {
   background: var(--card);
   border-radius: var(--radius);
@@ -73,9 +73,6 @@ a { color: var(--navy-2); }
 .card.error { color: var(--danger); font-weight: 600; }
 .loader { text-align: center; padding: 48px 0; color: var(--muted); font-weight: 600; }
 
-.intro p { margin: 0 0 6px; }
-.progress { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 12px 0 6px; }
-.progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); transition: width .4s; }
 
 /* ===== Search & filter ===== */
 .toolbar {
@@ -116,6 +113,32 @@ a { color: var(--navy-2); }
 .chip-count { background: rgba(21, 128, 61, .12); border-radius: 99px; padding: 0 8px; font-size: .85rem; }
 .chip.active .chip-count { background: rgba(255, 255, 255, .25); }
 .empty { text-align: center; }
+
+/* ===== Help bubble ===== */
+.help-btn {
+  flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: none; background: var(--navy-2); color: #fff;
+  font: inherit; font-size: 1.2rem; font-weight: 800;
+  cursor: pointer;
+}
+.help-bubble {
+  position: relative;
+  margin-top: 10px; padding: 12px 14px;
+  background: #fff; border: 2px solid var(--gold); border-radius: 12px;
+  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, .35);
+  font-size: .95rem;
+}
+/* little arrow pointing up at the "?" button (on the right in RTL) */
+.help-bubble::before {
+  content: ''; position: absolute; top: -9px; right: 13px;
+  width: 14px; height: 14px; background: #fff;
+  border-top: 2px solid var(--gold); border-left: 2px solid var(--gold);
+  transform: rotate(45deg);
+}
+.help-bubble p { margin: 0 0 8px; }
+.help-bubble .btn { padding: 6px 16px; }
+.hint { font-size: .8rem; font-weight: 400; color: var(--muted); }
 
 /* ===== Station ===== */
 .station h2 { margin: 0; font-size: 1.3rem; color: var(--navy); }
