@@ -114,6 +114,11 @@ a { color: var(--navy-2); }
 .chip.active .chip-count { background: rgba(255, 255, 255, .25); }
 .empty { text-align: center; }
 
+/* ===== Mini progress ===== */
+.mini-progress { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.mini-bar { flex: 1; height: 5px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.mini-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); transition: width .4s; }
+
 /* ===== Help bubble ===== */
 .help-btn {
   flex-shrink: 0;
