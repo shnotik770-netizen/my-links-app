@@ -47,17 +47,16 @@ a { color: var(--navy-2); }
 .hero-text { flex: 1; min-width: 0; text-align: center; }
 
 /* Ballot animation on the left of the header: the slip (ש) drops into the box, the box bumps. */
-.ballot { flex: 0 0 auto; width: 104px; text-align: center; }
-.ballot svg { display: block; width: 80px; margin: 0 auto; overflow: visible; }
+.ballot { flex: 0 0 auto; width: 120px; }
+.ballot svg { display: block; width: 100%; overflow: visible; }
 .ballot .slip { animation: slip-drop 3.2s ease-in infinite; }
 .ballot .box { transform-box: fill-box; transform-origin: center bottom; animation: box-bump 3.2s ease-out infinite; }
-.ballot-caption { margin-top: 4px; font-size: .8rem; font-weight: 800; color: var(--gold); line-height: 1.2; }
 @keyframes slip-drop {
   0% { transform: translateY(-14px); opacity: 0; }
   12% { transform: translateY(0); opacity: 1; }
   40% { transform: translateY(0); }
-  68% { transform: translateY(46px); }
-  100% { transform: translateY(46px); }
+  68% { transform: translateY(76px); }
+  100% { transform: translateY(76px); }
 }
 @keyframes box-bump {
   0%, 66% { transform: scale(1); }
@@ -69,9 +68,7 @@ a { color: var(--navy-2); }
 }
 @media (max-width: 560px) {
   .hero-inner { gap: 8px; }
-  .ballot { width: 78px; }
-  .ballot svg { width: 60px; }
-  .ballot-caption { font-size: .68rem; }
+  .ballot { width: 92px; }
 }
 .hero-title {
   display: block;
