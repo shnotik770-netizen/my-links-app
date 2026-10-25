@@ -40,19 +40,48 @@ a { color: var(--navy-2); }
 .hero {
   /* bottom band of the campaign poster (ballot box, tefillin, Afula) under a dark layer */
   background:
-    linear-gradient(180deg, rgba(10, 20, 55, .78) 0%, rgba(10, 20, 55, .55) 60%, rgba(10, 20, 55, .7) 100%),
+    linear-gradient(180deg, rgba(10, 20, 55, .55) 0%, rgba(10, 20, 55, .35) 60%, rgba(10, 20, 55, .55) 100%),
     url('img/hero.webp') center 55% / cover no-repeat,
     var(--poster-navy);
   color: #fff;
-  padding: 30px 16px 42px;
+  padding: 22px 14px 18px;
   border-radius: 0 0 28px 28px;
   box-shadow: 0 10px 25px -10px rgba(15, 23, 42, .5);
+  text-align: center;
 }
-.hero-inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 14px; }
-.hero-text { flex: 1; min-width: 0; text-align: center; }
 
-/* Ballot animation on the left of the header: the slip (ש) drops into the box, the box sways. */
-.ballot { flex: 0 0 auto; width: 120px; }
+/* Navy title box, as in the campaign poster */
+.hero-card {
+  max-width: 760px; margin: 0 auto;
+  display: flex; align-items: center; gap: 18px;
+  padding: 16px 26px;
+  background: var(--poster-navy);
+  border-radius: 24px;
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .55);
+}
+.hero-text { flex: 1; min-width: 0; text-align: center; font-family: 'Secular One', 'Assistant', sans-serif; line-height: 1.1; }
+.hero-title { display: block; color: #fff; text-decoration: none; font-size: clamp(1.7rem, 7.4vw, 3.1rem); }
+.hero-sub { margin-top: 4px; font-size: clamp(1rem, 4.3vw, 1.75rem); }
+.hero-city {
+  display: flex; align-items: center; justify-content: center; gap: .3em;
+  margin-top: 4px;
+  color: var(--gold);
+  font-size: clamp(2.1rem, 9.5vw, 4rem);
+}
+.hero-city i { flex: 0 1 1.9em; height: .11em; background: var(--gold); border-radius: 99px; }
+
+.hero-date {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 5px 20px 7px;
+  color: var(--poster-navy);
+  font-weight: 800;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23ffd400' d='M8 20 C60 6 140 14 220 8 C300 2 360 12 394 9 L387 33 L398 52 L384 71 L396 90 C320 97 240 90 160 95 C100 98 40 92 5 91 L14 71 L2 52 L12 33 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.nowrap { white-space: nowrap; }
+
+/* Ballot icon in the title box: the slip (ש) drops into the box, the box sways. */
+.ballot { flex: 0 0 auto; width: 130px; }
 .ballot svg { display: block; width: 100%; overflow: visible; }
 .ballot .slip { animation: slip-drop 3.2s ease-in infinite; }
 .ballot .box { transform-box: fill-box; transform-origin: center bottom; animation: box-bump 3.2s ease-out infinite; }
@@ -60,8 +89,8 @@ a { color: var(--navy-2); }
   0% { transform: translateY(-14px); opacity: 0; }
   12% { transform: translateY(0); opacity: 1; }
   40% { transform: translateY(0); }
-  68% { transform: translateY(76px); }
-  100% { transform: translateY(76px); }
+  68% { transform: translateY(64px); }
+  100% { transform: translateY(64px); }
 }
 /* after the slip goes in, the box sways right and left and settles */
 @keyframes box-bump {
@@ -77,35 +106,10 @@ a { color: var(--navy-2); }
   .ballot .slip, .ballot .box { animation: none; }
 }
 @media (max-width: 560px) {
-  .hero-inner { gap: 8px; }
-  .ballot { width: 92px; }
+  .hero { padding: 14px 10px 14px; }
+  .hero-card { gap: 10px; padding: 12px 14px; border-radius: 18px; }
+  .ballot { width: 84px; }
   .hero-date { font-size: .85rem; padding: 4px 14px 6px; }
-}
-.hero-title {
-  display: inline-block;
-  padding: .12em .6em .2em;
-  color: #fff;
-  text-decoration: none;
-  font-family: 'Secular One', 'Assistant', sans-serif;
-  font-size: clamp(1.55rem, 6.4vw, 2.5rem);
-  line-height: 1.25;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%2314275a' d='M8 20 C60 6 140 14 220 8 C300 2 360 12 394 9 L387 33 L398 52 L384 71 L396 90 C320 97 240 90 160 95 C100 98 40 92 5 91 L14 71 L2 52 L12 33 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
-}
-.hero-slogan {
-  margin-top: 6px;
-  font-family: 'Secular One', 'Assistant', sans-serif;
-  font-size: clamp(.95rem, 3.8vw, 1.25rem);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, .7);
-}
-.hero-slogan span { color: var(--gold); }
-.nowrap { white-space: nowrap; }
-.hero-date {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 5px 20px 7px;
-  color: var(--poster-navy);
-  font-weight: 800;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23ffd400' d='M8 20 C60 6 140 14 220 8 C300 2 360 12 394 9 L387 33 L398 52 L384 71 L396 90 C320 97 240 90 160 95 C100 98 40 92 5 91 L14 71 L2 52 L12 33 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
 }
 
 /* ===== Layout ===== */
@@ -193,6 +197,10 @@ a { color: var(--navy-2); }
 .hint { font-size: .8rem; font-weight: 400; color: var(--muted); }
 
 /* ===== Station ===== */
+.station {
+  /* faint Moshiach flag behind the station's hours */
+  background: url('img/moshiach-flag.svg') center 70% / auto 78% no-repeat, var(--card);
+}
 .station h2 { margin: 0; font-family: 'Secular One', 'Assistant', sans-serif; font-weight: 400; font-size: 1.3rem; color: var(--poster-navy); }
 .station-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .station-tools, .cell-tools { display: flex; gap: 6px; flex-shrink: 0; }
@@ -229,7 +237,7 @@ a { color: var(--navy-2); }
   width: 100%;
 }
 .cell-empty {
-  background: var(--free);
+  background: rgba(240, 253, 244, .78);
   border: 2px dashed var(--free-line);
   color: var(--free-text);
   font-weight: 700;
@@ -238,7 +246,7 @@ a { color: var(--navy-2); }
 }
 .cell-empty:hover { background: #dcfce7; }
 .cell-empty:active { transform: scale(.99); }
-.cell-taken { background: var(--taken); color: var(--taken-text); font-weight: 700; border: 2px solid transparent; }
+.cell-taken { background: rgba(239, 246, 255, .85); color: var(--taken-text); font-weight: 700; border: 2px solid transparent; }
 .cell-taken .check { color: var(--gold-dark); font-size: 1.1rem; }
 .cell-taken.admin { justify-content: space-between; font-weight: 400; }
 .cell-open { background: #fffbeb; border: 2px solid var(--gold); padding: 10px; }

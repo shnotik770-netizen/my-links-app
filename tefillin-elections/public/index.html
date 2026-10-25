@@ -8,40 +8,45 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Secular+One&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=2026.10.25-141906">
+  <link rel="stylesheet" href="style.css?v=2026.10.25-142935">
 </head>
 <body>
   <div id="ticker" class="ticker hidden" role="marquee" aria-label="משפטי השראה"><div class="ticker-track" id="ticker-track"></div></div>
   <header class="hero">
-    <div class="hero-inner">
+    <!-- Title box in the style of the campaign poster -->
+    <div class="hero-card">
       <div class="hero-text">
-        <a href="#/" class="hero-title" id="event-title">מבצע תפילין בקלפיות</a>
-        <div class="hero-slogan">כל קול משפיע, <span>כל זוג תפילין מכריע!</span></div>
-        <div class="hero-date" id="event-date"></div>
+        <a href="#/" class="hero-title">בואו למבצע תפילין</a>
+        <div class="hero-sub">בכל הקלפיות המובחרות בעיר</div>
+        <div class="hero-city"><i></i>עפולה<i></i></div>
       </div>
-      <!-- A ballot slip with the letter ש drops into the ballot box -->
+      <!-- Poster-style ballot box; the slip (ש, "בחרתי לעשות מבצעים") drops in and the box sways -->
       <div class="ballot" aria-hidden="true">
-        <svg viewBox="0 0 120 124">
+        <svg viewBox="0 0 120 132">
           <defs>
-            <clipPath id="above-slot"><rect x="0" y="0" width="120" height="75"/></clipPath>
+            <clipPath id="above-slot"><rect x="0" y="0" width="120" height="51"/></clipPath>
           </defs>
           <g clip-path="url(#above-slot)">
-            <g class="slip">
-              <rect x="26" y="2" width="68" height="72" rx="3" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
-              <text x="60" y="37" text-anchor="middle" font-family="Assistant, Arial, sans-serif" font-size="32" font-weight="800" fill="#0f172a">ש</text>
-              <text x="60" y="54" text-anchor="middle" font-family="Assistant, Arial, sans-serif" font-size="11" font-weight="800" fill="#1e3a8a">בחרתי לעשות</text>
-              <text x="60" y="67" text-anchor="middle" font-family="Assistant, Arial, sans-serif" font-size="11" font-weight="800" fill="#1e3a8a">מבצעים</text>
+            <g transform="rotate(14 60 50)">
+              <g class="slip">
+                <rect x="34" y="-6" width="52" height="58" rx="3" fill="#fff"/>
+                <text x="60" y="20" text-anchor="middle" font-family="Assistant, Arial, sans-serif" font-size="24" font-weight="800" fill="#14275a">ש</text>
+                <text x="60" y="34" text-anchor="middle" font-family="Assistant, Arial, sans-serif" font-size="8.5" font-weight="800" fill="#14275a">בחרתי לעשות</text>
+                <text x="60" y="44" text-anchor="middle" font-family="Assistant, Arial, sans-serif" font-size="8.5" font-weight="800" fill="#14275a">מבצעים</text>
+              </g>
             </g>
           </g>
           <g class="box">
-            <rect x="10" y="72" width="100" height="50" rx="6" fill="#fff" stroke="#14275a" stroke-width="3"/>
-            <rect x="22" y="73.5" width="76" height="5" rx="2.5" fill="#14275a"/>
-            <rect x="46" y="88" width="28" height="26" rx="4" fill="#14275a"/>
-            <path d="M52 101 l6 6 l11 -12" fill="none" stroke="#ffd400" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 66 L24 48 H96 L110 66 V82 H10 Z" fill="#fff"/>
+            <rect x="36" y="50" width="48" height="7" rx="3.5" fill="#14275a"/>
+            <rect x="16" y="87" width="88" height="44" rx="5" fill="#fff"/>
+            <rect x="42" y="94" width="36" height="30" rx="4" fill="#14275a"/>
+            <path d="M50 109 l7 7 l13 -14" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
           </g>
         </svg>
       </div>
     </div>
+    <div class="hero-date" id="event-date"></div>
   </header>
 
   <main id="app" class="container">
@@ -57,8 +62,8 @@
   </div>
   <div id="toast" class="toast hidden" role="status"></div>
 
-  <script src="config.js?v=2026.10.25-141906"></script>
-  <script src="api.js?v=2026.10.25-141906"></script>
-  <script src="app.js?v=2026.10.25-141906"></script>
+  <script src="config.js?v=2026.10.25-142935"></script>
+  <script src="api.js?v=2026.10.25-142935"></script>
+  <script src="app.js?v=2026.10.25-142935"></script>
 </body>
 </html>
