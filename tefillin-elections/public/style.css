@@ -197,10 +197,6 @@ a { color: var(--navy-2); }
 .hint { font-size: .8rem; font-weight: 400; color: var(--muted); }
 
 /* ===== Station ===== */
-.station {
-  /* faint Moshiach flag behind the station's hours */
-  background: url('img/moshiach-flag.svg') center 70% / auto 78% no-repeat, var(--card);
-}
 .station h2 { margin: 0; font-family: 'Secular One', 'Assistant', sans-serif; font-weight: 400; font-size: 1.3rem; color: var(--poster-navy); }
 .station-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .station-tools, .cell-tools { display: flex; gap: 6px; flex-shrink: 0; }
@@ -237,7 +233,7 @@ a { color: var(--navy-2); }
   width: 100%;
 }
 .cell-empty {
-  background: rgba(240, 253, 244, .78);
+  background: var(--free);
   border: 2px dashed var(--free-line);
   color: var(--free-text);
   font-weight: 700;
@@ -246,7 +242,7 @@ a { color: var(--navy-2); }
 }
 .cell-empty:hover { background: #dcfce7; }
 .cell-empty:active { transform: scale(.99); }
-.cell-taken { background: rgba(239, 246, 255, .85); color: var(--taken-text); font-weight: 700; border: 2px solid transparent; }
+.cell-taken { background: var(--taken); color: var(--taken-text); font-weight: 700; border: 2px solid transparent; }
 .cell-taken .check { color: var(--gold-dark); font-size: 1.1rem; }
 .cell-taken.admin { justify-content: space-between; font-weight: 400; }
 .cell-open { background: #fffbeb; border: 2px solid var(--gold); padding: 10px; }
