@@ -96,6 +96,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
                         סגירת יום
                     </button>
+                    <button onclick="openDayOffModal()" class="w-full bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-semibold py-2 rounded-xl transition">🏖️ סימון יום חופש</button>
                     <div id="return-today-wrap" class="hidden">
                         <button onclick="returnToToday()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold py-2 rounded-xl transition">↩️ חזרה להיום</button>
                     </div>
@@ -294,6 +295,23 @@
         </div>
     </div>
 
+    <!-- מודל יום חופש -->
+    <div id="dayoff-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="font-bold text-base text-slate-900 mb-1">🏖️ סימון יום חופש</h3>
+            <p class="text-xs text-slate-500 mb-4">היום יירשם בהיסטוריה כיום חופש (0 שעות) עם ההסבר, ולא ייספר כיום עבודה חסר. אם זה היום הפתוח עכשיו — הוא ייסגר, ומשימות פתוחות יעברו ליום הבא.</p>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">תאריך</label>
+            <input type="date" id="dayoff-date" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 mb-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">למה? (חובה)</label>
+            <input type="text" id="dayoff-reason" maxlength="200" placeholder="למשל: חג, מחלה, חופשה משפחתית…" onkeydown="if(event.key==='Enter'){confirmDayOff()}" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 mb-2">
+            <p id="dayoff-warning" class="hidden text-[13px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 mb-2"></p>
+            <div class="flex gap-2 mt-2">
+                <button onclick="confirmDayOff()" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold py-2.5 rounded-xl transition">סמן כיום חופש</button>
+                <button onclick="document.getElementById('dayoff-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl transition">ביטול</button>
+            </div>
+        </div>
+    </div>
+
     <!-- מודל דיווח יום קודם -->
     <div id="report-day-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
@@ -408,6 +426,8 @@
         let viewDay = '';        // יום התצוגה של הלוח (היום, או מחר אם היום נסגר)
         let todayReal = '';      // התאריך הקלנדרי האמיתי
         let lastClosed = '';     // התאריך האחרון שנסגר
+        let daysOff = [];        // [{date, reason}] ימים שסומנו כיום חופש
+        function dayOffOf(iso){ return daysOff.find(d => d.date === iso) || null; }
         let resumeDay = '';      // ביום שנפתח באיחור: היום שאליו חוזרים אחרי הסגירה
 
         function boardDate(){ return viewDay || workDate || todayISO(); }
@@ -433,7 +453,8 @@
             else { label = 'יום עבודה לא נפתח · ' + heLongDate(bd); cls = 'text-sm font-bold text-slate-700'; }
             main.className = cls;
             main.innerText = label;
-            small.innerText = 'היום: ' + heLongDate(today);
+            const todayOff = dayOffOf(today);
+            small.innerText = 'היום: ' + heLongDate(today) + (todayOff ? ' · 🏖️ יום חופש' + (todayOff.reason ? ' (' + todayOff.reason + ')' : '') : '');
             const at = document.getElementById('attendance-title');
             if (at) at.innerText = reporting ? ('סבבי נוכחות · ' + heDate(workDate)) : 'סבבי נוכחות היום';
         }
@@ -625,6 +646,7 @@
             todayReal = data.today || '';
             lastClosed = data.lastClosed || '';
             resumeDay = data.resumeDay || '';
+            daysOff = Array.isArray(data.daysOff) ? data.daysOff : [];
             try {
                 const attData = JSON.parse(data.attendance.intervals);
                 attendanceIntervals = Array.isArray(attData) ? attData : [];
@@ -1205,10 +1227,12 @@
             const d = selectedDate;
             const real = tasks.filter(t => t.status === 'dated' && t.dueDate === d)
                               .sort((a,b)=> Number(a.done) - Number(b.done));
-            const sim = simulateDay(d, real);
+            const off = dayOffOf(d);
+            const sim = off ? [] : simulateDay(d, real); // ביום חופש לא נוצרות רוטינות
+            if (off) c.insertAdjacentHTML('beforeend', `<div class="px-4 py-2 bg-sky-50 border-b border-sky-100 text-[14px] text-sky-800">🏖️ ${heDate(d)} מסומן כיום חופש${off.reason ? ' — ' + escapeHtml(off.reason) : ''}</div>`);
 
             if (real.length === 0 && sim.length === 0) {
-                c.innerHTML = `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות צפויות לתאריך ${heDate(d)}.</p></div>`;
+                c.insertAdjacentHTML('beforeend', `<div class="p-10 text-center text-slate-400"><p class="text-sm">אין משימות צפויות לתאריך ${heDate(d)}.</p></div>`);
                 return;
             }
             real.forEach(t => c.insertAdjacentHTML('beforeend', taskCardHtml(t, 'bydate')));
@@ -1905,6 +1929,62 @@
                 .catch(err => { console.error(err); hideLoader(); showNotification("שגיאת חיבור בפתיחת היום.", true); });
         }
 
+        // ====== יום חופש ======
+        function dayOffWarningFor(d){
+            const today = todayReal || todayISO();
+            const wd = dayOpen ? workDate : today;
+            if (dayOffOf(d)) return 'התאריך הזה כבר מסומן כיום חופש.';
+            if (d === wd) return dayOpen ? `זה היום הפתוח (${heDate(d)}) — הוא ייסגר כיום חופש ומשימות פתוחות יעברו ליום הבא.` : 'היום ייסגר כיום חופש ומשימות פתוחות יעברו למחר.';
+            return '';
+        }
+        function openDayOffModal(){
+            if (guardRO()) return;
+            const today = todayReal || todayISO();
+            const input = document.getElementById('dayoff-date');
+            input.value = dayOpen && workDate ? workDate : today;
+            document.getElementById('dayoff-reason').value = '';
+            const upd = () => { const w = document.getElementById('dayoff-warning'); const t = dayOffWarningFor(input.value); w.innerText = t; w.classList.toggle('hidden', !t); };
+            input.onchange = upd; upd();
+            document.getElementById('dayoff-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('dayoff-reason').focus(), 0);
+        }
+        function confirmDayOff(){
+            if (guardRO()) return;
+            const d = document.getElementById('dayoff-date').value;
+            const reason = document.getElementById('dayoff-reason').value.trim();
+            if (!d) { showNotification('נא לבחור תאריך.', true); return; }
+            if (!reason) { showNotification('נא לכתוב למה זה יום חופש.', true); return; }
+            if (dayOffOf(d)) { showNotification('התאריך הזה כבר מסומן כיום חופש.', true); return; }
+            document.getElementById('dayoff-modal').classList.add('hidden');
+            showLoader('מסמן יום חופש…');
+            fetchJSONP(gasUrl, { action: 'markDayOff', date: d, reason: reason }, 'cb_dayoff')
+                .then(data => {
+                    hideLoader();
+                    if (data && data.status === 'success') {
+                        applyLoadedData(data);
+                        renderAttendance(); renderTasks();
+                        if (currentTab === 'history') loadHistoryFromSheets();
+                        showNotification(`🏖️ ${heDate(d)} סומן כיום חופש.`);
+                    } else showNotification((data && data.message) || 'שגיאה בסימון יום חופש.', true);
+                })
+                .catch(err => { console.error(err); hideLoader(); showNotification('שגיאת חיבור בסימון יום חופש.', true); });
+        }
+        function unmarkDayOff(dateKey){
+            if (guardRO()) return;
+            if (!confirm(`לבטל את יום החופש של ${heDate(dateKey)}?\nהדוח של היום יימחק מההיסטוריה (משימות שכבר הועברו ליום הבא נשארות במקומן).`)) return;
+            showLoader('מבטל יום חופש…');
+            fetchJSONP(gasUrl, { action: 'unmarkDayOff', date: dateKey }, 'cb_undayoff')
+                .then(data => {
+                    hideLoader();
+                    if (data && data.status === 'success') {
+                        applyLoadedData(data);
+                        renderAttendance(); renderTasks(); loadHistoryFromSheets();
+                        showNotification('יום החופש בוטל.');
+                    } else showNotification((data && data.message) || 'שגיאה בביטול יום החופש.', true);
+                })
+                .catch(err => { console.error(err); hideLoader(); showNotification('שגיאת חיבור.', true); });
+        }
+
         function openReportDayModal(){
             const input = document.getElementById('report-day-input');
             const yest = addDaysISO(todayReal || todayISO(), -1);
@@ -1931,7 +2011,7 @@
         function parseSnapshot(raw){
             let parsed; try { parsed = JSON.parse(raw); } catch(e) { parsed = []; }
             if (Array.isArray(parsed)) return { tasks: parsed, tomorrow: [], prioritySummary: null };
-            return { tasks: parsed.tasks || [], tomorrow: parsed.tomorrow || [], prioritySummary: parsed.prioritySummary || null };
+            return { tasks: parsed.tasks || [], tomorrow: parsed.tomorrow || [], prioritySummary: parsed.prioritySummary || null, dayOff: !!parsed.dayOff, reason: parsed.reason || '' };
         }
 
         const HEB_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
@@ -1977,14 +2057,19 @@
 
             order.forEach(ym => {
                 const g = groups[ym];
-                const regularEntries = g.entries.filter(e => WORKDAY_DOWS.includes(dayOfWeekOf(e.date)));
-                const offEntries = g.entries.filter(e => !WORKDAY_DOWS.includes(dayOfWeekOf(e.date)));
+                const isOff = e => parseSnapshot(e.tasks).dayOff;
+                const vacationEntries = g.entries.filter(isOff);
+                const workEntries = g.entries.filter(e => !isOff(e));
+                const regularEntries = workEntries.filter(e => WORKDAY_DOWS.includes(dayOfWeekOf(e.date)));
+                const offEntries = workEntries.filter(e => !WORKDAY_DOWS.includes(dayOfWeekOf(e.date)));
                 const regularHours = regularEntries.reduce((s,e) => s + (Number(e.totalHours) || 0), 0);
                 const offHours = offEntries.reduce((s,e) => s + (Number(e.totalHours) || 0), 0);
                 const totalHours = regularHours + offHours;
                 const workDaysHad = regularEntries.length;
                 const capDate = (ym === curYM) ? todayKey : null;
-                const possible = possibleWorkdaysInMonth(g.year, g.month, capDate);
+                // ימי חופש שנופלים על ימי עבודה רגילים לא נספרים כימים "אפשריים"
+                const vacationOnWorkdays = vacationEntries.filter(e => WORKDAY_DOWS.includes(dayOfWeekOf(e.date)) && (!capDate || e.date <= capDate)).length;
+                const possible = Math.max(0, possibleWorkdaysInMonth(g.year, g.month, capDate) - vacationOnWorkdays);
                 const avg = workDaysHad ? (regularHours / workDaysHad) : 0;
                 const monthId = 'hmonth-' + ym;
                 const isCurrent = (ym === curYM);
@@ -2000,7 +2085,7 @@
                         <button onclick="toggleHistoryMonth('${monthId}')" class="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/60 transition text-right">
                             <div>
                                 <div class="font-bold text-slate-900 text-sm">📅 חודש ${HEB_MONTHS[g.month-1]} ${g.year}</div>
-                                <div class="text-[13px] text-slate-500 mt-0.5">${workDaysHad} מתוך ${possible} ימי עבודה אפשריים · ${regularHours.toFixed(1)} שעות סה"כ · ממוצע ${avg.toFixed(1)} שעות ליום</div>
+                                <div class="text-[13px] text-slate-500 mt-0.5">${workDaysHad} מתוך ${possible} ימי עבודה אפשריים · ${regularHours.toFixed(1)} שעות סה"כ · ממוצע ${avg.toFixed(1)} שעות ליום${vacationEntries.length ? ` · 🏖️ ${vacationEntries.length} ימי חופש` : ''}</div>
                             </div>
                             <span id="${monthId}-arrow" class="text-slate-400 transition-transform shrink-0 ${isCurrent ? 'rotate-180' : ''}">▼</span>
                         </button>
@@ -2015,6 +2100,19 @@
 
         function buildDayReportHtml(dayLog){
                 const snap = parseSnapshot(dayLog.tasks);
+                if (snap.dayOff) {
+                    return `
+                    <div class="bg-sky-50/60 p-4 rounded-xl border border-sky-200 shadow-sm flex justify-between items-center flex-wrap gap-2">
+                        <div class="min-w-0">
+                            <div class="font-bold text-sky-900 text-sm">🏖️ יום חופש · ${heDateWithWeekday(dayLog.date)}</div>
+                            <div class="text-[14px] text-sky-800 mt-0.5 break-words">${snap.reason ? escapeHtml(snap.reason) : '<span class="italic text-sky-500">לא נכתבה סיבה</span>'}</div>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs">
+                            <button onclick="shareHistoryToWhatsApp('${dayLog.date}')" class="bg-white border border-sky-200 hover:bg-sky-100 text-sky-700 font-medium px-2.5 py-1 rounded-lg transition">📋 העתק</button>
+                            ${readOnly ? '' : `<button onclick="unmarkDayOff('${dayLog.date}')" class="bg-white border border-slate-200 hover:bg-rose-50 text-rose-600 font-medium px-2.5 py-1 rounded-lg transition">✕ בטל יום חופש</button>`}
+                        </div>
+                    </div>`;
+                }
                 const done = snap.tasks.filter(t => t.done);
                 const notDone = snap.tasks.filter(t => !t.done);
                 const tomorrow = snap.tomorrow;
@@ -2239,6 +2337,11 @@
             const dayLog = history.find(h => h.date === dateKey);
             if (!dayLog) { showNotification('הדוח עדיין נטען, נסה שוב.', true); return; }
             const snap = parseSnapshot(dayLog.tasks);
+            if (snap.dayOff) {
+                copyTextToClipboard(`🏖️ ${heDateWithWeekday(dateKey)} — יום חופש${snap.reason ? '\nסיבה: ' + snap.reason : ''}`);
+                showNotification('📋 הועתק — אפשר להדביק בווצאפ.');
+                return;
+            }
             let intervals = [];
             try { intervals = JSON.parse(dayLog.intervals); } catch(e) {}
             const done = snap.tasks.filter(t => t.done);
