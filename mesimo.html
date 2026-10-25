@@ -1183,7 +1183,7 @@
                     </div>`;
                 } else {
                     // דיווח על יום עבר - חיווי בולט שזה לא היום
-                    const back = resumeDay ? ` · אחרי הסגירה חוזרים ל־${heDate(resumeDay)}` : '';
+                    const back = (resumeDay && resumeDay > workDate) ? ` · אחרי הסגירה חוזרים ל־${heDate(resumeDay)}` : ' · אחרי הסגירה חוזרים להיום';
                     modeBanner.classList.remove('hidden');
                     modeBanner.innerHTML = `<div class="bg-amber-500 text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm w-full min-w-0">
                         <span class="text-base shrink-0">📄</span>
