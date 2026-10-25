@@ -1,8 +1,9 @@
 :root {
   --navy: #0f172a;
   --navy-2: #1e3a8a;
-  --gold: #f59e0b;
-  --gold-dark: #d97706;
+  --gold: #ffd400;      /* campaign yellow, from the poster */
+  --gold-dark: #f2b700;
+  --poster-navy: #14275a;
   --bg: #f1f5f9;
   --card: #ffffff;
   --text: #1e293b;
@@ -37,9 +38,13 @@ a { color: var(--navy-2); }
 
 /* ===== Header ===== */
 .hero {
-  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+  /* bottom band of the campaign poster (ballot box, tefillin, Afula) under a dark layer */
+  background:
+    linear-gradient(180deg, rgba(10, 20, 55, .78) 0%, rgba(10, 20, 55, .55) 60%, rgba(10, 20, 55, .7) 100%),
+    url('img/hero.webp') center 55% / cover no-repeat,
+    var(--poster-navy);
   color: #fff;
-  padding: 28px 16px 40px;
+  padding: 30px 16px 42px;
   border-radius: 0 0 28px 28px;
   box-shadow: 0 10px 25px -10px rgba(15, 23, 42, .5);
 }
@@ -74,22 +79,33 @@ a { color: var(--navy-2); }
 @media (max-width: 560px) {
   .hero-inner { gap: 8px; }
   .ballot { width: 92px; }
+  .hero-date { font-size: .85rem; padding: 4px 14px 6px; }
 }
 .hero-title {
-  display: block;
+  display: inline-block;
+  padding: .12em .6em .2em;
   color: #fff;
   text-decoration: none;
-  font-size: clamp(1.6rem, 6vw, 2.3rem);
-  font-weight: 800;
+  font-family: 'Secular One', 'Assistant', sans-serif;
+  font-size: clamp(1.55rem, 6.4vw, 2.5rem);
+  line-height: 1.25;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%2314275a' d='M8 20 C60 6 140 14 220 8 C300 2 360 12 394 9 L387 33 L398 52 L384 71 L396 90 C320 97 240 90 160 95 C100 98 40 92 5 91 L14 71 L2 52 L12 33 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
 }
+.hero-slogan {
+  margin-top: 6px;
+  font-family: 'Secular One', 'Assistant', sans-serif;
+  font-size: clamp(.95rem, 3.8vw, 1.25rem);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .7);
+}
+.hero-slogan span { color: var(--gold); }
+.nowrap { white-space: nowrap; }
 .hero-date {
   display: inline-block;
   margin-top: 8px;
-  padding: 4px 14px;
-  border-radius: 999px;
-  background: var(--gold);
-  color: var(--navy);
-  font-weight: 700;
+  padding: 5px 20px 7px;
+  color: var(--poster-navy);
+  font-weight: 800;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23ffd400' d='M8 20 C60 6 140 14 220 8 C300 2 360 12 394 9 L387 33 L398 52 L384 71 L396 90 C320 97 240 90 160 95 C100 98 40 92 5 91 L14 71 L2 52 L12 33 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
 }
 
 /* ===== Layout ===== */
@@ -177,7 +193,7 @@ a { color: var(--navy-2); }
 .hint { font-size: .8rem; font-weight: 400; color: var(--muted); }
 
 /* ===== Station ===== */
-.station h2 { margin: 0; font-size: 1.3rem; color: var(--navy); }
+.station h2 { margin: 0; font-family: 'Secular One', 'Assistant', sans-serif; font-weight: 400; font-size: 1.3rem; color: var(--poster-navy); }
 .station-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .station-tools, .cell-tools { display: flex; gap: 6px; flex-shrink: 0; }
 .station-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 4px; color: var(--muted); font-size: .95rem; }
@@ -231,7 +247,7 @@ a { color: var(--navy-2); }
 .who b { color: var(--navy); }
 .who a { font-size: .95rem; direction: ltr; }
 .tag { font-size: .8rem; background: #fee2e2; color: var(--danger); padding: 1px 8px; border-radius: 99px; }
-.tag-manager { background: #fef3c7; color: var(--gold-dark); }
+.tag-manager { background: #fef3c7; color: #92400e; }
 .send-login { margin-top: 8px; font-size: .9rem; padding: 7px 12px; }
 
 .cell-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; width: 100%; }
