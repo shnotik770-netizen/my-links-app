@@ -1,5 +1,5 @@
 -- Mivtza Tefillin election-day scheduler – Supabase schema (project "toranim-system").
--- Applied as migrations tefillin_1 … tefillin_13. Kept here as the readable reference.
+-- Applied as migrations tefillin_1 … tefillin_14. Kept here as the readable reference.
 --
 -- Security model:
 --   * All objects are prefixed tefillin_ and isolated from the project's other tables.
@@ -209,6 +209,38 @@ begin
   insert into tefillin_signups (station_id, slot, seat, name, phone) values (p_station_id, p_slot, p_seat, v.name, v.phone)
   on conflict (station_id, slot, seat) do update set name = excluded.name, phone = excluded.phone, created_at = now();
   return '{}'::jsonb;
+end $$;
+
+-- Move an existing signup to another station/hour, or (p_copy) also assign the same person there.
+-- Takes the first free seat in the target hour. (A move is an UPDATE of the row, not delete + insert.)
+create function public.tefillin_move_signup(p_password text, p_id uuid, p_station_id uuid, p_slot text, p_copy boolean) returns jsonb
+language plpgsql set search_path = public as $$
+declare v tefillin_signups; v_station tefillin_stations; v_seat smallint;
+begin
+  perform tefillin_check_admin(p_password);
+  select * into v from tefillin_signups where id = p_id;
+  if not found then raise exception 'ההרשמה לא נמצאה'; end if;
+  select * into v_station from tefillin_stations where id = p_station_id;
+  if not found then raise exception 'הקלפי לא נמצאה'; end if;
+  if not (p_slot = any (v_station.slots)) then raise exception 'המשמרת אינה פעילה בקלפי זו'; end if;
+  if v.station_id = p_station_id and v.slot = p_slot then raise exception 'הפעיל כבר משובץ במשמרת הזו'; end if;
+  if exists (select 1 from tefillin_signups where station_id = p_station_id and slot = p_slot
+             and (case when v.phone <> '' then phone = v.phone else name = v.name end)) then
+    raise exception '% כבר משובץ במשמרת הזו', v.name;
+  end if;
+  select min(x) into v_seat from unnest(array[1, 2]::smallint[]) x
+  where not exists (select 1 from tefillin_signups where station_id = p_station_id and slot = p_slot and seat = x);
+  if v_seat is null then raise exception 'המשמרת הזו כבר מלאה (2 פעילים)'; end if;
+  begin
+    if coalesce(p_copy, false) then
+      insert into tefillin_signups (station_id, slot, seat, name, phone) values (p_station_id, p_slot, v_seat, v.name, v.phone);
+    else
+      update tefillin_signups set station_id = p_station_id, slot = p_slot, seat = v_seat, created_at = now() where id = p_id;
+    end if;
+  exception when unique_violation then
+    raise exception 'מצטערים, המקום הזה נתפס כרגע. נסו שוב.';
+  end;
+  return jsonb_build_object('station', v_station.name, 'slot', p_slot, 'seat', v_seat);
 end $$;
 
 -- Older single-seat entry point (seat 1), kept for compatibility.

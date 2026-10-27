@@ -249,7 +249,12 @@ a { color: var(--navy-2); }
 
 .who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .who b { color: var(--navy); }
-.who a { font-size: .95rem; direction: ltr; }
+.who a { font-size: .95rem; direction: ltr; white-space: nowrap; }
+/* narrow screens: the admin's buttons go on their own row under the name */
+@media (max-width: 560px) {
+  .cell-taken.admin { flex-wrap: wrap; }
+  .cell-taken.admin .cell-tools { width: 100%; justify-content: flex-end; }
+}
 .tag { font-size: .8rem; background: #fee2e2; color: var(--danger); padding: 1px 8px; border-radius: 99px; }
 .tag-manager { background: #fef3c7; color: #92400e; }
 .send-login { margin-top: 8px; font-size: .9rem; padding: 7px 12px; }
@@ -257,7 +262,7 @@ a { color: var(--navy-2); }
 .cell-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; width: 100%; }
 .cell-form-actions { display: flex; gap: 6px; }
 
-input, textarea {
+input, textarea, select {
   font: inherit;
   width: 100%;
   padding: 10px 12px;
