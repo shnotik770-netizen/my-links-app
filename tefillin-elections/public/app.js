@@ -4,7 +4,7 @@
   const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
   const MAX_PER_SLOT = 2;
   // Must match public/version.json (both are set by bump-version.sh).
-  const VERSION = '2026.10.27-133039';
+  const VERSION = '2026.10.27-133925';
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
@@ -328,6 +328,16 @@
 
   // ===== Public (guest) view =====
 
+  // Re-fetch the board in the background (e.g. after a signup) without disturbing an open form.
+  async function refreshPublicQuietly() {
+    try {
+      const data = await Api.getPublic();
+      if (state.view !== 'public' || state.openCell || state.busy) return;
+      state.stations = data.stations;
+      renderPublicList();
+    } catch (e) { /* keep showing what we have */ }
+  }
+
   async function loadPublic() {
     app.innerHTML = '<div class="loader">טוען את רשימת הקלפיות…</div>';
     try {
@@ -405,36 +415,46 @@
     return st.slots.map(x => x.slot || x);
   }
 
-  function namesAt(st, slot) {
-    if (state.view === 'admin') return adminPeople(adminIndex(), st.id + '|' + slot).map(s => s.name);
-    return (st.slots.find(x => x.slot === slot) || { names: [] }).names;
+  // People in one hour at one station: [{ name, phone }] for the admin, [{ name, key }] for guests.
+  function peopleAt(st, slot) {
+    if (state.view === 'admin') return adminPeople(adminIndex(), st.id + '|' + slot).map(s => ({ name: s.name, phone: s.phone }));
+    return guestPeople(st.slots.find(x => x.slot === slot) || { names: [] });
+  }
+
+  // Guests get an anonymous per-person key (from the phone, computed on the server) – never the phone itself.
+  function guestPeople(s) {
+    return s.people || s.names.map(name => ({ name, key: '' }));
   }
 
   // A volunteer's name that opens all of their assignments.
-  function personLink(name, phone) {
-    return '<button class="person-link" data-action="person-info" data-name="' + esc(name) + '"' +
-      (phone ? ' data-phone="' + esc(phone) + '"' : '') + '>' + esc(name) + '</button>';
+  function personLink(p) {
+    return '<button class="person-link" data-action="person-info" data-name="' + esc(p.name) + '"' +
+      (p.phone ? ' data-phone="' + esc(p.phone) + '"' : '') + (p.key ? ' data-key="' + esc(p.key) + '"' : '') + '>' +
+      esc(p.name) + '</button>';
   }
 
-  function whoLine(names) {
-    return names.length ? names.map(n => personLink(n)).join(', ') : '<span class="free-text">פנוי</span>';
+  function whoLine(people) {
+    return people.length ? people.map(personLink).join(', ') : '<span class="free-text">פנוי</span>';
   }
 
-  // Every station/hour a volunteer is assigned to. Matched by phone when known (admin), otherwise by name.
-  function personAssignments(name, phone) {
+  // Every station/hour a volunteer is assigned to: matched by phone (admin) or its anonymous key (guests);
+  // volunteers who gave no phone are matched by name.
+  function personAssignments(name, phone, key) {
     if (state.view === 'admin') {
       return state.admin.signups
-        .filter(s => phone ? s.phone === phone : s.name === name)
+        .filter(s => phone ? s.phone === phone : !s.phone && s.name === name)
         .map(s => ({ st: state.admin.stations.find(x => x.id === s.stationId), slot: s.slot }))
         .filter(a => a.st);
     }
     const list = [];
-    state.stations.forEach(st => st.slots.forEach(s => { if (s.names.indexOf(name) !== -1) list.push({ st, slot: s.slot }); }));
+    state.stations.forEach(st => st.slots.forEach(s => {
+      if (guestPeople(s).some(p => key ? p.key === key : !p.key && p.name === name)) list.push({ st, slot: s.slot });
+    }));
     return list;
   }
 
-  function openPersonInfo(name, phone) {
-    const list = personAssignments(name, phone)
+  function openPersonInfo(name, phone, key) {
+    const list = personAssignments(name, phone, key)
       .sort((a, b) => a.slot.localeCompare(b.slot) || a.st.name.localeCompare(b.st.name, 'he'));
     const perSlot = {};
     list.forEach(a => { perSlot[a.slot] = (perSlot[a.slot] || 0) + 1; });
@@ -466,7 +486,7 @@
       '<h2>' + esc(st.name) + '</h2>' + stationMeta(st) +
       '<div class="info-list">' +
         stationSlots(st).map(slot =>
-          '<div class="info-row"><span class="info-key">' + slotLabel(slot) + '</span><span>' + whoLine(namesAt(st, slot)) + '</span></div>').join('') +
+          '<div class="info-row"><span class="info-key">' + slotLabel(slot) + '</span><span>' + whoLine(peopleAt(st, slot)) + '</span></div>').join('') +
       '</div>' +
       '<div class="modal-actions">' +
         '<button class="btn btn-gold" data-action="show-station" data-id="' + esc(st.id) + '">הצגת הקלפי בלוח</button>' +
@@ -476,13 +496,13 @@
 
   function openHourInfo(slot) {
     const rows = viewStations().filter(st => stationSlots(st).indexOf(slot) !== -1);
-    const staffed = rows.filter(st => namesAt(st, slot).length).length;
+    const staffed = rows.filter(st => peopleAt(st, slot).length).length;
     openInfo(
       '<h2>' + slotLabel(slot) + '</h2>' +
       '<p class="muted">' + staffed + ' מתוך ' + rows.length + ' קלפיות מאוישות בשעה הזו</p>' +
       '<div class="info-list">' +
         rows.map(st =>
-          '<div class="info-row"><span class="info-key">' + esc(st.name) + '</span><span>' + whoLine(namesAt(st, slot)) + '</span></div>').join('') +
+          '<div class="info-row"><span class="info-key">' + esc(st.name) + '</span><span>' + whoLine(peopleAt(st, slot)) + '</span></div>').join('') +
       '</div>' +
       '<div class="modal-actions">' +
         '<button class="btn btn-gold" data-action="show-hour" data-slot="' + slot + '">הצגת השעה בלוח</button>' +
@@ -565,7 +585,7 @@
   // then "+ הוסף פעיל" offers a second place.
   function publicCells(st, s, me) {
     const key = st.id + '|' + s.slot;
-    let cells = s.names.map(n => '<div class="cell cell-taken"><span class="check">✓</span>' + personLink(n) + '</div>').join('');
+    let cells = guestPeople(s).map(p => '<div class="cell cell-taken"><span class="check">✓</span>' + personLink(p) + '</div>').join('');
     if (s.names.length < MAX_PER_SLOT) {
       if (state.openCell === key) {
         cells += '<div class="cell cell-open">' + cellForm(key, me.name || '', me.phone || '', s.names.length ? 'הוספה' : 'שבצו אותי') + '</div>';
@@ -638,10 +658,13 @@
       await Api.signup(stationId, slot, v.name, v.phone);
       save('local', ME_KEY, { name: v.name, phone: v.phone });
       const st = state.stations.find(x => x.id === stationId);
-      st.slots.find(x => x.slot === slot).names.push(v.name);
+      const s = st.slots.find(x => x.slot === slot);
+      s.names.push(v.name);
+      if (s.people) s.people.push({ name: v.name, key: '' }); // real key arrives with the refresh below
       state.openCell = null;
       renderPublic();
       toast('שובצת בהצלחה! ' + st.name + ', ' + slotLabel(slot) + '. תודה ובהצלחה!');
+      refreshPublicQuietly();
     } catch (err) {
       toast(err.message, 'error');
       if (/נתפס|מלאה/.test(err.message)) { state.openCell = null; loadPublic(); }
@@ -745,7 +768,7 @@
         const isManager = s.phone ? s.phone === st.managerPhone : !!st.managerName && s.name === st.managerName;
         cells +=
           '<div class="cell cell-taken admin">' +
-            '<div class="who"><b>' + personLink(s.name, s.phone) + '</b>' +
+            '<div class="who"><b>' + personLink(s) + '</b>' +
               (s.phone
                 ? '<a href="tel:' + esc(s.phone) + '">' + esc(formatPhone(s.phone)) + '</a>' +
                   '<a href="' + esc(waLink(s.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a>'
@@ -981,7 +1004,7 @@
       case 'jump':
         return jumpTo(el.dataset.target);
       case 'person-info':
-        return openPersonInfo(el.dataset.name, el.dataset.phone || '');
+        return openPersonInfo(el.dataset.name, el.dataset.phone || '', el.dataset.key || '');
       case 'station-info':
         return openStationInfo(id);
       case 'hour-info':

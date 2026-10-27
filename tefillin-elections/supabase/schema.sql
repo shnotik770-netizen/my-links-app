@@ -1,5 +1,5 @@
 -- Mivtza Tefillin election-day scheduler – Supabase schema (project "toranim-system").
--- Applied as migrations tefillin_1 … tefillin_14. Kept here as the readable reference.
+-- Applied as migrations tefillin_1 … tefillin_15. Kept here as the readable reference.
 --
 -- Security model:
 --   * All objects are prefixed tefillin_ and isolated from the project's other tables.
@@ -37,7 +37,8 @@ create table public.tefillin_signups (
 );
 create index tefillin_signups_phone_slot_idx on public.tefillin_signups (phone, slot);
 
--- key 'admin_password' (bcrypt hash), key 'ticker' (JSON array of banner sentences)
+-- key 'admin_password' (bcrypt hash), key 'ticker' (JSON array of banner sentences),
+-- key 'person_salt' (random secret for tefillin_person_key)
 create table public.tefillin_settings (key text primary key, value text not null);
 
 alter table public.tefillin_stations enable row level security;
@@ -84,6 +85,14 @@ $$;
 
 -- ===== Public actions =====
 
+-- Anonymous per-person key for the public view: HMAC of the phone with a server-only secret
+-- (settings key 'person_salt'), so guests can tell same-named volunteers apart without seeing the phone.
+create function public.tefillin_person_key(p_phone text) returns text
+language sql stable set search_path = public, extensions as $$
+  select case when coalesce(p_phone, '') = '' then ''
+    else left(encode(hmac(p_phone, (select value from tefillin_settings where key = 'person_salt'), 'sha256'), 'hex'), 16) end
+$$;
+
 create function public.tefillin_get_public() returns jsonb
 language sql stable set search_path = public as $$
   select jsonb_build_object('ticker', tefillin_ticker(), 'stations', coalesce(jsonb_agg(jsonb_build_object(
@@ -91,11 +100,15 @@ language sql stable set search_path = public as $$
     -- The station manager's contact is public on purpose (WhatsApp button for volunteers).
     'managerName', s.manager_name, 'managerPhone', s.manager_phone,
     'slots', (
-      -- Only volunteers' names are public (up to 2 per hour, by seat); their phones are admin-only.
-      select coalesce(jsonb_agg(jsonb_build_object('slot', sl, 'names', (
-        select coalesce(jsonb_agg(g.name order by g.seat), '[]'::jsonb)
-        from tefillin_signups g where g.station_id = s.id and g.slot = sl
-      )) order by sl), '[]'::jsonb)
+      -- Volunteers' names are public (up to 2 per hour, by seat); their phones are admin-only.
+      -- "people" adds an anonymous key per person (see tefillin_person_key); "names" is kept for older pages.
+      select coalesce(jsonb_agg(jsonb_build_object(
+        'slot', sl,
+        'names', (select coalesce(jsonb_agg(g.name order by g.seat), '[]'::jsonb)
+                  from tefillin_signups g where g.station_id = s.id and g.slot = sl),
+        'people', (select coalesce(jsonb_agg(jsonb_build_object('name', g.name, 'key', tefillin_person_key(g.phone)) order by g.seat), '[]'::jsonb)
+                   from tefillin_signups g where g.station_id = s.id and g.slot = sl)
+      ) order by sl), '[]'::jsonb)
       from unnest(s.slots) sl
     )
   ) order by s.position, s.created_at), '[]'::jsonb))
@@ -316,6 +329,8 @@ insert into public.tefillin_settings (key, value) values ('ticker', $j$[
   "כל הנחת תפילין היא חיבור נצחי של נשמה לבוראה - אל תפספסו אף הזדמנות לזכות יהודי.",
   "רק יחד נצליח לאייש את כל הקלפיות מתוך שמחה וחיות חסידית - תפסו משמרת עכשיו!"
 ]$j$);
+
+insert into public.tefillin_settings (key, value) values ('person_salt', encode(extensions.gen_random_bytes(24), 'hex'));
 
 -- Set the admin password (run once, by hand – do not commit the real password):
 -- insert into public.tefillin_settings (key, value) values ('admin_password', extensions.crypt('<password>', extensions.gen_salt('bf')));
