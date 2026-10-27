@@ -148,6 +148,12 @@ a { color: var(--navy-2); }
   cursor: pointer;
 }
 .jump-btn:hover { border-color: var(--gold); }
+/* volunteer names open all of their assignments */
+.person-link {
+  font: inherit; font-weight: inherit; color: inherit;
+  background: none; border: none; padding: 0; cursor: pointer;
+  text-decoration: underline dotted; text-underline-offset: 3px;
+}
 /* time / station labels open a detail window */
 button.slot-time, button.slot-station { font: inherit; border: none; cursor: pointer; width: 100%; }
 button.slot-time:hover, button.slot-station:hover { background: var(--navy-2); }

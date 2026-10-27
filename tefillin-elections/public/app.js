@@ -4,7 +4,7 @@
   const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
   const MAX_PER_SLOT = 2;
   // Must match public/version.json (both are set by bump-version.sh).
-  const VERSION = '2026.10.27-130327';
+  const VERSION = '2026.10.27-133039';
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
@@ -410,8 +410,49 @@
     return (st.slots.find(x => x.slot === slot) || { names: [] }).names;
   }
 
+  // A volunteer's name that opens all of their assignments.
+  function personLink(name, phone) {
+    return '<button class="person-link" data-action="person-info" data-name="' + esc(name) + '"' +
+      (phone ? ' data-phone="' + esc(phone) + '"' : '') + '>' + esc(name) + '</button>';
+  }
+
   function whoLine(names) {
-    return names.length ? esc(names.join(', ')) : '<span class="free-text">פנוי</span>';
+    return names.length ? names.map(n => personLink(n)).join(', ') : '<span class="free-text">פנוי</span>';
+  }
+
+  // Every station/hour a volunteer is assigned to. Matched by phone when known (admin), otherwise by name.
+  function personAssignments(name, phone) {
+    if (state.view === 'admin') {
+      return state.admin.signups
+        .filter(s => phone ? s.phone === phone : s.name === name)
+        .map(s => ({ st: state.admin.stations.find(x => x.id === s.stationId), slot: s.slot }))
+        .filter(a => a.st);
+    }
+    const list = [];
+    state.stations.forEach(st => st.slots.forEach(s => { if (s.names.indexOf(name) !== -1) list.push({ st, slot: s.slot }); }));
+    return list;
+  }
+
+  function openPersonInfo(name, phone) {
+    const list = personAssignments(name, phone)
+      .sort((a, b) => a.slot.localeCompare(b.slot) || a.st.name.localeCompare(b.st.name, 'he'));
+    const perSlot = {};
+    list.forEach(a => { perSlot[a.slot] = (perSlot[a.slot] || 0) + 1; });
+    openInfo(
+      '<h2>' + esc(name) + '</h2>' +
+      (state.view === 'admin' && phone
+        ? '<div class="station-meta"><a href="tel:' + esc(phone) + '">📞 ' + esc(formatPhone(phone)) + '</a>' +
+          '<a href="' + esc(waLink(phone)) + '" target="_blank" rel="noopener">💬 וואטסאפ</a></div>'
+        : '') +
+      '<p class="muted">' + (list.length === 1 ? 'משובץ במקום אחד' : 'משובץ ב-' + list.length + ' מקומות') + '</p>' +
+      '<div class="info-list">' +
+        list.map(a =>
+          '<div class="info-row"><span class="info-key">' + slotLabel(a.slot) + '</span><span>' +
+            '<button class="person-link" data-action="station-info" data-id="' + esc(a.st.id) + '">' + esc(a.st.name) + '</button>' +
+            (perSlot[a.slot] > 1 ? ' <span class="tag nowrap" title="משובץ באותה שעה ביותר ממקום אחד">⚠ חפיפה</span>' : '') +
+          '</span></div>').join('') +
+      '</div>' +
+      '<div class="modal-actions"><button class="btn btn-ghost" data-action="close-modal">סגירה</button></div>');
   }
 
   function openInfo(html) {
@@ -524,7 +565,7 @@
   // then "+ הוסף פעיל" offers a second place.
   function publicCells(st, s, me) {
     const key = st.id + '|' + s.slot;
-    let cells = s.names.map(n => '<div class="cell cell-taken"><span class="check">✓</span>' + esc(n) + '</div>').join('');
+    let cells = s.names.map(n => '<div class="cell cell-taken"><span class="check">✓</span>' + personLink(n) + '</div>').join('');
     if (s.names.length < MAX_PER_SLOT) {
       if (state.openCell === key) {
         cells += '<div class="cell cell-open">' + cellForm(key, me.name || '', me.phone || '', s.names.length ? 'הוספה' : 'שבצו אותי') + '</div>';
@@ -704,7 +745,7 @@
         const isManager = s.phone ? s.phone === st.managerPhone : !!st.managerName && s.name === st.managerName;
         cells +=
           '<div class="cell cell-taken admin">' +
-            '<div class="who"><b>' + esc(s.name) + '</b>' +
+            '<div class="who"><b>' + personLink(s.name, s.phone) + '</b>' +
               (s.phone
                 ? '<a href="tel:' + esc(s.phone) + '">' + esc(formatPhone(s.phone)) + '</a>' +
                   '<a href="' + esc(waLink(s.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a>'
@@ -939,6 +980,8 @@
         return toggleHelp();
       case 'jump':
         return jumpTo(el.dataset.target);
+      case 'person-info':
+        return openPersonInfo(el.dataset.name, el.dataset.phone || '');
       case 'station-info':
         return openStationInfo(id);
       case 'hour-info':
