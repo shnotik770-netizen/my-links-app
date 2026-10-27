@@ -1,5 +1,5 @@
 -- Mivtza Tefillin election-day scheduler – Supabase schema (project "toranim-system").
--- Applied as migrations tefillin_1 … tefillin_12. Kept here as the readable reference.
+-- Applied as migrations tefillin_1 … tefillin_13. Kept here as the readable reference.
 --
 -- Security model:
 --   * All objects are prefixed tefillin_ and isolated from the project's other tables.
@@ -63,7 +63,7 @@ begin
   end if;
 end $$;
 
--- Full name (2+ words) and an Israeli phone number are required for every signup.
+-- Full name (2+ words) is required; phone is optional (validated only when given).
 create function public.tefillin_clean_person(p_name text, p_phone text, out name text, out phone text)
 language plpgsql set search_path = '' as $$
 begin
@@ -72,7 +72,7 @@ begin
   if (select count(*) from unnest(string_to_array(name, ' ')) w where length(w) > 1) < 2 then
     raise exception 'יש להזין שם מלא (שם פרטי ושם משפחה)';
   end if;
-  if phone !~ '^0\d{8,9}$' then
+  if phone <> '' and phone !~ '^0\d{8,9}$' then
     raise exception 'מספר טלפון לא תקין';
   end if;
 end $$;
@@ -103,8 +103,8 @@ language sql stable set search_path = public as $$
 $$;
 
 -- Guest signup: takes the first free seat (1, then 2) in the hour.
--- A person may sign up any number of times, at the same or other stations; only the same phone
--- taking both places of the same hour at the same station is blocked.
+-- A person may sign up any number of times, at the same or other stations; only the same person
+-- (by phone, or by name when no phone) taking both places of the same hour at the same station is blocked.
 create function public.tefillin_signup(p_station_id uuid, p_slot text, p_name text, p_phone text) returns jsonb
 language plpgsql set search_path = public as $$
 declare v record; v_station tefillin_stations; v_seat smallint;
@@ -113,7 +113,8 @@ begin
   select * into v_station from tefillin_stations where id = p_station_id;
   if not found then raise exception 'הקלפי לא נמצאה'; end if;
   if not (p_slot = any (v_station.slots)) then raise exception 'המשמרת אינה פעילה בקלפי זו'; end if;
-  if exists (select 1 from tefillin_signups where station_id = p_station_id and slot = p_slot and phone = v.phone) then
+  if exists (select 1 from tefillin_signups where station_id = p_station_id and slot = p_slot
+             and (case when v.phone <> '' then phone = v.phone else name = v.name end)) then
     raise exception 'כבר נרשמת למשמרת הזו בקלפי הזו';
   end if;
   select min(x) into v_seat from unnest(array[1, 2]::smallint[]) x
