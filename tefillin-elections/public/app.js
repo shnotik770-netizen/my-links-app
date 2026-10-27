@@ -4,11 +4,12 @@
   const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
   const MAX_PER_SLOT = 2;
   // Must match public/version.json (both are set by bump-version.sh).
-  const VERSION = '2026.10.27-084442';
+  const VERSION = '2026.10.27-121009';
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
   const HELP_KEY = 'tefillin_help_seen';
+  const VIEW_KEY = 'tefillin_by_hour';
 
   const app = document.getElementById('app');
   const modal = document.getElementById('modal');
@@ -23,6 +24,7 @@
     query: '',      // search text (station or volunteer name)
     freeOnly: false, // show only unassigned hours
     helpOpen: false, // how-to bubble (set on first visit below)
+    byHour: false,   // list grouped by hour instead of by station
     busy: false,
   };
 
@@ -367,9 +369,18 @@
         '</div>' +
         (help ? helpBubble() : '') +
         (progress || '') +
-        // Quick jump: one button per station, scrolls straight to its card.
-        '<nav class="jump" aria-label="מעבר מהיר לקלפי">' +
-          stations.map(st => '<button class="jump-btn" data-action="jump" data-id="' + esc(st.id) + '">' + esc(st.name) + '</button>').join('') +
+        '<div class="view-toggle" role="group" aria-label="תצוגה">' +
+          '<button data-action="view-mode" data-mode="station" aria-pressed="' + !state.byHour + '">לפי קלפי</button>' +
+          '<button data-action="view-mode" data-mode="hour" aria-pressed="' + state.byHour + '">לפי שעה</button>' +
+        '</div>' +
+        // Quick jump: one button per station (or per hour in the "by hour" view), scrolls straight to its card.
+        '<nav class="jump" aria-label="מעבר מהיר">' +
+          (state.byHour
+            // (guest stations hold {slot, names} objects, admin stations hold plain slot strings)
+            ? ALL_SLOTS.filter(slot => stations.some(st => st.slots.some(x => (x.slot || x) === slot)))
+                .map(slot => '<button class="jump-btn" data-action="jump" data-target="hr-' + slot + '">' + slotLabel(slot) + '</button>')
+            : stations.map(st => '<button class="jump-btn" data-action="jump" data-target="st-' + esc(st.id) + '">' + esc(st.name) + '</button>')
+          ).join('') +
         '</nav>' +
       '</div>' +
       '<div id="list"></div>'
@@ -381,8 +392,8 @@
     return '<div class="slot-time"><b>' + from + '</b><span>עד ' + to + '</span></div>';
   }
 
-  function jumpTo(id) {
-    let card = document.getElementById('st-' + id);
+  function jumpTo(target) {
+    let card = document.getElementById(target);
     if (!card && (state.query || state.freeOnly)) {
       // The station is hidden by the search/filter – clear them so it can be shown.
       state.query = '';
@@ -392,7 +403,7 @@
       chip.classList.remove('active');
       chip.setAttribute('aria-pressed', 'false');
       rerender();
-      card = document.getElementById('st-' + id);
+      card = document.getElementById(target);
     }
     if (!card) return;
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -442,43 +453,71 @@
     renderPublicList();
   }
 
+  // Cells of one hour at one station (guest view). Up to 2 volunteers per hour: the first fills the cell,
+  // then "+ הוסף פעיל" offers a second place.
+  function publicCells(st, s, me) {
+    const key = st.id + '|' + s.slot;
+    let cells = s.names.map(n => '<div class="cell cell-taken"><span class="check">✓</span>' + esc(n) + '</div>').join('');
+    if (s.names.length < MAX_PER_SLOT) {
+      if (state.openCell === key) {
+        cells += '<div class="cell cell-open">' + cellForm(key, me.name || '', me.phone || '', s.names.length ? 'הוספה' : 'שבצו אותי') + '</div>';
+      } else if (s.names.length) {
+        cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף פעיל</button>';
+      } else {
+        cells += '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – לחצו לשיבוץ</button>';
+      }
+    }
+    return cells;
+  }
+
   function renderPublicList() {
     const me = load('local', ME_KEY) || {};
-    let html = '';
-
-    if (!state.stations.length) html += '<div class="card muted">עדיין לא הוגדרו קלפיות.</div>';
-
+    // [{ st, rows: [{ slot, cells }] }] for the stations that pass the search/filter
+    const groups = [];
     state.stations.forEach(st => {
       const slots = filterSlots(st, st.slots, s => !s.names.length, s => s.names.join(' '));
-      if (!slots) return;
-      html += '<section class="card station" id="st-' + esc(st.id) + '"><h2>' + esc(st.name) + '</h2>' + stationMeta(st);
-      if (!slots.length) {
-        html += '<div class="muted">אין משמרות פעילות בקלפי זו</div>';
-      } else {
-        html += '<div class="slots">';
-        slots.forEach(s => {
-          // Up to 2 volunteers per hour: the first fills the cell, then "+ הוסף פעיל" offers a second place.
-          const key = st.id + '|' + s.slot;
-          let cells = s.names.map(n => '<div class="cell cell-taken"><span class="check">✓</span>' + esc(n) + '</div>').join('');
-          if (s.names.length < MAX_PER_SLOT) {
-            if (state.openCell === key) {
-              cells += '<div class="cell cell-open">' + cellForm(key, me.name || '', me.phone || '', s.names.length ? 'הוספה' : 'שבצו אותי') + '</div>';
-            } else if (s.names.length) {
-              cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף פעיל</button>';
-            } else {
-              cells += '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – לחצו לשיבוץ</button>';
-            }
-          }
-          html += '<div class="slot-row">' + slotTime(s.slot) + '<div class="cell-stack">' + cells + '</div></div>';
-        });
-        html += '</div>';
-      }
-      html += '</section>';
+      if (slots) groups.push({ st, rows: slots.map(s => ({ slot: s.slot, cells: publicCells(st, s, me) })) });
     });
 
-    if (state.stations.length && !html) html = noResults();
+    let html = '';
+    if (!state.stations.length) html = '<div class="card muted">עדיין לא הוגדרו קלפיות.</div>';
+    else if (!groups.length) html = noResults();
+    else if (state.byHour) html = renderByHour(groups);
+    else {
+      groups.forEach(({ st, rows }) => {
+        html += '<section class="card station" id="st-' + esc(st.id) + '"><h2>' + esc(st.name) + '</h2>' + stationMeta(st);
+        html += rows.length ? slotRows(rows) : '<div class="muted">אין משמרות פעילות בקלפי זו</div>';
+        html += '</section>';
+      });
+    }
     document.getElementById('list').innerHTML = html;
     focusOpenForm();
+  }
+
+  function slotRows(rows) {
+    return '<div class="slots">' +
+      rows.map(r => '<div class="slot-row">' + slotTime(r.slot) + '<div class="cell-stack">' + r.cells + '</div></div>').join('') +
+    '</div>';
+  }
+
+  // "By hour" view: one card per hour, listing every station that runs that hour.
+  function renderByHour(groups) {
+    let html = '';
+    ALL_SLOTS.forEach(slot => {
+      const rows = [];
+      groups.forEach(({ st, rows: stRows }) => {
+        const r = stRows.find(x => x.slot === slot);
+        if (r) rows.push({ st, cells: r.cells });
+      });
+      if (!rows.length) return;
+      html +=
+        '<section class="card station hour-card" id="hr-' + slot + '"><h2>' + slotLabel(slot) + '</h2><div class="slots">' +
+          rows.map(r =>
+            '<div class="slot-row by-hour"><div class="slot-station">' + esc(r.st.name) + '</div>' +
+            '<div class="cell-stack">' + r.cells + '</div></div>').join('') +
+        '</div></section>';
+    });
+    return html;
   }
 
   async function submitSignup(form, key) {
@@ -583,74 +622,80 @@
     renderAdminList();
   }
 
+  // Cells of one hour at one station (admin view): both seats, with the admin's buttons.
+  function adminCells(st, slot, bySlot) {
+    const active = st.slots.indexOf(slot) !== -1;
+    const seats = bySlot[st.id + '|' + slot] || [];
+    let cells = '';
+    for (let seat = 1; seat <= MAX_PER_SLOT; seat++) {
+      const key = st.id + '|' + slot + '|' + seat;
+      const s = seats[seat - 1];
+      if (state.openCell === key) {
+        cells += '<div class="cell cell-open">' + cellForm(key, s ? s.name : '', s ? s.phone : '', s ? 'שמירה' : 'שיבוץ') + '</div>';
+      } else if (s) {
+        // Phone is optional; without one, the manager is matched by name.
+        const isManager = s.phone ? s.phone === st.managerPhone : !!st.managerName && s.name === st.managerName;
+        cells +=
+          '<div class="cell cell-taken admin">' +
+            '<div class="who"><b>' + esc(s.name) + '</b>' +
+              (s.phone
+                ? '<a href="tel:' + esc(s.phone) + '">' + esc(formatPhone(s.phone)) + '</a>' +
+                  '<a href="' + esc(waLink(s.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a>'
+                : '<span class="muted small">בלי טלפון</span>') +
+              (active ? '' : '<span class="tag">משמרת לא פעילה</span>') +
+              (isManager ? '<span class="tag tag-manager">מנהל הקלפי</span>' : '') +
+            '</div>' +
+            '<div class="cell-tools">' +
+              (isManager ? '' :
+                '<button class="icon-btn" title="הפוך למנהל הקלפי" data-action="make-manager" data-id="' + esc(s.id) + '">👤</button>') +
+              '<button class="icon-btn" title="העברה / שיבוץ נוסף" data-action="move-signup" data-id="' + esc(s.id) + '">⇄</button>' +
+              '<button class="icon-btn" title="שינוי שיבוץ" data-action="open-cell" data-key="' + esc(key) + '">✎</button>' +
+              '<button class="icon-btn danger" title="ביטול שיבוץ" data-action="cancel-signup" data-id="' + esc(s.id) + '">✕</button>' +
+            '</div>' +
+          '</div>';
+      } else if (seat === 1) {
+        cells += '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – שיבוץ ידני</button>';
+      } else if (seats[0]) {
+        cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף פעיל</button>';
+      }
+    }
+    return cells;
+  }
+
   function renderAdminList() {
     const { stations } = state.admin;
     const bySlot = adminIndex();
-    let html = '';
-
+    const groups = [];
     stations.forEach(st => {
       const slots = filterSlots(st,
         // Active hours, plus any inactive hour that still has a volunteer in it.
         ALL_SLOTS.filter(slot => st.slots.indexOf(slot) !== -1 || adminPeople(bySlot, st.id + '|' + slot).length),
         slot => st.slots.indexOf(slot) !== -1 && !adminPeople(bySlot, st.id + '|' + slot).length,
         slot => adminPeople(bySlot, st.id + '|' + slot).map(s => s.name + ' ' + s.phone).join(' '));
-      if (!slots) return;
-      html +=
-        '<section class="card station" id="st-' + esc(st.id) + '">' +
-          '<div class="station-head"><h2>' + esc(st.name) + '</h2>' +
-            '<div class="station-tools">' +
-              '<button class="icon-btn" title="עריכה" data-action="edit-station" data-id="' + esc(st.id) + '">✎</button>' +
-              '<button class="icon-btn danger" title="מחיקה" data-action="delete-station" data-id="' + esc(st.id) + '">🗑</button>' +
-            '</div>' +
-          '</div>' + stationMeta(st) +
-          (st.managerPhone
-            ? '<button class="btn btn-ghost send-login" data-action="send-login" data-id="' + esc(st.id) + '">📲 שליחת פרטי כניסה למנהל הקלפי בוואטסאפ</button>'
-            : '') +
-          '<div class="slots">';
-
-      slots.forEach(slot => {
-        const active = st.slots.indexOf(slot) !== -1;
-        const seats = bySlot[st.id + '|' + slot] || [];
-        let cells = '';
-        for (let seat = 1; seat <= MAX_PER_SLOT; seat++) {
-          const key = st.id + '|' + slot + '|' + seat;
-          const s = seats[seat - 1];
-          if (state.openCell === key) {
-            cells += '<div class="cell cell-open">' + cellForm(key, s ? s.name : '', s ? s.phone : '', s ? 'שמירה' : 'שיבוץ') + '</div>';
-          } else if (s) {
-            // Phone is optional; without one, the manager is matched by name.
-            const isManager = s.phone ? s.phone === st.managerPhone : !!st.managerName && s.name === st.managerName;
-            cells +=
-              '<div class="cell cell-taken admin">' +
-                '<div class="who"><b>' + esc(s.name) + '</b>' +
-                  (s.phone
-                    ? '<a href="tel:' + esc(s.phone) + '">' + esc(formatPhone(s.phone)) + '</a>' +
-                      '<a href="' + esc(waLink(s.phone)) + '" target="_blank" rel="noopener">וואטסאפ</a>'
-                    : '<span class="muted small">בלי טלפון</span>') +
-                  (active ? '' : '<span class="tag">משמרת לא פעילה</span>') +
-                  (isManager ? '<span class="tag tag-manager">מנהל הקלפי</span>' : '') +
-                '</div>' +
-                '<div class="cell-tools">' +
-                  (isManager ? '' :
-                    '<button class="icon-btn" title="הפוך למנהל הקלפי" data-action="make-manager" data-id="' + esc(s.id) + '">👤</button>') +
-                  '<button class="icon-btn" title="העברה / שיבוץ נוסף" data-action="move-signup" data-id="' + esc(s.id) + '">⇄</button>' +
-                  '<button class="icon-btn" title="שינוי שיבוץ" data-action="open-cell" data-key="' + esc(key) + '">✎</button>' +
-                  '<button class="icon-btn danger" title="ביטול שיבוץ" data-action="cancel-signup" data-id="' + esc(s.id) + '">✕</button>' +
-                '</div>' +
-              '</div>';
-          } else if (seat === 1) {
-            cells += '<button class="cell cell-empty" data-action="open-cell" data-key="' + esc(key) + '">+ פנוי – שיבוץ ידני</button>';
-          } else if (seats[0]) {
-            cells += '<button class="add-seat" data-action="open-cell" data-key="' + esc(key) + '">+ הוסף פעיל</button>';
-          }
-        }
-        html += '<div class="slot-row">' + slotTime(slot) + '<div class="cell-stack">' + cells + '</div></div>';
-      });
-      html += '</div></section>';
+      if (slots) groups.push({ st, rows: slots.map(slot => ({ slot, cells: adminCells(st, slot, bySlot) })) });
     });
 
+    let html = '';
     if (!stations.length) html = '<div class="card muted">אין קלפיות. הוסיפו קלפי ראשונה.</div>';
-    else if (!html) html = noResults();
+    else if (!groups.length) html = noResults();
+    else if (state.byHour) html = renderByHour(groups);
+    else {
+      groups.forEach(({ st, rows }) => {
+        html +=
+          '<section class="card station" id="st-' + esc(st.id) + '">' +
+            '<div class="station-head"><h2>' + esc(st.name) + '</h2>' +
+              '<div class="station-tools">' +
+                '<button class="icon-btn" title="עריכה" data-action="edit-station" data-id="' + esc(st.id) + '">✎</button>' +
+                '<button class="icon-btn danger" title="מחיקה" data-action="delete-station" data-id="' + esc(st.id) + '">🗑</button>' +
+              '</div>' +
+            '</div>' + stationMeta(st) +
+            (st.managerPhone
+              ? '<button class="btn btn-ghost send-login" data-action="send-login" data-id="' + esc(st.id) + '">📲 שליחת פרטי כניסה למנהל הקלפי בוואטסאפ</button>'
+              : '') +
+            slotRows(rows) +
+          '</section>';
+      });
+    }
     document.getElementById('list').innerHTML = html;
     focusOpenForm();
   }
@@ -826,7 +871,12 @@
       case 'toggle-help':
         return toggleHelp();
       case 'jump':
-        return jumpTo(id);
+        return jumpTo(el.dataset.target);
+      case 'view-mode':
+        state.byHour = el.dataset.mode === 'hour';
+        save('local', VIEW_KEY, state.byHour);
+        state.openCell = null;
+        return state.view === 'admin' ? renderAdmin() : renderPublic();
       case 'refresh':
         return loadAdmin();
       case 'logout':
@@ -888,6 +938,7 @@
   }
 
   state.helpOpen = !load('local', HELP_KEY);
+  state.byHour = !!load('local', VIEW_KEY);
 
   window.addEventListener('hashchange', route);
   route();
