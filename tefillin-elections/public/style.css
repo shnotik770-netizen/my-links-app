@@ -148,6 +148,16 @@ a { color: var(--navy-2); }
   cursor: pointer;
 }
 .jump-btn:hover { border-color: var(--gold); }
+/* time / station labels open a detail window */
+button.slot-time, button.slot-station { font: inherit; border: none; cursor: pointer; width: 100%; }
+button.slot-time:hover, button.slot-station:hover { background: var(--navy-2); }
+.slot-station::after { content: ' ⓘ'; opacity: .6; font-size: .8em; }
+.info h2 { margin: 0 0 4px; color: var(--poster-navy); font-family: 'Secular One', 'Assistant', sans-serif; font-weight: 400; }
+.info-list { margin: 12px 0; border-top: 1px solid var(--line); }
+.info-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+.info-key { font-weight: 700; color: var(--poster-navy); white-space: nowrap; }
+.free-text { color: var(--free-text); font-weight: 700; }
+
 /* "by station" / "by hour" switch */
 .view-toggle { display: inline-flex; margin-top: 8px; padding: 3px; background: #e2e8f0; border-radius: 999px; }
 .view-toggle button {

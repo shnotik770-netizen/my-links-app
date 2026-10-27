@@ -4,7 +4,7 @@
   const DEFAULT_SLOTS = ALL_SLOTS.slice(1, 5);
   const MAX_PER_SLOT = 2;
   // Must match public/version.json (both are set by bump-version.sh).
-  const VERSION = '2026.10.27-121009';
+  const VERSION = '2026.10.27-130327';
   const PASS_KEY = 'tefillin_admin_pass';
   const WA_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5c-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8M20.5 3.5A11.8 11.8 0 0 0 1.9 17.7L.2 24l6.4-1.7A11.8 11.8 0 0 0 24 12c0-3.2-1.2-6.2-3.5-8.5"/></svg>';
   const ME_KEY = 'tefillin_me';
@@ -387,9 +387,76 @@
     );
   }
 
+  // Time label of a row; tapping it shows that hour across all stations.
   function slotTime(slot) {
     const [from, to] = slot.split('-');
-    return '<div class="slot-time"><b>' + from + '</b><span>עד ' + to + '</span></div>';
+    return '<button class="slot-time" data-action="hour-info" data-slot="' + slot + '" title="מי משובץ בשעה הזו בכל הקלפיות">' +
+      '<b>' + from + '</b><span>עד ' + to + '</span></button>';
+  }
+
+  // ===== Detail windows: a station (from the "by hour" view) / an hour (from the "by station" view) =====
+
+  function viewStations() {
+    return state.view === 'admin' ? state.admin.stations : state.stations;
+  }
+
+  // Active hours of a station (guest stations hold {slot, names} objects, admin stations plain strings).
+  function stationSlots(st) {
+    return st.slots.map(x => x.slot || x);
+  }
+
+  function namesAt(st, slot) {
+    if (state.view === 'admin') return adminPeople(adminIndex(), st.id + '|' + slot).map(s => s.name);
+    return (st.slots.find(x => x.slot === slot) || { names: [] }).names;
+  }
+
+  function whoLine(names) {
+    return names.length ? esc(names.join(', ')) : '<span class="free-text">פנוי</span>';
+  }
+
+  function openInfo(html) {
+    modalCard.innerHTML = '<div class="info">' + html + '</div>';
+    modal.classList.remove('hidden');
+  }
+
+  function openStationInfo(id) {
+    const st = viewStations().find(x => x.id === id);
+    openInfo(
+      '<h2>' + esc(st.name) + '</h2>' + stationMeta(st) +
+      '<div class="info-list">' +
+        stationSlots(st).map(slot =>
+          '<div class="info-row"><span class="info-key">' + slotLabel(slot) + '</span><span>' + whoLine(namesAt(st, slot)) + '</span></div>').join('') +
+      '</div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn btn-gold" data-action="show-station" data-id="' + esc(st.id) + '">הצגת הקלפי בלוח</button>' +
+        '<button class="btn btn-ghost" data-action="close-modal">סגירה</button>' +
+      '</div>');
+  }
+
+  function openHourInfo(slot) {
+    const rows = viewStations().filter(st => stationSlots(st).indexOf(slot) !== -1);
+    const staffed = rows.filter(st => namesAt(st, slot).length).length;
+    openInfo(
+      '<h2>' + slotLabel(slot) + '</h2>' +
+      '<p class="muted">' + staffed + ' מתוך ' + rows.length + ' קלפיות מאוישות בשעה הזו</p>' +
+      '<div class="info-list">' +
+        rows.map(st =>
+          '<div class="info-row"><span class="info-key">' + esc(st.name) + '</span><span>' + whoLine(namesAt(st, slot)) + '</span></div>').join('') +
+      '</div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn btn-gold" data-action="show-hour" data-slot="' + slot + '">הצגת השעה בלוח</button>' +
+        '<button class="btn btn-ghost" data-action="close-modal">סגירה</button>' +
+      '</div>');
+  }
+
+  // Switch view (by station / by hour) and scroll to the given card.
+  function showIn(byHour, target) {
+    closeModal();
+    state.byHour = byHour;
+    save('local', VIEW_KEY, byHour);
+    state.openCell = null;
+    state.view === 'admin' ? renderAdmin() : renderPublic();
+    jumpTo(target);
   }
 
   function jumpTo(target) {
@@ -513,7 +580,7 @@
       html +=
         '<section class="card station hour-card" id="hr-' + slot + '"><h2>' + slotLabel(slot) + '</h2><div class="slots">' +
           rows.map(r =>
-            '<div class="slot-row by-hour"><div class="slot-station">' + esc(r.st.name) + '</div>' +
+            '<div class="slot-row by-hour"><button class="slot-station" data-action="station-info" data-id="' + esc(r.st.id) + '" title="פרטי הקלפי">' + esc(r.st.name) + '</button>' +
             '<div class="cell-stack">' + r.cells + '</div></div>').join('') +
         '</div></section>';
     });
@@ -872,6 +939,14 @@
         return toggleHelp();
       case 'jump':
         return jumpTo(el.dataset.target);
+      case 'station-info':
+        return openStationInfo(id);
+      case 'hour-info':
+        return openHourInfo(el.dataset.slot);
+      case 'show-station':
+        return showIn(false, 'st-' + id);
+      case 'show-hour':
+        return showIn(true, 'hr-' + el.dataset.slot);
       case 'view-mode':
         state.byHour = el.dataset.mode === 'hour';
         save('local', VIEW_KEY, state.byHour);
