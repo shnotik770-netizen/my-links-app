@@ -423,3 +423,6 @@ legend { font-weight: 700; padding: 0 6px; }
   .ticker-run[aria-hidden] { display: none; }
   .ticker-run { display: inline; }
 }
+
+/* Yechi line at the top of every page and printout */
+.yechi { margin: 0; padding: 4px 12px; text-align: center; font-size: 13px; font-weight: 700; letter-spacing: .2px; color: #14275a; background: #fff8d6; }
